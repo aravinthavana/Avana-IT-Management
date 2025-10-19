@@ -1,0 +1,5 @@
+{
+  "name": "IT Asset Management Dashboard",
+  "description": "A comprehensive dashboard for managing IT assets and users within an organization. It allows for tracking assets, assigning them to users, managing user profiles, and viewing key statistics.",
+  "requestFramePermissions": []
+}
