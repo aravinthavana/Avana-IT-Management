@@ -1,0 +1,93 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  name         String
+  email        String       @unique
+  role         String       @default("User")
+  departmentId Int?
+  branchId     Int?
+  
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+  assets       Asset[]      // When assigneeType == "User"
+  histories    AssetHistory[]
+}
+
+model Department {
+  id     Int     @id @default(autoincrement())
+  name   String
+  users  User[]
+}
+
+model Branch {
+  id       Int     @id @default(autoincrement())
+  name     String
+  location String?
+  users    User[]
+}
+
+model Asset {
+  id                Int       @id @default(autoincrement())
+  assetId           String    @unique
+  name              String
+  category          String
+  status            String    @default("In Stock")
+  
+  // Logical assignee tracking (can be User, Department, or Branch)
+  assigneeId        Int?
+  assigneeType      String?   
+
+  // Direct foreign key (used when assigned to User)
+  userId            Int?
+  user              User?     @relation(fields: [userId], references: [id])
+  
+  company           String?
+  brand             String?
+  model             String?
+  serialNumber      String?
+  location          String?
+  
+  purchaseId        Int?
+  purchase          PurchaseRecord? @relation(fields: [purchaseId], references: [id])
+
+  warrantyType      String?   @default("None")
+  warrantyStartDate DateTime?
+  warrantyYears     String?
+  warrantyEndDate   DateTime?
+  
+  remarks           String?
+  specs             Json?
+
+  histories         AssetHistory[]
+}
+
+model AssetHistory {
+  id        Int      @id @default(autoincrement())
+  assetId   Int
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  timestamp DateTime @default(now())
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  event     String
+  details   String?
+}
+
+model PurchaseRecord {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String   @unique
+  purchaseDate  DateTime
+  vendor        String?
+  amount        Float?
+  assets        Asset[]
+}
