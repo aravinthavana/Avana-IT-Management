@@ -6,4 +6,5 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 EXPOSE 8080
+USER node
 CMD ["npm", "start"]
