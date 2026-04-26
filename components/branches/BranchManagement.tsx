@@ -6,6 +6,8 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import { ICONS } from '../../constants';
 import BranchDetailView from './BranchDetailView';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
 // Reusable FormInput component
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
     <div>
@@ -15,12 +17,13 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
 );
 
 const BranchManagement: React.FC = () => {
-    const { branches, setBranches, assets, setNotification, selectedBranchId, setSelectedBranchId } = useAppContext();
+    const { branches, setBranches, assets, setNotification, selectedBranchId, setSelectedBranchId, getHeaders } = useAppContext();
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
     const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null);
     const [formData, setFormData] = useState({ name: '', location: '' });
+    const [isLoading, setIsLoading] = useState(false);
 
     const assetCounts = useMemo(() => {
         const counts: { [key: number]: number } = {};
@@ -32,32 +35,39 @@ const BranchManagement: React.FC = () => {
 
     const handleOpenForm = (branch: Branch | null = null) => {
         setEditingBranch(branch);
-        setFormData({ name: branch ? branch.name : '', location: branch ? branch.location : '' });
+        setFormData({ name: branch ? branch.name : '', location: branch ? (branch.location || '') : '' });
         setIsFormOpen(true);
     };
 
-    const handleCloseForm = () => {
-        setEditingBranch(null);
-        setIsFormOpen(false);
-    };
+    const handleCloseForm = () => { setEditingBranch(null); setIsFormOpen(false); };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingBranch) {
-            // Edit
-            setBranches(branches.map(b => b.id === editingBranch.id ? { ...b, ...formData } : b));
-            setNotification({ message: `Branch "${formData.name}" updated successfully.`, type: 'success' });
-        } else {
-            // Add new
-            const newBranch: Branch = {
-                id: Date.now(),
-                name: formData.name,
-                location: formData.location,
-            };
-            setBranches([...branches, newBranch]);
-            setNotification({ message: `Branch "${formData.name}" added successfully.`, type: 'success' });
+        setIsLoading(true);
+        try {
+            if (editingBranch) {
+                const res = await fetch(`${API_URL}/api/branches/${editingBranch.id}`, {
+                    method: 'PUT', headers: getHeaders(), body: JSON.stringify(formData),
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                const updated = await res.json();
+                setBranches(branches.map(b => b.id === editingBranch.id ? updated : b));
+                setNotification({ message: `Branch "${updated.name}" updated.`, type: 'success' });
+            } else {
+                const res = await fetch(`${API_URL}/api/branches`, {
+                    method: 'POST', headers: getHeaders(), body: JSON.stringify(formData),
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                const created = await res.json();
+                setBranches([...branches, created]);
+                setNotification({ message: `Branch "${created.name}" added.`, type: 'success' });
+            }
+            handleCloseForm();
+        } catch (err: any) {
+            setNotification({ message: err.message || 'An error occurred', type: 'error' });
+        } finally {
+            setIsLoading(false);
         }
-        handleCloseForm();
     };
 
     const handleDeleteRequest = (branch: Branch) => {
@@ -68,11 +78,21 @@ const BranchManagement: React.FC = () => {
         setBranchToDelete(branch);
     };
 
-    const confirmDelete = () => {
-        if (branchToDelete) {
+    const confirmDelete = async () => {
+        if (!branchToDelete) return;
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/branches/${branchToDelete.id}`, {
+                method: 'DELETE', headers: getHeaders(),
+            });
+            if (!res.ok) throw new Error((await res.json()).error);
             setBranches(branches.filter(b => b.id !== branchToDelete.id));
-            setNotification({ message: `Branch "${branchToDelete.name}" deleted successfully.`, type: 'success' });
+            setNotification({ message: `Branch "${branchToDelete.name}" deleted.`, type: 'success' });
             setBranchToDelete(null);
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to delete', type: 'error' });
+        } finally {
+            setIsLoading(false);
         }
     };
 

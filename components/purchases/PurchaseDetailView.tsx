@@ -18,7 +18,7 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode, className?: 
 
 const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBack }) => {
     const { assets, setSelectedAssetId } = useAppContext();
-    const purchaseAssets = assets.filter(a => purchase.assetIds.includes(a.id));
+    const purchaseAssets = assets.filter(a => a.purchaseId === purchase.id);
     
     const getStatusChip = (status: string) => {
         const styles: { [key: string]: string } = {
@@ -42,7 +42,7 @@ const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBac
                             </button>
                         )}
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate" title={purchase.invoiceNumber}>Invoice: {purchase.invoiceNumber}</h2>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white truncate" title={purchase.invoiceNumber}>Invoice: {purchase.invoiceNumber}</h2>
                         </div>
                     </div>
                 </div>
@@ -54,8 +54,8 @@ const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBac
                          <DetailItem label="Invoice Number" value={<span className="font-semibold">{purchase.invoiceNumber}</span>} />
                          <DetailItem label="Vendor" value={purchase.vendor} />
                          <DetailItem label="Purchase Date" value={new Date(purchase.purchaseDate).toLocaleDateString()} />
-                         <DetailItem label="PO Number" value={purchase.poNumber || 'N/A'} />
-                         <DetailItem label="Assets Procured" value={purchase.assetIds.length} />
+                         <DetailItem label="PO Number" value={(purchase as any).poNumber || 'N/A'} />
+                         <DetailItem label="Assets Procured" value={purchaseAssets.length} />
                          <DetailItem 
                             label="Invoice Attachment" 
                             value={

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 
 interface HeaderProps {
@@ -7,9 +8,12 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
-    const { currentUser, view: currentView, theme, setTheme } = useAppContext();
+    const { view: currentView, theme, setTheme } = useAppContext();
+    const { user, logout } = useAuth();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     const viewTitles: { [key: string]: string } = {
         dashboard: 'Home',
@@ -37,6 +41,9 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setDropdownOpen(false);
+            }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setUserMenuOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -81,8 +88,26 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                             ))}
                         </div>
                     </div>
-                    <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">{currentUser.name}</span>
-                    <img src={currentUser.avatar} alt="User Avatar" className="w-9 h-9 rounded-full"/>
+                    <div className="relative" ref={userMenuRef}>
+                        <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center space-x-3 focus:outline-none">
+                            <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">{user?.name}</span>
+                            <div className="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">
+                                {user?.name?.charAt(0)}
+                            </div>
+                        </button>
+                        <div className={`absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 border border-slate-200 dark:border-slate-700 origin-top-right transition-all duration-200 ease-out ${userMenuOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}>
+                            <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
+                                <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{user?.role}</p>
+                            </div>
+                            <button
+                                onClick={logout}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                Sign out
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>

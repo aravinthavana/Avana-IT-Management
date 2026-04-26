@@ -7,6 +7,8 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 
 
+import { useAuth } from '../../contexts/AuthContext';
+
 interface AssetDetailViewProps {
     asset: Asset;
     onBack?: () => void;
@@ -15,16 +17,49 @@ interface AssetDetailViewProps {
 const DetailItem: React.FC<{ label: string, value: React.ReactNode, className?: string }> = ({ label, value, className }) => (
     <div className={className}>
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="text-slate-800 dark:text-slate-100 mt-1">{value}</p>
+        <div className="text-slate-800 dark:text-slate-100 mt-1">{value}</div>
     </div>
 );
 
 const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
     const { users, departments, branches, purchaseRecords, setPreviewTarget, setSelectedPurchaseId, setSelectedAssetId } = useAppContext();
+    const { user } = useAuth();
     const assignee = getAssigneeDisplayInfo(asset.assigneeId, asset.assigneeType, users, departments, branches);
     const purchase = purchaseRecords.find(p => p.id === asset.purchaseId);
     const specEntries = Object.entries(asset.specs || {});
     const warrantyStatus = getWarrantyStatus(asset);
+    
+    const handleUnassign = async () => {
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
+                method: 'PUT',
+                headers: useAppContext().getHeaders(),
+                body: JSON.stringify({
+                    ...asset,
+                    status: 'In Stock',
+                    assigneeId: null,
+                    assigneeType: null,
+                    specs: asset.specs ? JSON.stringify(asset.specs) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to unassign');
+            const updated = await res.json();
+            useAppContext().setAssets(useAppContext().assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            useAppContext().logAssetHistory(asset.id, 'Unassigned', 'Asset was unassigned manually.');
+            useAppContext().setNotification({ message: 'Asset unassigned successfully', type: 'success' });
+        } catch (err: any) {
+            useAppContext().setNotification({ message: err.message, type: 'error' });
+        }
+    };
+
+    const handleAssign = () => {
+        // We'll use the existing AssetForm for assignment by triggering an "Edit"
+        // But we could also add a dedicated AssignModal here for better UX.
+        // For now, let's just use AssetForm.
+        // I'll need to trigger the edit mode in AssetManagement from here.
+        // Actually, let's just implement a quick "Edit" call.
+        useAppContext().navigate('assets', { editingAssetId: asset.id });
+    };
     
     const handlePurchaseClick = () => {
         if (purchase) {
@@ -49,9 +84,24 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{asset.assetId}</p>
                         </div>
                     </div>
-                    <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors flex-shrink-0">
-                        {ICONS.qr} <span className="hidden sm:inline">Print Label</span>
-                    </button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {user?.role !== 'User' && (
+                            <>
+                                {asset.status === 'Assigned' ? (
+                                    <button onClick={handleUnassign} className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400 flex items-center gap-2 text-sm transition-all active:scale-95">
+                                        {ICONS.remove} <span className="hidden sm:inline">Unassign</span>
+                                    </button>
+                                ) : asset.status === 'In Stock' ? (
+                                    <button onClick={handleAssign} className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm">
+                                        {ICONS.users} <span className="hidden sm:inline">Assign Asset</span>
+                                    </button>
+                                ) : null}
+                                <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors flex-shrink-0">
+                                    {ICONS.qr} <span className="hidden sm:inline">Print Label</span>
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

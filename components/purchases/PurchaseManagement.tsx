@@ -4,13 +4,15 @@ import { ICONS } from '../../constants';
 import PurchaseForm from './PurchaseForm';
 import { PurchaseRecord } from '../../types';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
 interface PurchaseManagementProps {
     pageState?: { [key: string]: any } | null;
     onPageStateConsumed?: () => void;
 }
 
 const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPageStateConsumed }) => {
-    const { purchaseRecords, setSelectedPurchaseId } = useAppContext();
+    const { purchaseRecords, setPurchaseRecords, setSelectedPurchaseId, setNotification, getHeaders } = useAppContext();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingPurchase, setEditingPurchase] = useState<PurchaseRecord | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,10 +36,23 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
     const filteredPurchases = useMemo(() => {
         return purchaseRecords.filter(p =>
-            p.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.vendor.toLowerCase().includes(searchTerm.toLowerCase())
+            (p.invoiceNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.vendor || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [purchaseRecords, searchTerm]);
+
+    const handleDeletePurchase = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Are you sure you want to delete this purchase record?')) return;
+        try {
+            const res = await fetch(`${API_URL}/api/purchases/${id}`, { method: 'DELETE', headers: getHeaders() });
+            if (!res.ok) throw new Error((await res.json()).error);
+            setPurchaseRecords(purchaseRecords.filter(p => p.id !== id));
+            setNotification({ message: 'Purchase record deleted.', type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to delete', type: 'error' });
+        }
+    };
 
     return (
         <>
@@ -66,14 +81,14 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                                 <p className="font-semibold text-red-600 dark:text-red-400">{purchase.invoiceNumber}</p>
                                 <p className="text-sm text-slate-600 dark:text-slate-300">{purchase.vendor}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {new Date(purchase.purchaseDate).toLocaleDateString()} &bull; {purchase.assetIds.length} Asset(s)
+                                    {purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : 'N/A'}
+                                    {(purchase as any).assets?.length > 0 ? ` • ${(purchase as any).assets.length} Asset(s)` : ''}
                                 </p>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                {/* Edit is disabled for now as it requires complex asset handling logic */}
-                                {/* <button onClick={(e) => { e.stopPropagation(); handleOpenForm(purchase); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-500" title="Edit">{ICONS.edit}</button> */}
-                                <div className="p-2 text-slate-500 dark:text-slate-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            <div className="flex items-center space-x-1">
+                                <button onClick={(e) => handleDeletePurchase(purchase.id, e)} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-red-600" title="Delete">{ICONS.delete}</button>
+                                <div className="p-2 text-slate-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                                 </div>
                             </div>
                         </div>

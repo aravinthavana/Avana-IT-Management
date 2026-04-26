@@ -6,26 +6,32 @@ import AssetForm from '../assets/AssetForm';
 import AssetTypeChoiceModal from '../assets/AssetTypeChoiceModal';
 import { ICONS } from '../../constants';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
 interface PurchaseFormProps {
     isOpen: boolean;
     onClose: () => void;
     purchase: PurchaseRecord | null;
 }
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
-    <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-        <input {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
-    </div>
-);
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, name, ...props }) => {
+    const inputId = id || name;
+    return (
+        <div>
+            <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+        </div>
+    );
+};
 
 const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }) => {
-    const { setPurchaseRecords, setAssets, setNotification, logAssetHistory } = useAppContext();
+    const { setPurchaseRecords, setAssets, setNotification, logAssetHistory, getHeaders } = useAppContext();
     const invoiceFileInputRef = useRef<HTMLInputElement>(null);
     const poFileInputRef = useRef<HTMLInputElement>(null);
     
     const [formData, setFormData] = useState({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: '', invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
     const [assetsInPurchase, setAssetsInPurchase] = useState<Asset[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [isAssetChoiceModalOpen, setIsAssetChoiceModalOpen] = useState(false);
     const [isAssetFormOpen, setIsAssetFormOpen] = useState(false);
@@ -33,7 +39,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
 
     useEffect(() => {
         if (purchase) {
-            setFormData({ invoiceNumber: purchase.invoiceNumber, poNumber: purchase.poNumber || '', vendor: purchase.vendor, purchaseDate: purchase.purchaseDate, invoiceAttachmentUrl: purchase.invoiceAttachmentUrl || '', invoiceAttachmentFilename: purchase.invoiceAttachmentFilename || '', poAttachmentUrl: purchase.poAttachmentUrl || '', poAttachmentFilename: purchase.poAttachmentFilename || '' });
+            setFormData({ invoiceNumber: purchase.invoiceNumber, poNumber: (purchase as any).poNumber || '', vendor: purchase.vendor || '', purchaseDate: purchase.purchaseDate, invoiceAttachmentUrl: (purchase as any).invoiceAttachmentUrl || '', invoiceAttachmentFilename: (purchase as any).invoiceAttachmentFilename || '', poAttachmentUrl: (purchase as any).poAttachmentUrl || '', poAttachmentFilename: (purchase as any).poAttachmentFilename || '' });
         } else {
             setFormData({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: new Date().toISOString().split('T')[0], invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
             setAssetsInPurchase([]);
@@ -49,12 +55,10 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
         if (file) {
             const reader = new FileReader();
             reader.onload = (loadEvent) => {
-                const urlKey = `${type}AttachmentUrl`;
-                const filenameKey = `${type}AttachmentFilename`;
                 setFormData(prev => ({
                     ...prev,
-                    [urlKey]: loadEvent.target?.result as string,
-                    [filenameKey]: file.name
+                    [`${type}AttachmentUrl`]: loadEvent.target?.result as string,
+                    [`${type}AttachmentFilename`]: file.name
                 }));
             };
             reader.readAsDataURL(file);
@@ -62,18 +66,9 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
     };
     
     const removeAttachment = (type: 'invoice' | 'po') => {
-        const urlKey = `${type}AttachmentUrl`;
-        const filenameKey = `${type}AttachmentFilename`;
-        const fileInputRef = type === 'invoice' ? invoiceFileInputRef : poFileInputRef;
-    
-        setFormData(prev => ({
-            ...prev,
-            [urlKey]: '',
-            [filenameKey]: ''
-        }));
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
+        setFormData(prev => ({ ...prev, [`${type}AttachmentUrl`]: '', [`${type}AttachmentFilename`]: '' }));
+        const ref = type === 'invoice' ? invoiceFileInputRef : poFileInputRef;
+        if (ref.current) ref.current.value = '';
     };
 
     const handleOpenAssetChoice = () => setIsAssetChoiceModalOpen(true);
@@ -94,39 +89,50 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
         setAssetsInPurchase(prev => prev.filter(a => a.id !== tempId));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (assetsInPurchase.length === 0) {
             setNotification({ message: 'Please add at least one asset to this purchase record.', type: 'error' });
             return;
         }
+        setIsSubmitting(true);
+        try {
+            // 1. Create the purchase record
+            const purchasePayload = {
+                invoiceNumber: formData.invoiceNumber,
+                vendor: formData.vendor,
+                purchaseDate: new Date(formData.purchaseDate).toISOString(),
+                amount: 0,
+            };
+            const purchaseRes = await fetch(`${API_URL}/api/purchases`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(purchasePayload),
+            });
+            if (!purchaseRes.ok) throw new Error((await purchaseRes.json()).error || 'Failed to create purchase');
+            const savedPurchase = await purchaseRes.json();
+            setPurchaseRecords(prev => [...prev, { ...savedPurchase, purchaseDate: savedPurchase.purchaseDate ? new Date(savedPurchase.purchaseDate).toISOString().split('T')[0] : '' }]);
 
-        const newPurchaseId = Date.now();
-        const finalAssets: Asset[] = [];
-        const finalAssetIds: number[] = [];
-        let lastAssetId = Date.now();
-
-        assetsInPurchase.forEach(tempAsset => {
-            const finalAsset = { ...tempAsset, id: ++lastAssetId, purchaseId: newPurchaseId };
-            finalAssets.push(finalAsset);
-            finalAssetIds.push(finalAsset.id);
-        });
-        
-        const newPurchase: PurchaseRecord = {
-            id: newPurchaseId,
-            ...formData,
-            assetIds: finalAssetIds
-        };
-
-        setPurchaseRecords(prev => [...prev, newPurchase]);
-        setAssets(prev => [...prev, ...finalAssets]);
-        
-        finalAssets.forEach(asset => {
-            logAssetHistory(asset.id, 'Asset Created', `Added via Purchase Record ${newPurchase.invoiceNumber}`);
-        });
-
-        setNotification({ message: `Purchase record ${newPurchase.invoiceNumber} and ${finalAssets.length} assets added.`, type: 'success' });
-        onClose();
+            // 2. Create each asset linked to the purchase
+            const savedAssets: Asset[] = [];
+            for (const tempAsset of assetsInPurchase) {
+                const { id: _, specs, ...assetData } = tempAsset as any;
+                const assetRes = await fetch(`${API_URL}/api/assets`, {
+                    method: 'POST', headers: getHeaders(),
+                    body: JSON.stringify({ ...assetData, purchaseId: savedPurchase.id, specs: specs ? JSON.stringify(specs) : null }),
+                });
+                if (assetRes.ok) {
+                    const savedAsset = await assetRes.json();
+                    savedAssets.push(savedAsset);
+                    logAssetHistory(savedAsset.id, 'Asset Created', `Added via Purchase Record ${savedPurchase.invoiceNumber}`);
+                }
+            }
+            setAssets(prev => [...prev, ...savedAssets]);
+            setNotification({ message: `Purchase ${savedPurchase.invoiceNumber} and ${savedAssets.length} asset(s) saved.`, type: 'success' });
+            onClose();
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to save', type: 'error' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -210,8 +216,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                     </fieldset>
                     
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
-                        <button type="button" onClick={onClose} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
-                        <button type="submit" className="w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center">Save Purchase</button>
+                        <button type="button" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">Cancel</button>
+                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">{isSubmitting ? 'Saving...' : 'Save Purchase'}</button>
                     </div>
                 </form>
             </Modal>

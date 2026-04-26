@@ -26,6 +26,9 @@ const Breadcrumbs: React.FC = () => {
         users: 'User Management',
         departments: 'Department Management',
         branches: 'Branch Management',
+        requests: 'Asset Requests',
+        purchases: 'Purchase Management',
+        licenses: 'License Management',
         profile: 'My Profile',
     };
 

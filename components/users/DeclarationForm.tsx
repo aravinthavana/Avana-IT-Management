@@ -38,15 +38,24 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
 
     const currentCompany = companyDetails[laptop.company as keyof typeof companyDetails] || companyDetails.AMD;
 
+    // specs may be stored as a JSON string in SQLite — safely parse it
+    const specs: Record<string, any> = (() => {
+        if (!laptop.specs) return {};
+        if (typeof laptop.specs === 'string') {
+            try { return JSON.parse(laptop.specs); } catch { return {}; }
+        }
+        return laptop.specs as Record<string, any>;
+    })();
+
     const technicalDetails = [
         { label: 'Laptop Brand', value: laptop.brand }, { label: 'Model Number', value: laptop.model },
-        { label: 'Laptop Color', value: laptop.specs.color }, { label: 'Laptop Service Tag', value: laptop.specs.serviceTag },
-        { label: 'Charger Adapter', value: laptop.specs.chargerAdapter }, { label: 'Processor', value: laptop.specs.processor },
-        { label: 'Graphics', value: laptop.specs.graphics }, { label: 'Storage', value: laptop.specs.storage },
-        { label: 'Memory Technology', value: laptop.specs.memoryTechnology }, { label: 'Battery', value: laptop.specs.battery },
-        { label: 'Dimensions', value: laptop.specs.dimensions }, { label: 'Audio', value: laptop.specs.audio },
-        { label: 'Display Size', value: laptop.specs.displaySize }, { label: 'Operating System', value: laptop.specs.os },
-        { label: 'Item Weight', value: laptop.specs.itemWeight }, { label: 'Software', value: laptop.specs.software },
+        { label: 'Laptop Color', value: specs.color }, { label: 'Laptop Service Tag', value: specs.serviceTag },
+        { label: 'Charger Adapter', value: specs.chargerAdapter }, { label: 'Processor', value: specs.processor },
+        { label: 'Graphics', value: specs.graphics }, { label: 'Storage', value: specs.storage },
+        { label: 'Memory Technology', value: specs.memoryTechnology }, { label: 'Battery', value: specs.battery },
+        { label: 'Dimensions', value: specs.dimensions }, { label: 'Audio', value: specs.audio },
+        { label: 'Display Size', value: specs.displaySize }, { label: 'Operating System', value: specs.os },
+        { label: 'Item Weight', value: specs.itemWeight }, { label: 'Software', value: specs.software },
     ].filter(item => item.value);
     
     return (
