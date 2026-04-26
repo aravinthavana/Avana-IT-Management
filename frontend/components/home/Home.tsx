@@ -9,6 +9,7 @@ import BarChart from './BarChart';
 import WarrantyStatusOverview from './WarrantyStatusOverview';
 import { WarrantyStatus } from '../../types';
 import ExpiringLicensesTable from '../dashboard/ExpiringLicensesTable';
+import PendingHandovers from '../handovers/PendingHandovers';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -36,6 +37,7 @@ const Home: React.FC = () => {
         
         return (
             <div className="space-y-8 animate-fade-in">
+                <PendingHandovers />
                 {/* Hero / Welcome Section */}
                 <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-3xl p-8 sm:p-10 text-white shadow-2xl relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
@@ -197,6 +199,7 @@ const Home: React.FC = () => {
 
     return (
         <div className="space-y-8">
+            <PendingHandovers />
             <section>
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">At a Glance</h2>
                  <div className="flex gap-6 pb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-x-auto">

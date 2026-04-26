@@ -45,7 +45,8 @@ const assetSchema = z.object({
     assetId: z.string().min(3),
     name: z.string().min(2),
     category: z.string(),
-    status: z.enum(['In Stock', 'Assigned', 'In Repair', 'Retired']).default('In Stock'),
+    status: z.enum(['In Stock', 'Assigned', 'In Repair', 'Retired', 'Pending Handover']).default('In Stock'),
+
     assigneeId: z.number().nullable().optional(),
     assigneeType: z.enum(['User', 'Department', 'Branch']).nullable().optional(),
     company: z.string().nullable().optional(),
@@ -315,6 +316,67 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
     }
 });
 
+// --- Handover Endpoints ---
+
+// Get pending handovers for current user
+app.get('/api/handovers/pending', authenticateToken, async (req, res) => {
+    try {
+        // @ts-ignore
+        const { id: userId } = req.user;
+        const handovers = await prisma.handoverLog.findMany({
+            where: { userId, status: 'Pending' },
+            include: { asset: true }
+        });
+        res.json(handovers);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch pending handovers' });
+    }
+});
+
+// Sign a handover
+app.post('/api/handovers/:id/sign', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { signature } = req.body;
+        // @ts-ignore
+        const { id: userId } = req.user;
+
+        if (!signature) return res.status(400).json({ error: 'Signature is required' });
+
+        const handover = await prisma.handoverLog.findUnique({
+            where: { id: Number(id) }
+        });
+
+        if (!handover || handover.userId !== userId) {
+            return res.status(404).json({ error: 'Handover not found or unauthorized' });
+        }
+
+        if (handover.status !== 'Pending') {
+            return res.status(400).json({ error: 'Handover is already signed or rejected' });
+        }
+
+        // Update HandoverLog
+        await prisma.handoverLog.update({
+            where: { id: Number(id) },
+            data: {
+                signature,
+                status: 'Signed',
+                handoverDate: new Date()
+            }
+        });
+
+        // Update Asset status to Assigned
+        await prisma.asset.update({
+            where: { id: handover.assetId },
+            data: { status: 'Assigned' }
+        });
+
+        res.json({ success: true, message: 'Handover signed successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to sign handover' });
+    }
+});
+
 // Health check - unprotected
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Secured Avana IT Backend is running' });
@@ -535,13 +597,27 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
         if (!validation.success) return res.status(400).json({ error: validation.error.format() });
 
         const data = validation.data;
+        const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
+        
         const asset = await prisma.asset.create({
             data: { 
                 ...data, 
+                status: newUserId ? 'Pending Handover' : (data.status || 'In Stock'),
                 specs: data.specs ? JSON.stringify(data.specs) : null,
-                userId: data.assigneeType === 'User' ? data.assigneeId : null // Ensure relation is set
+                userId: newUserId // Ensure relation is set
             }
         });
+
+        if (newUserId) {
+            await prisma.handoverLog.create({
+                data: {
+                    assetId: asset.id,
+                    userId: newUserId,
+                    status: 'Pending'
+                }
+            });
+        }
+
         res.json(asset);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create asset' });
@@ -555,12 +631,29 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
         if (!validation.success) return res.status(400).json({ error: validation.error.format() });
 
         const data = validation.data;
+        const existingAsset = await prisma.asset.findUnique({ where: { id: Number(id) } });
+        const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
+
+        let finalStatus = data.status;
+        if (newUserId && existingAsset && existingAsset.userId !== newUserId) {
+            // New assignment! Create handover log
+            await prisma.handoverLog.create({
+                data: {
+                    assetId: Number(id),
+                    userId: newUserId,
+                    status: 'Pending'
+                }
+            });
+            finalStatus = 'Pending Handover';
+        }
+
         const asset = await prisma.asset.update({
             where: { id: Number(id) },
             data: { 
                 ...data, 
+                status: finalStatus,
                 specs: data.specs ? JSON.stringify(data.specs) : null,
-                userId: data.assigneeType === 'User' ? data.assigneeId : null 
+                userId: newUserId 
             }
         });
         res.json(asset);

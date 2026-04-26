@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -36,6 +36,7 @@ model User {
   managedRequests AssetRequest[] @relation("ManagerRequests")
   tickets      SupportTicket[]
   kbArticles   KnowledgeBase[]
+  handovers    HandoverLog[]
 }
 
 model Department {
@@ -85,6 +86,7 @@ model Asset {
 
   histories         AssetHistory[]
   licenseAssignments LicenseAssignment[]
+  handovers         HandoverLog[]
 }
 
 model AssetHistory {
@@ -98,6 +100,17 @@ model AssetHistory {
   
   event     String
   details   String?
+}
+
+model HandoverLog {
+  id           Int      @id @default(autoincrement())
+  assetId      Int
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  handoverDate DateTime @default(now())
+  signature    String?  // Base64 signature image string
+  status       String   @default("Pending") // Pending, Signed, Rejected
 }
 
 model PurchaseRecord {
