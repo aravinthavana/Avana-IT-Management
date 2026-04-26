@@ -6,6 +6,8 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import { ICONS } from '../../constants';
 import DepartmentDetailView from './DepartmentDetailView';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
 // Reusable FormInput component
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
     <div>
@@ -15,29 +17,25 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
 );
 
 const DepartmentManagement: React.FC = () => {
-    const { departments, setDepartments, assets, users, setUsers, setNotification, selectedDepartmentId, setSelectedDepartmentId } = useAppContext();
+    const { departments, setDepartments, assets, users, setNotification, selectedDepartmentId, setSelectedDepartmentId, getHeaders } = useAppContext();
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
     const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
     const [formData, setFormData] = useState({ name: '' });
+    const [isLoading, setIsLoading] = useState(false);
 
     const assetCounts = useMemo(() => {
         const counts: { [key: number]: number } = {};
-        departments.forEach(dept => {
-            counts[dept.id] = assets.filter(asset => asset.assigneeType === 'department' && asset.assigneeId === dept.id).length;
-        });
+        departments.forEach(dept => { counts[dept.id] = assets.filter(a => a.assigneeType === 'department' && a.assigneeId === dept.id).length; });
         return counts;
     }, [assets, departments]);
 
     const userCounts = useMemo(() => {
         const counts: { [key: number]: number } = {};
-        departments.forEach(dept => {
-            counts[dept.id] = users.filter(user => user.department === dept.name).length;
-        });
+        departments.forEach(dept => { counts[dept.id] = users.filter(u => u.departmentId === dept.id).length; });
         return counts;
     }, [users, departments]);
-
 
     const handleOpenForm = (dept: Department | null = null) => {
         setEditingDepartment(dept);
@@ -45,35 +43,35 @@ const DepartmentManagement: React.FC = () => {
         setIsFormOpen(true);
     };
 
-    const handleCloseForm = () => {
-        setEditingDepartment(null);
-        setIsFormOpen(false);
-    };
+    const handleCloseForm = () => { setEditingDepartment(null); setIsFormOpen(false); };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingDepartment) {
-            // Edit
-            const oldName = editingDepartment.name;
-            const newName = formData.name;
-
-            setDepartments(departments.map(d => d.id === editingDepartment.id ? { ...d, name: newName } : d));
-
-            if (oldName !== newName) {
-                setUsers(users.map(user => user.department === oldName ? { ...user, department: newName } : user));
+        setIsLoading(true);
+        try {
+            if (editingDepartment) {
+                const res = await fetch(`${API_URL}/api/departments/${editingDepartment.id}`, {
+                    method: 'PUT', headers: getHeaders(), body: JSON.stringify(formData),
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                const updated = await res.json();
+                setDepartments(departments.map(d => d.id === editingDepartment.id ? updated : d));
+                setNotification({ message: `Department "${updated.name}" updated.`, type: 'success' });
+            } else {
+                const res = await fetch(`${API_URL}/api/departments`, {
+                    method: 'POST', headers: getHeaders(), body: JSON.stringify(formData),
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                const created = await res.json();
+                setDepartments([...departments, created]);
+                setNotification({ message: `Department "${created.name}" added.`, type: 'success' });
             }
-
-            setNotification({ message: `Department "${newName}" updated successfully.`, type: 'success' });
-        } else {
-            // Add new
-            const newDepartment: Department = {
-                id: Date.now(),
-                name: formData.name,
-            };
-            setDepartments([...departments, newDepartment]);
-            setNotification({ message: `Department "${formData.name}" added successfully.`, type: 'success' });
+            handleCloseForm();
+        } catch (err: any) {
+            setNotification({ message: err.message || 'An error occurred', type: 'error' });
+        } finally {
+            setIsLoading(false);
         }
-        handleCloseForm();
     };
 
     const handleDeleteRequest = (dept: Department) => {
@@ -84,11 +82,21 @@ const DepartmentManagement: React.FC = () => {
         setDepartmentToDelete(dept);
     };
 
-    const confirmDelete = () => {
-        if (departmentToDelete) {
+    const confirmDelete = async () => {
+        if (!departmentToDelete) return;
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/departments/${departmentToDelete.id}`, {
+                method: 'DELETE', headers: getHeaders(),
+            });
+            if (!res.ok) throw new Error((await res.json()).error);
             setDepartments(departments.filter(d => d.id !== departmentToDelete.id));
-            setNotification({ message: `Department "${departmentToDelete.name}" deleted successfully.`, type: 'success' });
+            setNotification({ message: `Department "${departmentToDelete.name}" deleted.`, type: 'success' });
             setDepartmentToDelete(null);
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to delete', type: 'error' });
+        } finally {
+            setIsLoading(false);
         }
     };
 

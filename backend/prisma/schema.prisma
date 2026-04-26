@@ -4,22 +4,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   id           Int          @id @default(autoincrement())
   name         String
   email        String       @unique
+  password     String?
   role         String       @default("User")
+  status       String       @default("Active")
   departmentId Int?
   branchId     Int?
+  managerId    Int?
   
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
+  manager      User?        @relation("UserManager", fields: [managerId], references: [id])
+  subordinates User[]       @relation("UserManager")
+  
   assets       Asset[]      // When assigneeType == "User"
   histories    AssetHistory[]
+  licenseAssignments LicenseAssignment[]
+  assetRequests AssetRequest[] @relation("UserRequests")
+  managedRequests AssetRequest[] @relation("ManagerRequests")
+  tickets      SupportTicket[]
+  kbArticles   KnowledgeBase[]
 }
 
 model Department {
@@ -65,9 +76,10 @@ model Asset {
   warrantyEndDate   DateTime?
   
   remarks           String?
-  specs             Json?
+  specs             String?
 
   histories         AssetHistory[]
+  licenseAssignments LicenseAssignment[]
 }
 
 model AssetHistory {
@@ -90,4 +102,80 @@ model PurchaseRecord {
   vendor        String?
   amount        Float?
   assets        Asset[]
+}
+
+model License {
+  id             Int       @id @default(autoincrement())
+  name           String
+  category       String
+  key            String?
+  seats          Int       @default(1)
+  startDate      DateTime? 
+  expirationDate DateTime? 
+  cost           Float?
+  status         String    @default("Active") // Active, Expiring Soon, Expired, Cancelled
+  remarks        String?
+
+  assignments    LicenseAssignment[]
+}
+
+model LicenseAssignment {
+  id           Int      @id @default(autoincrement())
+  licenseId    Int
+  license      License  @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  
+  userId       Int?
+  user         User?    @relation(fields: [userId], references: [id])
+  
+  assetId      Int?
+  asset        Asset?   @relation(fields: [assetId], references: [id])
+  
+  assignedAt   DateTime @default(now())
+}
+
+model AssetRequest {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation("UserRequests", fields: [userId], references: [id])
+  
+  managerId    Int?
+  manager      User?    @relation("ManagerRequests", fields: [managerId], references: [id])
+  
+  requestType  String   // e.g., "New Asset", "Replacement", "Upgrade"
+  category     String   // e.g., "Laptop", "Mouse", "Keyboard"
+  description  String?
+  status       String   @default("Pending Manager") // Pending Manager, Pending Admin, Approved, Rejected
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SupportTicket {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  
+  subject     String
+  category    String   // Hardware, Software, Email, Network, Account, Other
+  priority    String   @default("Medium") // Low, Medium, High, Urgent
+  status      String   @default("Open")   // Open, In Progress, Resolved, Closed
+  description String
+  
+  assetId     Int?     
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+}
+
+model KnowledgeBase {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String   // Troubleshooting, Policy, SOP, FAQ
+  content     String   // Markdown content
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
