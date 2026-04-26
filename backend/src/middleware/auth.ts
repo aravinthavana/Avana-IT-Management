@@ -10,6 +10,15 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
 
     if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
 
+    // Anti-CSRF Double-Submit check for browser mutating requests
+    if (['POST', 'PUT', 'DELETE'].includes(req.method) && req.cookies?.authToken) {
+        const csrfCookie = req.cookies?.['XSRF-TOKEN'];
+        const csrfHeader = req.headers['x-xsrf-token'];
+        if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+            return res.status(403).json({ error: 'CSRF security token mismatch.' });
+        }
+    }
+
     const secret = process.env.JWT_SECRET;
     if (!secret) {
         console.error('JWT_SECRET is missing in middleware!');

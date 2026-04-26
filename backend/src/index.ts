@@ -10,6 +10,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin } from './middleware/auth';
 import jwksClient from 'jwks-rsa';
 import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -33,6 +34,11 @@ const userSchema = z.object({
     departmentId: z.number().nullable().optional(),
     branchId: z.number().nullable().optional(),
     managerId: z.number().nullable().optional(),
+    avatar: z.string().nullable().optional(),
+    mobile: z.string().nullable().optional(),
+    jobTitle: z.string().nullable().optional(),
+    company: z.string().nullable().optional(),
+    employeeId: z.string().nullable().optional(),
 });
 
 const assetSchema = z.object({
@@ -121,7 +127,7 @@ function getKey(header: any, callback: (err: Error | null, key?: string) => void
 
 app.post('/api/auth/m365', async (req, res) => {
     try {
-        const { idToken } = req.body;
+        const { idToken, accessToken } = req.body;
         if (!idToken) return res.status(400).json({ error: 'Token is required' });
 
         (jwt as any).verify(idToken, getKey as any, {
@@ -138,49 +144,101 @@ app.post('/api/auth/m365', async (req, res) => {
                 try {
                     const decodedToken = decoded as any;
                     const { email, name, preferred_username } = decodedToken;
-            const userEmail = (email || preferred_username || '').toLowerCase();
+                    const userEmail = (email || preferred_username || '').toLowerCase();
 
-            if (!userEmail) return res.status(400).json({ error: 'Email not found in token' });
+                    if (!userEmail) return res.status(400).json({ error: 'Email not found in token' });
 
-            if (!userEmail.endsWith('@avanamedical.com') && !userEmail.endsWith('@avanasurgical.com')) {
-                return res.status(403).json({ error: 'Access denied. Unauthorized domain.' });
-            }
+                    if (!userEmail.endsWith('@avanamedical.com') && !userEmail.endsWith('@avanasurgical.com')) {
+                        return res.status(403).json({ error: 'Access denied. Unauthorized domain.' });
+                    }
 
-            if (decodedToken.tid && decodedToken.tid !== process.env.AZURE_TENANT_ID) {
-                return res.status(403).json({ error: 'Access denied. Invalid tenant.' });
-            }
+                    if (decodedToken.tid && decodedToken.tid !== process.env.AZURE_TENANT_ID) {
+                        return res.status(403).json({ error: 'Access denied. Invalid tenant.' });
+                    }
 
-            // Upsert User
-            let user = await prisma.user.findUnique({ 
-                where: { email: userEmail },
-                include: { department: true, branch: true }
-            });
+                    // --- Fetch Microsoft Graph profile data ---
+                    let graphProfile: any = {};
+                    let avatarBase64: string | null = null;
 
-            if (!user) {
-                const userCount = await prisma.user.count();
-                user = await prisma.user.create({
-                    data: {
-                        email: userEmail,
-                        name: name || userEmail.split('@')[0],
-                        role: userCount === 0 ? 'Admin' : 'User',
-                        status: 'Active'
-                    },
-                    include: { department: true, branch: true }
-                });
-            }
+                    if (accessToken) {
+                        try {
+                            // Fetch basic profile
+                            const profileRes = await fetch('https://graph.microsoft.com/v1.0/me?$select=displayName,mobilePhone,jobTitle,companyName,employeeId,officeLocation', {
+                                headers: { Authorization: `Bearer ${accessToken}` }
+                            });
+                            if (profileRes.ok) {
+                                graphProfile = await profileRes.json();
+                            }
 
-            if (user.status === 'Inactive') {
-                return res.status(403).json({ error: 'Account is inactive' });
-            }
+                            // Fetch profile photo
+                            const photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+                                headers: { Authorization: `Bearer ${accessToken}` }
+                            });
+                            if (photoRes.ok) {
+                                const photoBuffer = await photoRes.arrayBuffer();
+                                const contentType = photoRes.headers.get('content-type') || 'image/jpeg';
+                                avatarBase64 = `data:${contentType};base64,${Buffer.from(photoBuffer).toString('base64')}`;
+                            }
+                        } catch (graphErr) {
+                            console.warn('Graph API fetch failed (non-critical):', graphErr);
+                        }
+                    }
 
-            const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
-            res.cookie('authToken', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 8 * 60 * 60 * 1000 // 8 hours
-            });
-            res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
+                    // Build profile data from Graph
+                    const profileData = {
+                        name: graphProfile.displayName || name || userEmail.split('@')[0],
+                        mobile: graphProfile.mobilePhone || null,
+                        jobTitle: graphProfile.jobTitle || null,
+                        company: graphProfile.companyName || null,
+                        employeeId: graphProfile.employeeId || null,
+                        ...(avatarBase64 ? { avatar: avatarBase64 } : {}),
+                    };
+
+                    // Upsert User — always sync profile on login
+                    let user = await prisma.user.findUnique({
+                        where: { email: userEmail },
+                        include: { department: true, branch: true }
+                    });
+
+                    if (!user) {
+                        const userCount = await prisma.user.count();
+                        user = await prisma.user.create({
+                            data: {
+                                email: userEmail,
+                                ...profileData,
+                                role: userCount === 0 ? 'Admin' : 'User',
+                                status: 'Active'
+                            },
+                            include: { department: true, branch: true }
+                        });
+                    } else {
+                        // Sync profile data on every login
+                        user = await prisma.user.update({
+                            where: { email: userEmail },
+                            data: profileData,
+                            include: { department: true, branch: true }
+                        });
+                    }
+
+                    if (user.status === 'Inactive') {
+                        return res.status(403).json({ error: 'Account is inactive' });
+                    }
+
+                    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+                    const csrfToken = crypto.randomBytes(32).toString('hex');
+                    
+                    res.cookie('authToken', token, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        maxAge: 8 * 60 * 60 * 1000
+                    });
+                    res.cookie('XSRF-TOKEN', csrfToken, {
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        maxAge: 8 * 60 * 60 * 1000
+                    });
+                    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
                 } catch (dbError) {
                     console.error('M365 DB Error:', dbError);
                     res.status(500).json({ error: 'Failed to sync user data' });
@@ -208,11 +266,18 @@ app.post('/api/login', async (req, res) => {
         if (!validPassword) return res.status(400).json({ error: 'Invalid credentials' });
 
         const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        const csrfToken = crypto.randomBytes(32).toString('hex');
+        
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
+        res.cookie('XSRF-TOKEN', csrfToken, {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 8 * 60 * 60 * 1000
         });
         res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
     } catch (error) {
@@ -223,6 +288,10 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => {
     res.clearCookie('authToken', {
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.clearCookie('XSRF-TOKEN', {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict'
     });
@@ -240,7 +309,7 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
         if (!user || user.status === 'Inactive') {
             return res.status(401).json({ error: 'User not found or inactive' });
         }
-        res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
+        res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
@@ -335,16 +404,21 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: validation.error.format() });
         }
         
-        const { name, email, role, status, departmentId, branchId, managerId, password } = validation.data;
+        const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId } = validation.data;
 
         const updateData: any = {};
         if (name) updateData.name = name;
         if (email) updateData.email = email;
+        if (avatar !== undefined) updateData.avatar = avatar;
+        if (mobile !== undefined) updateData.mobile = mobile;
+        if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
+        if (company !== undefined) updateData.company = company;
+        if (employeeId !== undefined) updateData.employeeId = employeeId;
         
         // Only admin can change role/status/depts
         if (requestingUserRole === 'Admin') {
-            if (role) updateData.role = role;
-            if (status) updateData.status = status;
+            if (req.body.role !== undefined) updateData.role = role;
+            if (req.body.status !== undefined) updateData.status = status;
             if (departmentId !== undefined) updateData.departmentId = departmentId;
             if (branchId !== undefined) updateData.branchId = branchId;
             if (managerId !== undefined) updateData.managerId = managerId;
@@ -794,13 +868,21 @@ app.put('/api/requests/:id/status', authenticateToken, async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
         // @ts-ignore
-        const { role } = req.user;
+        const { role, id: requestingUserId } = req.user;
+
+        const existingRequest = await prisma.assetRequest.findUnique({ where: { id: Number(id) } });
+        if (!existingRequest) return res.status(404).json({ error: 'Request not found.' });
 
         if ((status === 'Pending Admin' || status === 'Rejected by Manager') && role !== 'Manager' && role !== 'Admin') {
-            return res.status(403).json({ error: 'Not authorized' });
+            return res.status(403).json({ error: 'Not authorized.' });
         }
+        
+        if (role === 'Manager' && existingRequest.managerId !== requestingUserId) {
+            return res.status(403).json({ error: 'Not authorized to manage this request.' });
+        }
+
         if ((status === 'Approved' || status === 'Rejected by Admin') && role !== 'Admin') {
-            return res.status(403).json({ error: 'Only admins can give final approval' });
+            return res.status(403).json({ error: 'Only admins can give final approval.' });
         }
 
         const request = await prisma.assetRequest.update({ where: { id: Number(id) }, data: { status } });

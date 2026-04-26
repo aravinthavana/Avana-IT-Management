@@ -11,9 +11,18 @@ const UserProfile: React.FC = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [mobile, setMobile] = useState(currentUser.mobile || '');
+    const [jobTitle, setJobTitle] = useState(currentUser.jobTitle || '');
+    const [company, setCompany] = useState(currentUser.company || '');
+    const [employeeId, setEmployeeId] = useState(currentUser.employeeId || '');
+
     React.useEffect(() => {
         setName(currentUser.name);
         setEmail(currentUser.email);
+        setMobile(currentUser.mobile || '');
+        setJobTitle(currentUser.jobTitle || '');
+        setCompany(currentUser.company || '');
+        setEmployeeId(currentUser.employeeId || '');
     }, [currentUser]);
 
     const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
@@ -28,7 +37,7 @@ const UserProfile: React.FC = () => {
 
         setIsSubmitting(true);
         try {
-            const body: any = { name, email };
+            const body: any = { name, email, mobile, jobTitle, company, employeeId };
             if (password) {
                 body.password = password;
                 body.currentPassword = currentPassword;
@@ -89,9 +98,25 @@ const UserProfile: React.FC = () => {
                             <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
                             <input id="fullName" name="fullName" type="text" value={name} onChange={(e) => setName(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`} />
                         </div>
-                        <div className="sm:col-span-2">
+                        <div>
                             <label htmlFor="profileEmail" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                             <input id="profileEmail" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`} />
+                        </div>
+                        <div>
+                            <label htmlFor="mobile" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Mobile Number</label>
+                            <input id="mobile" name="mobile" type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                            <label htmlFor="jobTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
+                            <input id="jobTitle" name="jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                            <label htmlFor="company" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Company</label>
+                            <input id="company" name="company" type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                            <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Employee ID</label>
+                            <input id="employeeId" name="employeeId" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
                         </div>
                     </div>
 

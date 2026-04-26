@@ -10,12 +10,12 @@ export interface User {
     department?: any;  // populated by Prisma include
     branch?: any;     // populated by Prisma include
     manager?: User;   // populated by Prisma include
-    // Legacy frontend-only fields (kept for compatibility)
     employeeId?: string;
     mobile?: string;
     company?: string;
     location?: string;
     avatar?: string;
+    jobTitle?: string;
     password?: string;
 }
 
