@@ -65,8 +65,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
 
     return (
         <>
-            <aside className={`bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-slate-200 dark:border-slate-800`}>
-                <div className="p-4 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 h-16">
+            <aside className={`bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-slate-200 dark:border-slate-800 flex flex-col`}>
+                <div className="p-4 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 h-16 shrink-0">
                     <a
                         href="#"
                         onClick={(e) => {
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                         <img src="https://avanamedical.com/wp-content/themes/avana/assets/images/logo.png" alt="Company Logo" className="h-10" />
                     </a>
                 </div>
-                <nav className="flex-1 px-2 py-4 space-y-1">
+                <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
                     {filteredNavItems.map(item => (
                         <div key={item.name}>
                              <a 
@@ -95,10 +95,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                                         handleNav(item.view);
                                     }
                                 }} 
-                                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium ${currentView === item.view ? 'bg-red-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium ${currentView === item.view ? 'bg-red-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                             >
                                 <div className="flex items-center flex-1">
-                                    <span className="w-6 h-6 mr-3">{item.icon}</span>
+                                    <span className="w-6 h-6 mr-3 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 ease-in-out">{item.icon}</span>
                                     <span className="flex-1">{item.name}</span>
                                     {item.view === 'requests' && pendingCount > 0 && (
                                         <span className="ml-2 bg-white text-red-600 dark:bg-red-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
@@ -129,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     ))}
                 </nav>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-black opacity-50 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+            {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 md:hidden transition-all" onClick={() => setSidebarOpen(false)}></div>}
         </>
     );
 };

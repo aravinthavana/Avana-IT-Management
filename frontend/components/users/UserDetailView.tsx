@@ -94,14 +94,21 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             <div className="space-y-6 pt-6">
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
                     <div className="flex flex-col items-center text-center md:flex-row md:items-start md:space-x-6 md:text-left">
-                        <img src={user.avatar} alt="User Avatar" className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-700 shadow-md flex-shrink-0"/>
+                        {user.avatar ? (
+                            <img src={user.avatar} alt="User Avatar" className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-700 shadow-md flex-shrink-0 object-cover"/>
+                        ) : (
+                            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-700 shadow-md flex-shrink-0 flex items-center justify-center font-bold text-3xl bg-gradient-to-br from-red-400 to-red-600 text-white">
+                                {user.name?.charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <div className="mt-4 md:mt-0">
-                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{user.name}</h2>
-                            <p className="text-gray-600 dark:text-gray-300"><strong>Employee ID:</strong> {user.employeeId}</p>
-                            <p className="text-gray-600 dark:text-gray-300"><strong>Mobile:</strong> {user.mobile}</p>
-                            <p className="text-gray-600 dark:text-gray-300"><strong>Department:</strong> {user.department}</p>
-                            <p className="text-gray-600 dark:text-gray-300"><strong>Company:</strong> {user.company}</p>
-                            <p className="text-gray-600 dark:text-gray-300"><strong>Location:</strong> {user.location}</p>
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{user.name}</h2>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Employee ID:</strong> {user.employeeId || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Mobile:</strong> {user.mobile || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Job Title:</strong> {user.jobTitle || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Location:</strong> {user.branch?.name || user.location || 'N/A'}</p>
                         </div>
                     </div>
                 </div>

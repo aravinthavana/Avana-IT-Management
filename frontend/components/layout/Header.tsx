@@ -54,7 +54,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
 
 
     return (
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
             <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 <div className="flex items-center">
                     <button className="md:hidden mr-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" onClick={() => setSidebarOpen(true)}>

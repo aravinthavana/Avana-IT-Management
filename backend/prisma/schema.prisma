@@ -18,6 +18,11 @@ model User {
   departmentId Int?
   branchId     Int?
   managerId    Int?
+  avatar       String?
+  mobile       String?
+  jobTitle     String?
+  company      String?
+  employeeId   String?
   
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])

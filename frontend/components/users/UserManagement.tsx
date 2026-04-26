@@ -209,9 +209,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:shadow-md dark:hover:bg-slate-700/50 hover:-translate-y-px transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 border dark:border-slate-700 ${isInactive ? 'border-slate-200 opacity-70' : 'border-slate-200/80'}`}
                             >
                                 <div className="flex items-center w-full sm:w-auto">
-                                    <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-lg bg-gradient-to-br from-red-400 to-red-600 text-white">
-                                        {user.name?.charAt(0).toUpperCase()}
-                                    </div>
+                                    {user.avatar ? (
+                                        <img src={user.avatar} alt={user.name} className="h-11 w-11 rounded-full flex-shrink-0 object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
+                                    ) : (
+                                        <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-lg bg-gradient-to-br from-red-400 to-red-600 text-white shadow-sm">
+                                            {user.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
                                     <div className="ml-4">
                                         <div className="flex items-center gap-2">
                                             <p className="font-semibold text-slate-800 dark:text-slate-100">{user.name}</p>

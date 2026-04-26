@@ -47,7 +47,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     // Helper: get auth headers
     const getHeaders = useCallback(() => {
-        return { 'Content-Type': 'application/json' };
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        const cookies = document.cookie.split(';');
+        const csrfCookie = cookies.find(c => c.trim().startsWith('XSRF-TOKEN='));
+        if (csrfCookie) {
+            headers['X-XSRF-TOKEN'] = decodeURIComponent(csrfCookie.trim().split('=')[1]);
+        }
+        return headers;
     }, []);
 
     // Fetch all initial data from backend when app loads

@@ -32,7 +32,7 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./frontend
     ports:
       - "80:80"
     depends_on:

@@ -110,7 +110,9 @@ export default function App() {
                     <Header setSidebarOpen={setSidebarOpen} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Breadcrumbs />
-                        {renderView()}
+                        <div key={view} className="page-transition">
+                            {renderView()}
+                        </div>
                     </main>
                 </div>
                 <Notification notification={notification} onClear={() => setNotification(null)} />
