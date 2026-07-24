@@ -44,7 +44,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'User', status: 'Active',
         departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
-        employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: ''
+        employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
     });
 
     useEffect(() => {
@@ -64,12 +64,13 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                 jobTitle: user.jobTitle || '',
                 company: user.company || '',
                 laptopStatus: user.laptopStatus || '',
+                location: user.location || '',
             });
         } else {
             setFormData({
                 name: '', email: '', password: '', role: 'User', status: 'Active',
                 departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
-                employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: ''
+                employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
             });
         }
     }, [user, isOpen]);
@@ -95,6 +96,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
             jobTitle: formData.jobTitle || null,
             company: formData.company || null,
             laptopStatus: formData.laptopStatus || null,
+            location: formData.location || null,
         };
         if (formData.password && formData.password.trim() !== '') {
             payload.password = formData.password;
@@ -158,12 +160,13 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             <option key={dept.id} value={dept.id}>{dept.name}</option>
                         ))}
                     </FormSelect>
-                    <FormSelect label="Branch" name="branchId" value={formData.branchId} onChange={handleChange}>
-                        <option value="">-- No Branch --</option>
+                    <FormSelect label="Official Branch" name="branchId" value={formData.branchId} onChange={handleChange}>
+                        <option value="">-- No Branch (Remote / Unassigned) --</option>
                         {branches.map(branch => (
                             <option key={branch.id} value={branch.id}>{branch.name}</option>
                         ))}
                     </FormSelect>
+                    <FormInput label="Work Location (City / Station)" type="text" name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Hyderabad, Pune, Cochin, Remote" />
                     <FormSelect label="Reports To (Manager)" name="managerId" value={formData.managerId} onChange={handleChange}>
                         <option value="">-- No Manager --</option>
                         {users.filter(u => u.id !== user?.id && (u.role === 'Manager' || u.role === 'Admin')).map(u => (

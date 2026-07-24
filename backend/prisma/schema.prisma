@@ -25,6 +25,7 @@ model User {
   employeeId   String?
   accountType  String       @default("Employee")
   laptopStatus String?      // e.g. "Using own laptop", "No laptop assigned", "Details not collected"
+  location     String?      // Work Location e.g. "Hyderabad", "Pune", "Remote"
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
   manager      User?        @relation("UserManager", fields: [managerId], references: [id])

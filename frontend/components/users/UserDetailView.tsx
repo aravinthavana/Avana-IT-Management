@@ -112,7 +112,8 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <p className="text-slate-600 dark:text-slate-300"><strong>Mobile:</strong> {user.mobile || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Job Title:</strong> {user.jobTitle || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Location:</strong> {user.branch?.name || user.location || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Official Branch:</strong> {user.branch?.name || 'Remote / Unassigned'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Work Location:</strong> {user.location || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Reporting Manager:</strong> {user.manager?.name || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Licenses:</strong> {user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}</p>
