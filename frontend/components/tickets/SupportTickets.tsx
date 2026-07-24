@@ -2,13 +2,20 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
-import { SupportTicket } from '../../types';
+import { SupportTicket, TicketComment } from '../../types';
+
+const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
 
 const SupportTickets: React.FC = () => {
     const { tickets, setTickets, getHeaders, setNotification, assets, navigate } = useAppContext();
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+    const [comments, setComments] = useState<TicketComment[]>([]);
+    const [newComment, setNewComment] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [submittingComment, setSubmittingComment] = useState(false);
+
     const [formData, setFormData] = useState({
         subject: '',
         category: 'Hardware',
@@ -20,6 +27,56 @@ const SupportTickets: React.FC = () => {
     const categories = ['Hardware', 'Software', 'Email', 'Network', 'Account', 'Other'];
     const priorities = ['Low', 'Medium', 'High', 'Urgent'];
     const statuses = ['Open', 'In Progress', 'Resolved', 'Closed'];
+
+    React.useEffect(() => {
+        if (selectedTicket) {
+            fetchComments(selectedTicket.id);
+        } else {
+            setComments([]);
+            setNewComment('');
+        }
+    }, [selectedTicket?.id]);
+
+    const fetchComments = async (ticketId: number) => {
+        setLoadingComments(true);
+        try {
+            const res = await fetch(`${API_URL}/api/tickets/${ticketId}/comments`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch comments', err);
+        } finally {
+            setLoadingComments(false);
+        }
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newComment.trim() || !selectedTicket) return;
+        setSubmittingComment(true);
+        try {
+            const res = await fetch(`${API_URL}/api/tickets/${selectedTicket.id}/comments`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ message: newComment.trim() }),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const addedComment = await res.json();
+                setComments(prev => [...prev, addedComment]);
+                setNewComment('');
+            }
+        } catch (err) {
+            console.error('Failed to post comment', err);
+        } finally {
+            setSubmittingComment(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -259,6 +316,59 @@ const SupportTickets: React.FC = () => {
                                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Description</p>
                                 <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-800">{selectedTicket.description}</div>
                             </div>
+
+                            {/* Discussion / Comment Thread */}
+                            <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                                <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    💬 Discussion ({comments.length})
+                                </h4>
+
+                                {/* Comments list */}
+                                <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1">
+                                    {loadingComments && (
+                                        <p className="text-xs text-slate-400 font-medium">Loading messages...</p>
+                                    )}
+                                    {!loadingComments && comments.length === 0 && (
+                                        <p className="text-xs text-slate-400 font-medium italic">No comments yet. Start the discussion below.</p>
+                                    )}
+                                    {comments.map(c => {
+                                        const isAuthorAdmin = c.user?.role === 'Admin';
+                                        return (
+                                            <div key={c.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-xs text-slate-800 dark:text-white">{c.user?.name || 'User'}</span>
+                                                        {isAuthorAdmin && (
+                                                            <span className="px-2 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 rounded-full text-[10px] font-black uppercase">IT Admin</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] font-medium text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{c.message}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Comment Form */}
+                                <form onSubmit={handleAddComment} className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newComment}
+                                        onChange={e => setNewComment(e.target.value)}
+                                        placeholder="Add a reply..."
+                                        className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-red-500 transition-colors"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={submittingComment || !newComment.trim()}
+                                        className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-red-600/20 active:scale-95 shrink-0"
+                                    >
+                                        {submittingComment ? 'Sending...' : 'Send'}
+                                    </button>
+                                </form>
+                            </div>
+
                             {user?.role === 'Admin' && (
                                 <div className="pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-3">
                                     {statuses.map(s => (

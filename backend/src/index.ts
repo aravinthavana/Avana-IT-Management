@@ -1176,6 +1176,61 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
     }
 });
 
+app.get('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const comments = await prisma.ticketComment.findMany({
+            where: { ticketId: Number(id) },
+            include: {
+                user: { select: { id: true, name: true, role: true, avatar: true } }
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+        res.json(comments);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch ticket comments' });
+    }
+});
+
+app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        // @ts-ignore
+        const userId = req.user.id;
+        const { message } = req.body;
+
+        if (!message || typeof message !== 'string' || !message.trim()) {
+            return res.status(400).json({ error: 'Comment message is required' });
+        }
+
+        const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) } });
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        const comment = await prisma.ticketComment.create({
+            data: {
+                ticketId: Number(id),
+                userId,
+                message: message.trim()
+            },
+            include: {
+                user: { select: { id: true, name: true, role: true, avatar: true } }
+            }
+        });
+
+        await prisma.supportTicket.update({
+            where: { id: Number(id) },
+            data: { updatedAt: new Date() }
+        });
+
+        res.json(comment);
+    } catch (error) {
+        console.error('Failed to post ticket comment:', error);
+        res.status(500).json({ error: 'Failed to post comment' });
+    }
+});
+
 // --- Knowledge Base ---
 
 app.get('/api/kb', authenticateToken, async (req, res) => {

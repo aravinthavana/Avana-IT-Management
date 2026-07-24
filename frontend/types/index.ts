@@ -195,6 +195,16 @@ export interface SupportTicket {
     createdAt: string;
     updatedAt: string;
     resolvedAt?: string;
+    comments?: TicketComment[];
+}
+
+export interface TicketComment {
+    id: number;
+    ticketId: number;
+    userId: number;
+    user?: { id: number; name: string; role: string; avatar?: string };
+    message: string;
+    createdAt: string;
 }
 
 export interface KnowledgeBaseArticle {
