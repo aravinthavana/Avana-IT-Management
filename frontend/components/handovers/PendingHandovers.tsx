@@ -5,6 +5,9 @@ interface Handover {
     id: number;
     assetId: number;
     status: string;
+    handoverDate: string;
+    userId: number;
+    user?: { id: number; name: string; email: string };
     asset: {
         id: number;
         assetId: string;
@@ -78,17 +81,27 @@ export default function PendingHandovers() {
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {handovers.map(handover => (
-                    <div key={handover.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-amber-200 dark:border-slate-700 shadow-sm flex justify-between items-center">
-                        <div>
-                            <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">
-                                {handover.asset.assetId}
-                            </span>
-                            <h4 className="text-sm font-medium text-slate-900 dark:text-white mt-1">{handover.asset.name}</h4>
+                    <div key={handover.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-amber-200 dark:border-slate-700 shadow-sm flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">
+                                    {handover.asset.assetId}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                                    {handover.status}
+                                </span>
+                            </div>
+                            <h4 className="text-sm font-medium text-slate-900 dark:text-white mt-1 truncate">{handover.asset.name}</h4>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{handover.asset.brand} {handover.asset.model}</p>
+                            {handover.handoverDate && (
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                                    Initiated: {new Date(handover.handoverDate).toLocaleDateString()}
+                                </p>
+                            )}
                         </div>
                         <button
                             onClick={() => setSelectedHandover(handover)}
-                            className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-md transition-colors"
+                            className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-md transition-colors flex-shrink-0"
                         >
                             Sign
                         </button>

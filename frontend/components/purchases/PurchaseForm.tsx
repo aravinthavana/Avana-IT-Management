@@ -25,7 +25,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
 };
 
 const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }) => {
-    const { setPurchaseRecords, setAssets, setNotification, logAssetHistory, getHeaders } = useAppContext();
+    const { setPurchaseRecords, setAssets, setNotification, getHeaders } = useAppContext();
     const invoiceFileInputRef = useRef<HTMLInputElement>(null);
     const poFileInputRef = useRef<HTMLInputElement>(null);
     
@@ -105,7 +105,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                 amount: 0,
             };
             const purchaseRes = await fetch(`${API_URL}/api/purchases`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify(purchasePayload),
+                method: 'POST', headers: getHeaders(), credentials: 'include', body: JSON.stringify(purchasePayload),
             });
             if (!purchaseRes.ok) throw new Error((await purchaseRes.json()).error || 'Failed to create purchase');
             const savedPurchase = await purchaseRes.json();
@@ -116,13 +116,12 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
             for (const tempAsset of assetsInPurchase) {
                 const { id: _, specs, ...assetData } = tempAsset as any;
                 const assetRes = await fetch(`${API_URL}/api/assets`, {
-                    method: 'POST', headers: getHeaders(),
+                    method: 'POST', headers: getHeaders(), credentials: 'include',
                     body: JSON.stringify({ ...assetData, purchaseId: savedPurchase.id, specs: specs ? JSON.stringify(specs) : null }),
                 });
                 if (assetRes.ok) {
                     const savedAsset = await assetRes.json();
                     savedAssets.push(savedAsset);
-                    logAssetHistory(savedAsset.id, 'Asset Created', `Added via Purchase Record ${savedPurchase.invoiceNumber}`);
                 }
             }
             setAssets(prev => [...prev, ...savedAssets]);

@@ -17,6 +17,9 @@ export interface User {
     avatar?: string;
     jobTitle?: string;
     password?: string;
+    licenseAssignments?: LicenseAssignment[];
+    accountType?: string;
+    laptopStatus?: string;
 }
 
 export interface AssetRequest {
@@ -28,6 +31,7 @@ export interface AssetRequest {
     description?: string;
     status: 'Pending Manager' | 'Pending Admin' | 'Approved' | 'Rejected by Manager' | 'Rejected by Admin';
     createdAt: string;
+    updatedAt?: string;
     user?: User;
     manager?: User;
 }
@@ -77,9 +81,15 @@ export interface AssetHistory {
 export interface PurchaseRecord {
     id: number;
     invoiceNumber: string;
+    poNumber?: string;
     purchaseDate: string;
     vendor?: string;
     amount?: number;
+    invoiceAttachmentUrl?: string;
+    invoiceAttachmentFilename?: string;
+    poAttachmentUrl?: string;
+    poAttachmentFilename?: string;
+    assets?: Asset[];
 }
 
 export interface NotificationType {
@@ -196,4 +206,17 @@ export interface KnowledgeBaseArticle {
     author?: { name: string };
     createdAt: string;
     updatedAt: string;
+}
+
+export interface SelfAudit {
+    id: number;
+    assetId: number;
+    userId: number;
+    scannedAssetId?: string;
+    imageUrl?: string;
+    remarks?: string;
+    status: 'Pending Review' | 'Approved' | 'Rejected';
+    auditDate: string;
+    asset?: Asset;
+    user?: User;
 }

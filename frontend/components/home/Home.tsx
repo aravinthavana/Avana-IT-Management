@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import SelfAuditModal from '../assets/SelfAuditModal';
 import { useAppContext } from '../../hooks/useAppContext';
 import Card from '../ui/Card';
 import { ICONS } from '../../constants';
@@ -15,6 +16,8 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const Home: React.FC = () => {
     const { assets, users, navigate, setAssetFilters, setSelectedAssetId, tickets } = useAppContext();
+    const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+    const [auditTargetAsset, setAuditTargetAsset] = useState<any>(null);
     const { user } = useAuth();
 
     const stats = useMemo(() => ({
@@ -87,6 +90,9 @@ const Home: React.FC = () => {
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
                                                     <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs font-bold">In Use</span>
                                                 </div>
+                                                <button onClick={() => { setAuditTargetAsset(asset); setIsAuditModalOpen(true); }} className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all active:scale-95 shadow-sm flex items-center gap-2">
+                                                    📷 Self Audit
+                                                </button>
                                                 <button onClick={() => setSelectedAssetId(asset.id)} className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">
                                                     View Details
                                                 </button>
@@ -163,6 +169,7 @@ const Home: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                {auditTargetAsset && <SelfAuditModal isOpen={isAuditModalOpen} onClose={() => { setIsAuditModalOpen(false); setAuditTargetAsset(null); }} asset={auditTargetAsset} />}
             </div>
         );
     }

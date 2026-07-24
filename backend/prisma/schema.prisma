@@ -23,7 +23,8 @@ model User {
   jobTitle     String?
   company      String?
   employeeId   String?
-  
+  accountType  String       @default("Employee")
+  laptopStatus String?      // e.g. "Using own laptop", "No laptop assigned", "Details not collected"
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
   manager      User?        @relation("UserManager", fields: [managerId], references: [id])
@@ -37,6 +38,7 @@ model User {
   tickets      SupportTicket[]
   kbArticles   KnowledgeBase[]
   handovers    HandoverLog[]
+  selfAudits   SelfAudit[]
 }
 
 model Department {
@@ -87,6 +89,7 @@ model Asset {
   histories         AssetHistory[]
   licenseAssignments LicenseAssignment[]
   handovers         HandoverLog[]
+  selfAudits        SelfAudit[]
 }
 
 model AssetHistory {
@@ -116,10 +119,15 @@ model HandoverLog {
 model PurchaseRecord {
   id            Int      @id @default(autoincrement())
   invoiceNumber String   @unique
+  poNumber      String?
   purchaseDate  DateTime
   vendor        String?
-  amount        Float?
-  assets        Asset[]
+  amount                 Float?
+  invoiceAttachmentUrl   String?
+  invoiceAttachmentFilename String?
+  poAttachmentUrl        String?
+  poAttachmentFilename   String?
+  assets                 Asset[]
 }
 
 model License {
@@ -196,4 +204,17 @@ model KnowledgeBase {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SelfAudit {
+  id               Int      @id @default(autoincrement())
+  assetId          Int
+  asset            Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+  scannedAssetId   String?
+  imageUrl         String?  // Storage URL or Base64 string
+  remarks          String?
+  status           String   @default("Pending Review") // Pending Review, Approved, Rejected
+  auditDate        DateTime @default(now())
 }

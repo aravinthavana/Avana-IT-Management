@@ -51,7 +51,8 @@ const DepartmentManagement: React.FC = () => {
         try {
             if (editingDepartment) {
                 const res = await fetch(`${API_URL}/api/departments/${editingDepartment.id}`, {
-                    method: 'PUT', headers: getHeaders(), body: JSON.stringify(formData),
+                    method: 'PUT', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(formData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const updated = await res.json();
@@ -59,7 +60,8 @@ const DepartmentManagement: React.FC = () => {
                 setNotification({ message: `Department "${updated.name}" updated.`, type: 'success' });
             } else {
                 const res = await fetch(`${API_URL}/api/departments`, {
-                    method: 'POST', headers: getHeaders(), body: JSON.stringify(formData),
+                    method: 'POST', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(formData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const created = await res.json();
@@ -88,6 +90,7 @@ const DepartmentManagement: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/api/departments/${departmentToDelete.id}`, {
                 method: 'DELETE', headers: getHeaders(),
+                                credentials: 'include',
             });
             if (!res.ok) throw new Error((await res.json()).error);
             setDepartments(departments.filter(d => d.id !== departmentToDelete.id));

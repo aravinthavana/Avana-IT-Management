@@ -5,6 +5,7 @@ import { ICONS } from '../../constants';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import UserForm from './UserForm';
 import UserDetailView from './UserDetailView';
+import UserHierarchy from './UserHierarchy';
 import { User } from '../../types';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
@@ -15,14 +16,18 @@ interface UserManagementProps {
 }
 
 const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFiltersApplied }) => {
-    const { users, setUsers, setNotification, selectedUserId, setSelectedUserId, selectedDepartmentId, navigate, getHeaders, fetchAllData } = useAppContext();
+    const { users, setUsers, assets, setNotification, selectedUserId, setSelectedUserId, selectedDepartmentId, navigate, getHeaders, fetchAllData } = useAppContext();
     const { user: loggedInUser } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterCompany, setFilterCompany] = useState('All');
+    const [filterAccountType, setFilterAccountType] = useState('All');
+    const [filterLaptopStatus, setFilterLaptopStatus] = useState('All');
     const [confirmAction, setConfirmAction] = useState<{ type: 'deactivate' | 'reactivate' | 'delete'; userId: number; userName: string } | null>(null);
     const [sortKey, setSortKey] = useState('name-asc');
     const [isLoading, setIsLoading] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
 
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
@@ -34,6 +39,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 const res = await fetch(`${API_URL}/api/users/${editingUser.id}`, {
                     method: 'PUT',
                     headers: getHeaders(),
+                                credentials: 'include',
                     body: JSON.stringify(userData),
                 });
                 if (!res.ok) {
@@ -47,6 +53,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 const res = await fetch(`${API_URL}/api/users`, {
                     method: 'POST',
                     headers: getHeaders(),
+                                credentials: 'include',
                     body: JSON.stringify(userData),
                 });
                 if (!res.ok) {
@@ -76,6 +83,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             const res = await fetch(`${API_URL}/api/users/${userId}/status`, {
                 method: 'PUT',
                 headers: getHeaders(),
+                                credentials: 'include',
                 body: JSON.stringify({ status: newStatus }),
             });
             if (!res.ok) {
@@ -103,6 +111,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             const res = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: 'DELETE',
                 headers: getHeaders(),
+                                credentials: 'include',
             });
             if (!res.ok) {
                 const err = await res.json();
@@ -126,11 +135,32 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     };
 
     const processedUsers = useMemo(() => {
-        let filtered = users.filter(user =>
-            (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (user.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        let filtered = users.filter(user => {
+            const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesCompany = filterCompany === 'All' || user.company === filterCompany;
+            
+            const accType = user.accountType || 'Employee';
+            const matchesAccountType = filterAccountType === 'All' || accType === filterAccountType;
+
+            let matchesLaptopStatus = true;
+            if (filterLaptopStatus !== 'All') {
+                const userAssets = assets.filter(a => a.assigneeId === user.id && a.assigneeType?.toLowerCase() === 'user');
+                const hasAsset = userAssets.length > 0;
+                
+                if (filterLaptopStatus === 'Has Assigned Laptop') {
+                    matchesLaptopStatus = hasAsset;
+                } else if (filterLaptopStatus === 'Uses Own Laptop') {
+                    matchesLaptopStatus = user.laptopStatus === 'Uses Own Laptop';
+                } else if (filterLaptopStatus === 'No Laptop Assigned') {
+                    matchesLaptopStatus = !hasAsset && user.laptopStatus !== 'Uses Own Laptop';
+                }
+            }
+
+            return matchesSearch && matchesCompany && matchesAccountType && matchesLaptopStatus;
+        });
 
         const [key, direction] = sortKey.split('-');
         filtered.sort((a, b) => {
@@ -141,7 +171,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             return 0;
         });
         return filtered;
-    }, [users, searchTerm, sortKey]);
+    }, [users, assets, searchTerm, filterCompany, filterAccountType, filterLaptopStatus, sortKey]);
 
     const handleBackFromUser = () => {
         setSelectedUserId(null);
@@ -168,19 +198,48 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             </ConfirmationModal>
 
             <div className="bg-transparent">
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <div className="relative w-full sm:w-auto">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
+                    <div className="relative w-full xl:w-auto flex-1 max-w-md">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{ICONS.search}</span>
                         <input
                             type="text"
                             placeholder="Search by name, email, department..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
                         />
                     </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                        <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                            <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                <span className="hidden sm:inline">List</span>
+                            </button>
+                            <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                                <span className="hidden sm:inline">Hierarchy</span>
+                            </button>
+                        </div>
+                        <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                            <option value="All">All Companies</option>
+                            <option value="Avana Medical Devices">Avana Medical</option>
+                            <option value="Avana Surgical Systems">Avana Surgical</option>
+                            <option value="Avana Technology Services">Avana Technology</option>
+                        </select>
+                        <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                            <option value="All">All Account Types</option>
+                            <option value="Employee">Employees Only</option>
+                            <option value="External Employee">External Employees</option>
+                            <option value="Shared Account">Shared Accounts</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                            <option value="All">All Laptop Statuses</option>
+                            <option value="Has Assigned Laptop">Has Assigned Laptop</option>
+                            <option value="No Laptop Assigned">No Laptop Assigned</option>
+                            <option value="Uses Own Laptop">Uses Own Laptop</option>
+                        </select>
+                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
                             <option value="name-asc">Name (A-Z)</option>
                             <option value="name-desc">Name (Z-A)</option>
                         </select>
@@ -190,7 +249,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     </div>
                 </div>
 
-                <div className="space-y-3">
+                {viewMode === 'list' ? (
+                    <div className="space-y-3">
                     {processedUsers.length === 0 && (
                         <div className="text-center py-16 text-slate-500 dark:text-slate-400">
                             <p className="text-lg font-medium">No users found</p>
@@ -220,12 +280,40 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                         <div className="flex items-center gap-2">
                                             <p className="font-semibold text-slate-800 dark:text-slate-100">{user.name}</p>
                                             {isSelf && <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">You</span>}
+                                            {user.accountType && user.accountType !== 'Employee' && (
+                                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-800">
+                                                    {user.accountType}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">{user.email} {deptName ? `• ${deptName}` : ''}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                            {user.employeeId && <span className="font-medium mr-1">[{user.employeeId}]</span>}
+                                            {user.email} {deptName ? `• ${deptName}` : ''}
+                                        </p>
+                                        {user.jobTitle && (
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                                {user.jobTitle} {user.branch?.name ? `• ${user.branch.name}` : ''}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="hidden lg:flex items-center gap-8 text-sm text-slate-600 dark:text-slate-300 text-center">
+                                <div className="hidden lg:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 text-center">
+                                    <div>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">License</p>
+                                        <div className="mt-1">
+                                            {user.licenseAssignments && user.licenseAssignments.length > 0 ? (
+                                                <span 
+                                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 cursor-help"
+                                                    title={user.licenseAssignments.map((la: any) => la.license?.name?.replace('Microsoft 365 ', '')).join('\n')}
+                                                >
+                                                    {user.licenseAssignments.length} {user.licenseAssignments.length === 1 ? 'License' : 'Licenses'}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">None</span>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Role</p>
                                         <p className={`font-medium px-2 py-0.5 rounded-full text-xs ${user.role === 'Admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : user.role === 'Manager' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>{user.role}</p>
@@ -281,6 +369,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         );
                     })}
                 </div>
+                ) : (
+                    <UserHierarchy 
+                        users={users}
+                        searchTerm={searchTerm}
+                        filterCompany={filterCompany}
+                        filterAccountType={filterAccountType}
+                        onSelectUser={setSelectedUserId}
+                        loggedInUserId={loggedInUser?.id}
+                    />
+                )}
 
                 <UserForm isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveUser} user={editingUser} isLoading={isLoading} />
             </div>

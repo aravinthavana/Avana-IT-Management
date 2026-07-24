@@ -11,7 +11,7 @@ interface DepartmentDetailViewProps {
 }
 
 const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentId, onBack }) => {
-    const { departments, assets, setAssets, setNotification, logAssetHistory, setSelectedAssetId, users, navigate, setSelectedUserId } = useAppContext();
+    const { departments, assets, setAssets, setNotification, setSelectedAssetId, users, navigate, setSelectedUserId } = useAppContext();
     const department = departments.find(d => d.id === departmentId);
     const departmentAssets = assets.filter(a => a.assigneeType === 'department' && a.assigneeId === departmentId);
     
@@ -38,7 +38,6 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
             ? { ...asset, assigneeId: department.id, assigneeType: 'department', status: 'Assigned' } 
             : asset
         ));
-        logAssetHistory(assetToAssign.id, 'Assigned', `Assigned to Department: ${department.name}.`);
         setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${department.name}.`, type: 'success' });
         setIsAssignModalOpen(false);
     };
@@ -56,7 +55,6 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
         if (updatedAssetData.remarks) {
             details += ` Remarks: "${updatedAssetData.remarks}"`;
         }
-        logAssetHistory(assetToUnassign.id, 'Unassigned', details);
 
         setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         setAssetToUnassign(null);

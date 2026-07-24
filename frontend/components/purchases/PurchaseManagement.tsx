@@ -45,7 +45,7 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
         e.stopPropagation();
         if (!confirm('Are you sure you want to delete this purchase record?')) return;
         try {
-            const res = await fetch(`${API_URL}/api/purchases/${id}`, { method: 'DELETE', headers: getHeaders() });
+            const res = await fetch(`${API_URL}/api/purchases/${id}`, { method: 'DELETE', headers: getHeaders(), credentials: 'include' });
             if (!res.ok) throw new Error((await res.json()).error);
             setPurchaseRecords(purchaseRecords.filter(p => p.id !== id));
             setNotification({ message: 'Purchase record deleted.', type: 'success' });
@@ -77,15 +77,26 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                 <div className="p-6 space-y-3">
                     {filteredPurchases.map(purchase => (
                         <div key={purchase.id} onClick={() => setSelectedPurchaseId(purchase.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
-                            <div>
+                            <div className="min-w-0 flex-1">
                                 <p className="font-semibold text-red-600 dark:text-red-400">{purchase.invoiceNumber}</p>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">{purchase.vendor}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : 'N/A'}
-                                    {(purchase as any).assets?.length > 0 ? ` • ${(purchase as any).assets.length} Asset(s)` : ''}
-                                </p>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{purchase.vendor || 'No Vendor'}</p>
+                                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : 'N/A'}
+                                    </p>
+                                    {(purchase as any).assets?.length > 0 && (
+                                        <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                                            {(purchase as any).assets.length} Asset(s)
+                                        </span>
+                                    )}
+                                    {purchase.amount != null && (
+                                        <span className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-semibold">
+                                            ₹{purchase.amount.toLocaleString()}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-1">
+                            <div className="flex items-center space-x-1 flex-shrink-0">
                                 <button onClick={(e) => handleDeletePurchase(purchase.id, e)} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-red-600" title="Delete">{ICONS.delete}</button>
                                 <div className="p-2 text-slate-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>

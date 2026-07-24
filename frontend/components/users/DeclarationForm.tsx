@@ -36,7 +36,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
         ATS: { name: 'Avana Technology Services Pvt. Ltd.', address: ['No.91, Ground Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai 600032,', 'Tamil Nadu, India'], phone: '+91 44 2233 1061/62/63', cin: '' }
     };
 
-    const currentCompany = companyDetails[laptop.company as keyof typeof companyDetails] || companyDetails.AMD;
+    const companyCode = (laptop.company || laptop.assetId?.split('-')[0] || 'AMD').toUpperCase();
+    const currentCompany = companyDetails[companyCode as keyof typeof companyDetails] || companyDetails.AMD;
 
     // specs may be stored as a JSON string in SQLite — safely parse it
     const specs: Record<string, any> = (() => {
@@ -77,8 +78,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
 
                 <div className="mb-4 text-sm">
                     <p className="font-bold">To: {user.name}</p>
-                    <p>Dept: {user.department}</p>
-                    <p>Mob No: {user.mobile}</p> 
+                    <p>Dept: {typeof user.department === 'object' ? user.department?.name : (user.department || 'N/A')}</p>
+                    <p>Mob No: {user.mobile || 'N/A'}</p> 
                 </div>
 
                 <table className="w-full mb-4 text-sm">
@@ -86,8 +87,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                         <tr className="border-t border-b border-gray-400">
                             <td className="py-1 pr-4 whitespace-nowrap"><strong className="font-semibold">Date:</strong> {today}</td>
                             <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Laptop Asset ID:</strong> {laptop.assetId}</td>
-                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Company:</strong> {laptop.company}</td>
-                            <td className="py-1 pl-4 whitespace-nowrap"><strong className="font-semibold">Working Location:</strong> {user.location}</td>
+                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Company:</strong> {companyCode}</td>
+                            <td className="py-1 pl-4 whitespace-nowrap"><strong className="font-semibold">Working Location:</strong> {user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A'}</td>
                         </tr>
                     </tbody>
                 </table>

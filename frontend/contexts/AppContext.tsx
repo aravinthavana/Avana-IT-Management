@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { AppContextType, User, Asset, NotificationType, AssetHistory, Department, Branch, PreviewTarget, Filter, PurchaseRecord, License, AssetRequest, SupportTicket, KnowledgeBaseArticle } from '../types';
+import { AppContextType, User, Asset, NotificationType, AssetHistory, Department, Branch, PreviewTarget, Filter, PurchaseRecord, License, AssetRequest, SupportTicket, KnowledgeBaseArticle, SelfAudit } from '../types';
 import { useAuth } from './AuthContext';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -29,6 +29,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [assetRequests, setAssetRequests] = useState<AssetRequest[]>([]);
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [kbArticles, setKbArticles] = useState<KnowledgeBaseArticle[]>([]);
+    const [selfAudits, setSelfAudits] = useState<SelfAudit[]>([]);
     const [notification, setNotification] = useState<NotificationType | null>(null);
     const [view, setView] = useState('dashboard');
     const [pageState, setPageState] = useState<any | null>(null);
@@ -68,7 +69,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         };
 
         try {
-            const [usersRes, assetsRes, deptRes, branchRes, purchaseRes, licenseRes, requestsRes, ticketsRes, kbRes] = await Promise.all([
+            const [usersRes, assetsRes, deptRes, branchRes, purchaseRes, licenseRes, requestsRes, ticketsRes, kbRes, selfAuditsRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/api/users`),
                 fetchWithAuth(`${API_URL}/api/assets`),
                 fetchWithAuth(`${API_URL}/api/departments`),
@@ -78,6 +79,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 fetchWithAuth(`${API_URL}/api/requests`),
                 fetchWithAuth(`${API_URL}/api/tickets`),
                 fetchWithAuth(`${API_URL}/api/kb`),
+                fetchWithAuth(`${API_URL}/api/self-audits`),
             ]);
 
             if (usersRes.ok) setUsers(await usersRes.json());
@@ -106,6 +108,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             if (requestsRes.ok) setAssetRequests(await requestsRes.json());
             if (ticketsRes.ok) setTickets(await ticketsRes.json());
             if (kbRes.ok) setKbArticles(await kbRes.json());
+            if (selfAuditsRes && selfAuditsRes.ok) setSelfAudits(await selfAuditsRes.json());
         } catch (err) {
             console.error('Failed to fetch initial data:', err);
         }
@@ -222,6 +225,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setTickets,
         kbArticles,
         setKbArticles,
+        selfAudits,
+        setSelfAudits,
         fetchAllData,
         getHeaders,
     };

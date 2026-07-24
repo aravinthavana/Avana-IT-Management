@@ -47,7 +47,8 @@ const BranchManagement: React.FC = () => {
         try {
             if (editingBranch) {
                 const res = await fetch(`${API_URL}/api/branches/${editingBranch.id}`, {
-                    method: 'PUT', headers: getHeaders(), body: JSON.stringify(formData),
+                    method: 'PUT', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(formData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const updated = await res.json();
@@ -55,7 +56,8 @@ const BranchManagement: React.FC = () => {
                 setNotification({ message: `Branch "${updated.name}" updated.`, type: 'success' });
             } else {
                 const res = await fetch(`${API_URL}/api/branches`, {
-                    method: 'POST', headers: getHeaders(), body: JSON.stringify(formData),
+                    method: 'POST', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(formData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const created = await res.json();
@@ -84,6 +86,7 @@ const BranchManagement: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/api/branches/${branchToDelete.id}`, {
                 method: 'DELETE', headers: getHeaders(),
+                                credentials: 'include',
             });
             if (!res.ok) throw new Error((await res.json()).error);
             setBranches(branches.filter(b => b.id !== branchToDelete.id));

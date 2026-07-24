@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { KnowledgeBaseArticle } from '../../types';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 const KnowledgeBase: React.FC = () => {
     const { kbArticles, setKbArticles, getHeaders, setNotification } = useAppContext();
@@ -15,6 +17,8 @@ const KnowledgeBase: React.FC = () => {
         category: 'Troubleshooting',
         content: ''
     });
+    
+    const quillRef = useRef<any>(null);
 
     const categories = ['Troubleshooting', 'Policy', 'SOP', 'FAQ'];
 
@@ -25,6 +29,59 @@ const KnowledgeBase: React.FC = () => {
             a.content.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [kbArticles, searchTerm]);
+
+    const imageHandler = () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files ? input.files[0] : null;
+            if (!file) return;
+
+            const uploadData = new FormData();
+            uploadData.append('image', file);
+
+            try {
+                const headers = getHeaders() as any;
+                delete headers['Content-Type']; // Let browser set boundary for FormData
+
+                const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/upload`, {
+                    method: 'POST',
+                    headers,
+                    body: uploadData,
+                    credentials: 'include'
+                });
+
+                if (!res.ok) throw new Error('Upload failed');
+                const { url } = await res.json();
+                
+                const quill = quillRef.current;
+                if (quill) {
+                    const range = quill.getEditor().getSelection();
+                    quill.getEditor().insertEmbed(range ? range.index : 0, 'image', url);
+                }
+            } catch (err: any) {
+                setNotification({ message: 'Failed to upload image', type: 'error' });
+            }
+        };
+    };
+
+    const modules = useMemo(() => ({
+        toolbar: {
+            container: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+            ],
+            handlers: {
+                image: imageHandler
+            }
+        }
+    }), []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +94,8 @@ const KnowledgeBase: React.FC = () => {
             const res = await fetch(url, {
                 method,
                 headers: getHeaders(),
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                credentials: 'include'
             });
             if (!res.ok) throw new Error('Failed to save article');
             const saved = await res.json();
@@ -62,7 +120,8 @@ const KnowledgeBase: React.FC = () => {
         try {
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/kb/${id}`, {
                 method: 'DELETE',
-                headers: getHeaders()
+                headers: getHeaders(),
+                                credentials: 'include',
             });
             if (!res.ok) throw new Error('Failed to delete article');
             setKbArticles(kbArticles.filter(a => a.id !== id));
@@ -130,9 +189,10 @@ const KnowledgeBase: React.FC = () => {
                                 <p className="text-xs text-slate-500 font-medium">Last updated on {new Date(selectedArticle.updatedAt).toLocaleDateString()} by {selectedArticle.author?.name}</p>
                             </div>
                             <div className="p-8">
-                                <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                                    {selectedArticle.content}
-                                </div>
+                                <div 
+                                    className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                                />
                                 <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2 hover:underline">
                                     &larr; Back to list
                                 </button>
@@ -144,7 +204,9 @@ const KnowledgeBase: React.FC = () => {
                                 <button key={article.id} onClick={() => setSelectedArticle(article)} className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 text-left hover:shadow-xl hover:-translate-y-1 transition-all group">
                                     <span className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest block mb-2">{article.category}</span>
                                     <h4 className="text-lg font-black text-slate-800 dark:text-white mb-2 group-hover:text-red-600 transition-colors line-clamp-2">{article.title}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">{article.content}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+                                        {article.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...'}
+                                    </p>
                                     <div className="flex items-center justify-between mt-auto">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{new Date(article.updatedAt).toLocaleDateString()}</span>
                                         <span className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
@@ -167,12 +229,13 @@ const KnowledgeBase: React.FC = () => {
             {/* Create/Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black text-slate-800 dark:text-white">{selectedArticle ? 'Edit Article' : 'New Article'}</h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">{ICONS.close}</button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
+                            <div className="p-8 space-y-6 overflow-y-auto">
                             <div className="grid grid-cols-3 gap-6">
                                 <div className="col-span-2">
                                     <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Title</label>
@@ -186,10 +249,23 @@ const KnowledgeBase: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Content (Plain text or Markdown)</label>
-                                <textarea required rows={12} value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none font-mono text-sm leading-relaxed" placeholder="Type your article content here..." />
+                                <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Content</label>
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                                    <ReactQuill 
+                                        ref={quillRef}
+                                        theme="snow" 
+                                        value={formData.content} 
+                                        onChange={(val) => setFormData({...formData, content: val})} 
+                                        modules={modules}
+                                        className="h-64 mb-12 text-slate-800 dark:text-white"
+                                    />
+                                </div>
                             </div>
-                            <button type="submit" className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Save Article</button>
+                            </div>
+                            <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-4 shrink-0">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-4 rounded-2xl font-black text-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]">Cancel</button>
+                                <button type="submit" className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Save Article</button>
+                            </div>
                         </form>
                     </div>
                 </div>

@@ -33,7 +33,8 @@ const LicenseManagement: React.FC = () => {
         try {
             if (selectedLicense) {
                 const res = await fetch(`${API_URL}/api/licenses/${licenseData.id}`, {
-                    method: 'PUT', headers: getHeaders(), body: JSON.stringify(licenseData),
+                    method: 'PUT', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(licenseData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const updated = await res.json();
@@ -41,7 +42,8 @@ const LicenseManagement: React.FC = () => {
                 setNotification({ message: 'License updated.', type: 'success' });
             } else {
                 const res = await fetch(`${API_URL}/api/licenses`, {
-                    method: 'POST', headers: getHeaders(), body: JSON.stringify(licenseData),
+                    method: 'POST', headers: getHeaders(),
+                                credentials: 'include', body: JSON.stringify(licenseData),
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 const created = await res.json();
@@ -59,6 +61,7 @@ const LicenseManagement: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/api/licenses/${licenseToDelete}`, {
                 method: 'DELETE', headers: getHeaders(),
+                                credentials: 'include',
             });
             if (!res.ok) throw new Error((await res.json()).error);
             setLicenses(licenses.filter(l => l.id !== licenseToDelete));
@@ -127,10 +130,25 @@ const LicenseManagement: React.FC = () => {
                                 <span className="text-slate-500 dark:text-slate-400">Assigned:</span>
                                 <span className="font-medium">{license.assignedSeats || (license.assignments?.length || 0)}</span>
                             </div>
+                            {license.startDate && (
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500 dark:text-slate-400">Start Date:</span>
+                                    <span className="font-medium">{new Date(license.startDate).toLocaleDateString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between">
                                 <span className="text-slate-500 dark:text-slate-400">Expires:</span>
                                 <span className="font-medium">{license.expirationDate ? new Date(license.expirationDate).toLocaleDateString() : 'N/A'}</span>
                             </div>
+                            {license.cost != null && (
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500 dark:text-slate-400">Cost:</span>
+                                    <span className="font-medium text-green-700 dark:text-green-400">₹{license.cost.toLocaleString()}</span>
+                                </div>
+                            )}
+                            {license.remarks && (
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic border-t border-slate-100 dark:border-slate-700 pt-2">"{license.remarks}"</p>
+                            )}
                         </div>
 
                         {/* Progress Bar for Seats */}

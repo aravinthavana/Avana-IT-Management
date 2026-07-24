@@ -27,7 +27,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidt
 
     return (
         <div 
-            className={`fixed inset-0 bg-black z-50 flex justify-center items-start p-4 pt-10 sm:pt-20 transition-opacity duration-200 ${isOpen ? 'bg-opacity-60' : 'bg-opacity-0'}`}
+            className={`fixed inset-0 z-50 flex justify-center items-center p-4 transition-colors duration-200 ${isOpen ? 'bg-black/60' : 'bg-black/0'}`}
             aria-labelledby="modal-title"
             role="dialog"
             aria-modal="true"

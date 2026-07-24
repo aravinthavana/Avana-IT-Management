@@ -11,9 +11,12 @@ import BulkChangeStatusModal from './BulkChangeStatusModal';
 import { getWarrantyStatus } from '../../utils/assetUtils';
 import AssetCreationMethodModal from './AssetCreationMethodModal';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
+
 
 const AssetManagement: React.FC = () => {
-    const { assets, setAssets, users, departments, branches, purchaseRecords, setNotification, logAssetHistory, setSelectedAssetId, assetFilters, setAssetFilters, navigate, pageState, clearPageState, getHeaders } = useAppContext();
+    const { assets, setAssets, users, departments, branches, purchaseRecords, setNotification, setSelectedAssetId, assetFilters, setAssetFilters, navigate, pageState, clearPageState, getHeaders } = useAppContext();
     const { user } = useAuth();
     const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager';
     // Modal states
@@ -45,6 +48,16 @@ const AssetManagement: React.FC = () => {
         brand: 'Brand',
     };
 
+    useEffect(() => {
+        if (pageState?.editingAssetId && assets.length > 0) {
+            const assetToEdit = assets.find(a => a.id === pageState.editingAssetId);
+            if (assetToEdit) {
+                handleEditAsset(assetToEdit);
+            }
+            clearPageState();
+        }
+    }, [pageState, assets, clearPageState]);
+
     // --- Handlers for Asset Creation/Editing ---
     const handleOpenCreationMethod = () => setIsCreationMethodModalOpen(true);
 
@@ -65,7 +78,8 @@ const AssetManagement: React.FC = () => {
     };
 
     const handleEditAsset = (asset: Asset) => {
-        setNewAssetType(asset.specs && Object.keys(asset.specs).length > 0 ? 'Device' : 'Other');
+        const isDeviceCategory = ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(asset.category) || (asset.specs && Object.keys(asset.specs).length > 0);
+        setNewAssetType(isDeviceCategory ? 'Device' : 'Other');
         setEditingAsset(asset);
         setIsAssetFormOpen(true);
     };
@@ -85,6 +99,7 @@ const AssetManagement: React.FC = () => {
                 const res = await fetch(`${API_URL}/api/assets/${editingAsset.id}`, {
                     method: 'PUT',
                     headers: getHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({
                         ...updatedAssetData,
                         specs: updatedAssetData.specs ? JSON.stringify(updatedAssetData.specs) : null
@@ -94,7 +109,6 @@ const AssetManagement: React.FC = () => {
                 const updated = await res.json();
                 
                 setAssets(assets.map(a => a.id === editingAsset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
-                logAssetHistory(editingAsset.id, 'Asset Updated', 'Asset details were updated.');
                 setNotification({ message: `Asset "${updatedAssetData.name}" updated successfully.`, type: 'success' });
             } else {
                 // Creating new assets
@@ -103,17 +117,19 @@ const AssetManagement: React.FC = () => {
                     const res = await fetch(`${API_URL}/api/assets`, {
                         method: 'POST',
                         headers: getHeaders(),
+                        credentials: 'include',
                         body: JSON.stringify({
                             ...asset,
                             specs: asset.specs ? JSON.stringify(asset.specs) : null
                         })
                     });
-                    if (res.ok) {
-                        const saved = await res.json();
-                        const parsed = { ...saved, specs: typeof saved.specs === 'string' ? JSON.parse(saved.specs) : saved.specs };
-                        savedAssets.push(parsed);
-                        logAssetHistory(parsed.id, 'Asset Created', `Asset '${parsed.name}' with ID '${parsed.assetId}' was created.`);
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `Failed to create asset "${asset.name}"`);
                     }
+                    const saved = await res.json();
+                    const parsed = { ...saved, specs: typeof saved.specs === 'string' ? JSON.parse(saved.specs) : saved.specs };
+                    savedAssets.push(parsed);
                 }
 
                 setAssets(prev => [...prev, ...savedAssets]);
@@ -140,7 +156,8 @@ const AssetManagement: React.FC = () => {
             try {
                 const res = await fetch(`${API_URL}/api/assets/${assetToDelete}`, {
                     method: 'DELETE',
-                    headers: getHeaders()
+                    headers: getHeaders(),
+                    credentials: 'include'
                 });
                 if (!res.ok) throw new Error((await res.json()).error);
                 
@@ -270,7 +287,8 @@ const AssetManagement: React.FC = () => {
             for (const id of assetsToDelete) {
                 const res = await fetch(`${API_URL}/api/assets/${id}`, {
                     method: 'DELETE',
-                    headers: getHeaders()
+                    headers: getHeaders(),
+                    credentials: 'include'
                 });
                 if (res.ok) deletedCount++;
             }
@@ -295,6 +313,7 @@ const AssetManagement: React.FC = () => {
                 const res = await fetch(`${API_URL}/api/assets/${id}`, {
                     method: 'PUT',
                     headers: getHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({
                         ...asset,
                         status: newStatus,
@@ -418,7 +437,6 @@ const AssetManagement: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {assetFilters.map((filter) => {
-                            if (filter.field === 'warrantyStatus') return null;
                             const availableFields = Object.keys(filterableAssetFields).filter(f => !assetFilters.some(af => af.field === f && af.id !== filter.id));
                             return (
                                 <div key={filter.id} className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl">

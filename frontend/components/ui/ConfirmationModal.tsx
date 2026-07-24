@@ -25,7 +25,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
     if (!isRendered) return null;
 
     return (
-        <div className={`fixed inset-0 z-[60] flex justify-center items-center p-4 transition-opacity duration-200 ${isOpen ? 'bg-black bg-opacity-60' : 'bg-opacity-0'}`}>
+        <div className={`fixed inset-0 z-[60] flex justify-center items-center p-4 transition-colors duration-200 ${isOpen ? 'bg-black/60' : 'bg-black/0'}`}>
             <div className={`bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm transform transition-all duration-200 ease-out ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
                 <div className="p-6 text-center">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{title}</h3>

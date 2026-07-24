@@ -11,9 +11,9 @@ interface UserDetailViewProps {
 }
 
 const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
-    const { users, assets, setAssets, setNotification, logAssetHistory, setSelectedAssetId, setPreviewTarget } = useAppContext();
+    const { users, assets, setAssets, setNotification, setSelectedAssetId, setPreviewTarget } = useAppContext();
     const user = users.find(u => u.id === userId);
-    const userAssets = assets.filter(a => a.assigneeType === 'user' && a.assigneeId === userId);
+    const userAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
 
@@ -32,7 +32,6 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             ? { ...asset, assigneeId: user!.id, assigneeType: 'user', status: 'Assigned', location: user!.location } 
             : asset
         ));
-        logAssetHistory(assetToAssign.id, 'Assigned', `Assigned to ${user!.name}.`);
         setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${user!.name}.`, type: 'success' });
         setIsAssignModalOpen(false);
     };
@@ -56,7 +55,6 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         if (updatedAssetData.remarks) {
             details += ` Remarks: "${updatedAssetData.remarks}"`;
         }
-        logAssetHistory(assetToUnassign.id, 'Unassigned', details);
 
         setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         setAssetToUnassign(null);
@@ -102,13 +100,32 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         )}
                         <div className="mt-4 md:mt-0">
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{user.name}</h2>
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
+                                {user.name}
+                                {user.accountType && user.accountType !== 'Employee' && (
+                                    <span className="text-sm px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-semibold tracking-wide">
+                                        {user.accountType}
+                                    </span>
+                                )}
+                            </h2>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Employee ID:</strong> {user.employeeId || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Mobile:</strong> {user.mobile || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Job Title:</strong> {user.jobTitle || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Location:</strong> {user.branch?.name || user.location || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Reporting Manager:</strong> {user.manager?.name || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300"><strong>Licenses:</strong> {user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}</p>
+                            {user.laptopStatus && (
+                                <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                    <strong>Laptop Status:</strong>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                        user.laptopStatus === 'Uses Own Laptop' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                        user.laptopStatus === 'No Laptop Assigned' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
+                                        'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
+                                    }`}>{user.laptopStatus}</span>
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>

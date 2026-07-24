@@ -11,6 +11,9 @@ import { authenticateToken, requireAdmin } from './middleware/auth';
 import jwksClient from 'jwks-rsa';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -39,6 +42,8 @@ const userSchema = z.object({
     jobTitle: z.string().nullable().optional(),
     company: z.string().nullable().optional(),
     employeeId: z.string().nullable().optional(),
+    accountType: z.string().default('Employee'),
+    laptopStatus: z.string().nullable().optional(),
 });
 
 const assetSchema = z.object({
@@ -88,7 +93,9 @@ const licenseSchema = z.object({
 });
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
     origin: process.env.FRONTEND_URL || ['http://localhost', 'http://localhost:5173'],
     credentials: true,
@@ -102,6 +109,13 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
 });
 app.use('/api/', apiLimiter);
+
+// Static file serving for uploads
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -371,6 +385,16 @@ app.post('/api/handovers/:id/sign', authenticateToken, async (req, res) => {
             data: { status: 'Assigned' }
         });
 
+        // Add history log
+        await prisma.assetHistory.create({
+            data: {
+                assetId: handover.assetId,
+                userId: userId,
+                event: 'Handover Signed',
+                details: 'User digitally signed the handover form.'
+            }
+        });
+
         res.json({ success: true, message: 'Handover signed successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to sign handover' });
@@ -392,21 +416,21 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 
         if (role === 'Admin') {
             users = await prisma.user.findMany({
-                include: { department: true, branch: true, manager: true },
+                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } },
                 orderBy: { name: 'asc' }
             });
         } else if (role === 'Manager') {
             // Managers see themselves and their direct reports
             users = await prisma.user.findMany({
                 where: { OR: [{ id }, { managerId: id }] },
-                include: { department: true, branch: true, manager: true },
+                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } },
                 orderBy: { name: 'asc' }
             });
         } else {
             // Regular users only see themselves
             users = await prisma.user.findMany({
                 where: { id },
-                include: { department: true, branch: true, manager: true }
+                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
             });
         }
 
@@ -423,7 +447,7 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
         const validation = userSchema.safeParse(req.body);
         if (!validation.success) return res.status(400).json({ error: validation.error.format() });
         
-        const { name, email, password, role, status, departmentId, branchId, managerId } = validation.data;
+        const { name, email, password, role, status, departmentId, branchId, managerId, accountType } = validation.data;
 
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) return res.status(409).json({ error: 'A user with this email already exists' });
@@ -439,6 +463,7 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
                 departmentId: departmentId ? Number(departmentId) : null,
                 branchId: branchId ? Number(branchId) : null,
                 managerId: managerId ? Number(managerId) : null,
+                accountType: accountType || 'Employee',
             },
             include: { department: true, branch: true, manager: true }
         });
@@ -466,7 +491,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: validation.error.format() });
         }
         
-        const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId } = validation.data;
+        const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId, accountType, laptopStatus } = validation.data;
 
         const updateData: any = {};
         if (name) updateData.name = name;
@@ -476,6 +501,8 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
         if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
         if (company !== undefined) updateData.company = company;
         if (employeeId !== undefined) updateData.employeeId = employeeId;
+        if (accountType !== undefined) updateData.accountType = accountType;
+        if (laptopStatus !== undefined) updateData.laptopStatus = laptopStatus;
         
         // Only admin can change role/status/depts
         if (requestingUserRole === 'Admin') {
@@ -599,12 +626,27 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
         const data = validation.data;
         const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
         
+        const assetCompany = data.company || (data.assetId ? data.assetId.split('-')[0] : null);
+
         const asset = await prisma.asset.create({
             data: { 
                 ...data, 
+                company: assetCompany,
                 status: newUserId ? 'Pending Handover' : (data.status || 'In Stock'),
-                specs: data.specs ? JSON.stringify(data.specs) : null,
+                specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
                 userId: newUserId // Ensure relation is set
+            }
+        });
+
+        // Add history for creation
+        // @ts-ignore
+        const actionUserId = req.user.id;
+        await prisma.assetHistory.create({
+            data: {
+                assetId: asset.id,
+                userId: actionUserId,
+                event: 'Asset Created',
+                details: `Asset '${asset.name}' with ID '${asset.assetId}' was created.`
             }
         });
 
@@ -618,8 +660,31 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
             });
         }
 
+        if (data.assigneeType && data.assigneeId) {
+            let assigneeName = '';
+            if (data.assigneeType === 'User') {
+                const u = await prisma.user.findUnique({ where: { id: data.assigneeId } });
+                assigneeName = u ? u.name : 'Unknown User';
+            } else if (data.assigneeType === 'Department') {
+                const d = await prisma.department.findUnique({ where: { id: data.assigneeId } });
+                assigneeName = d ? d.name : 'Unknown Department';
+            } else if (data.assigneeType === 'Branch') {
+                const b = await prisma.branch.findUnique({ where: { id: data.assigneeId } });
+                assigneeName = b ? b.name : 'Unknown Branch';
+            }
+            await prisma.assetHistory.create({
+                data: {
+                    assetId: asset.id,
+                    userId: actionUserId,
+                    event: 'Assigned',
+                    details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`
+                }
+            });
+        }
+
         res.json(asset);
     } catch (error) {
+        console.error('Error creating asset:', error);
         res.status(500).json({ error: 'Failed to create asset' });
     }
 });
@@ -632,6 +697,8 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
 
         const data = validation.data;
         const existingAsset = await prisma.asset.findUnique({ where: { id: Number(id) } });
+        if (!existingAsset) return res.status(404).json({ error: 'Asset not found' });
+        
         const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
 
         let finalStatus = data.status;
@@ -647,15 +714,65 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
             finalStatus = 'Pending Handover';
         }
 
+        const updatedCompany = data.company || existingAsset.company || (data.assetId ? data.assetId.split('-')[0] : (existingAsset.assetId ? existingAsset.assetId.split('-')[0] : null));
+
         const asset = await prisma.asset.update({
             where: { id: Number(id) },
             data: { 
                 ...data, 
+                company: updatedCompany,
                 status: finalStatus,
-                specs: data.specs ? JSON.stringify(data.specs) : null,
+                specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
                 userId: newUserId 
             }
         });
+
+        // @ts-ignore
+        const actionUserId = req.user.id;
+        
+        // Log history based on changes
+        if (existingAsset.assigneeType !== data.assigneeType || existingAsset.assigneeId !== data.assigneeId) {
+            if (data.assigneeType && data.assigneeId) {
+                let assigneeName = '';
+                if (data.assigneeType === 'User') {
+                    const u = await prisma.user.findUnique({ where: { id: data.assigneeId } });
+                    assigneeName = u ? u.name : 'Unknown User';
+                } else if (data.assigneeType === 'Department') {
+                    const d = await prisma.department.findUnique({ where: { id: data.assigneeId } });
+                    assigneeName = d ? d.name : 'Unknown Department';
+                } else if (data.assigneeType === 'Branch') {
+                    const b = await prisma.branch.findUnique({ where: { id: data.assigneeId } });
+                    assigneeName = b ? b.name : 'Unknown Branch';
+                }
+                await prisma.assetHistory.create({
+                    data: {
+                        assetId: asset.id,
+                        userId: actionUserId,
+                        event: 'Assigned',
+                        details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`
+                    }
+                });
+            } else if (!data.assigneeType && !data.assigneeId && existingAsset.assigneeType) {
+                await prisma.assetHistory.create({
+                    data: {
+                        assetId: asset.id,
+                        userId: actionUserId,
+                        event: 'Unassigned',
+                        details: 'Asset was unassigned manually.'
+                    }
+                });
+            }
+        } else {
+            await prisma.assetHistory.create({
+                data: {
+                    assetId: asset.id,
+                    userId: actionUserId,
+                    event: 'Asset Updated',
+                    details: 'Asset details were updated.'
+                }
+            });
+        }
+
         res.json(asset);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update asset' });
@@ -1117,6 +1234,129 @@ app.delete('/api/kb/:id', authenticateToken, requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete KB article' });
     }
 });
+
+// --- Self Audits ---
+
+app.get('/api/self-audits', authenticateToken, async (req, res) => {
+    try {
+        // @ts-ignore
+        const { role, id } = req.user;
+        let audits;
+
+        if (role === 'Admin') {
+            audits = await prisma.selfAudit.findMany({
+                include: { user: { select: { id: true, name: true, email: true } }, asset: true },
+                orderBy: { auditDate: 'desc' }
+            });
+        } else {
+            audits = await prisma.selfAudit.findMany({
+                where: { userId: id },
+                include: { user: { select: { id: true, name: true, email: true } }, asset: true },
+                orderBy: { auditDate: 'desc' }
+            });
+        }
+        res.json(audits);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch self audits' });
+    }
+});
+
+app.post('/api/self-audits', authenticateToken, async (req, res) => {
+    try {
+        // @ts-ignore
+        const { id: userId } = req.user;
+        const { assetId, scannedAssetId, imageUrl, remarks } = req.body;
+
+        const asset = await prisma.asset.findUnique({ where: { id: Number(assetId) } });
+        if (!asset) return res.status(404).json({ error: 'Asset not found.' });
+
+        const audit = await prisma.selfAudit.create({
+            data: {
+                assetId: Number(assetId),
+                userId: Number(userId),
+                scannedAssetId,
+                imageUrl,
+                remarks,
+                status: 'Pending Review'
+            },
+            include: { user: { select: { id: true, name: true, email: true } }, asset: true }
+        });
+        res.status(201).json(audit);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create self audit' });
+    }
+});
+
+app.put('/api/self-audits/:id/status', authenticateToken, async (req, res) => {
+    try {
+        // @ts-ignore
+        const { role } = req.user;
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const { id } = req.params;
+        const { status, remarks } = req.body;
+
+        if (!['Approved', 'Rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const audit = await prisma.selfAudit.update({
+            where: { id: Number(id) },
+            data: { 
+                status,
+                ...(remarks && { remarks })
+            },
+            include: { user: { select: { id: true, name: true, email: true } }, asset: true }
+        });
+        res.json(audit);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update self audit status' });
+    }
+});
+
+// --- Upload Route for Rich Text Editor ---
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed.'));
+        }
+    }
+});
+
+app.post('/api/upload', authenticateToken, upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+        
+        // Return the URL to the uploaded file
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.headers.host;
+        const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+        
+        res.json({ url });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
+
+
 
 app.listen(port, () => {
     console.log(`Server running on port ${port} with security measures enabled.`);

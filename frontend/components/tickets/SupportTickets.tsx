@@ -27,6 +27,7 @@ const SupportTickets: React.FC = () => {
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/tickets`, {
                 method: 'POST',
                 headers: getHeaders(),
+                                credentials: 'include',
                 body: JSON.stringify(formData)
             });
             if (!res.ok) throw new Error('Failed to submit ticket');
@@ -45,6 +46,7 @@ const SupportTickets: React.FC = () => {
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/tickets/${ticketId}`, {
                 method: 'PUT',
                 headers: getHeaders(),
+                                credentials: 'include',
                 body: JSON.stringify({ status: newStatus })
             });
             if (!res.ok) throw new Error('Failed to update status');
@@ -139,12 +141,13 @@ const SupportTickets: React.FC = () => {
             {/* Submit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black text-slate-800 dark:text-white">New Support Request</h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">{ICONS.close}</button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
+                            <div className="p-8 space-y-6 overflow-y-auto">
                             <div>
                                 <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Subject</label>
                                 <input required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none placeholder:text-slate-400" placeholder="Summary of the issue" />
@@ -174,7 +177,11 @@ const SupportTickets: React.FC = () => {
                                 <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Description</label>
                                 <textarea required rows={4} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none placeholder:text-slate-400" placeholder="Provide more details about the problem..." />
                             </div>
-                            <button type="submit" className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Submit Ticket</button>
+                            </div>
+                            <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-4 shrink-0">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-3 rounded-2xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]">Cancel</button>
+                                <button type="submit" className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Submit Ticket</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -183,37 +190,71 @@ const SupportTickets: React.FC = () => {
             {/* Detail View Modal */}
             {selectedTicket && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
                             <div>
                                 <h3 className="text-xl font-black text-slate-800 dark:text-white">{selectedTicket.subject}</h3>
                                 <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Ticket #{selectedTicket.id}</p>
                             </div>
                             <button onClick={() => setSelectedTicket(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">{ICONS.close}</button>
                         </div>
-                        <div className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${getStatusColor(selectedTicket.status)}`}>{selectedTicket.status}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Priority</p>
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${getPriorityColor(selectedTicket.priority)}`}>{selectedTicket.priority}</span>
-                                    </div>
+                        <div className="p-8 space-y-6 overflow-y-auto">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${getStatusColor(selectedTicket.status)}`}>{selectedTicket.status}</span>
                                 </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Category</p>
-                                        <p className="font-bold text-slate-800 dark:text-white">{selectedTicket.category}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Submitted By</p>
-                                        <p className="font-bold text-slate-800 dark:text-white">{selectedTicket.user?.name}</p>
-                                    </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Priority</p>
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${getPriorityColor(selectedTicket.priority)}`}>{selectedTicket.priority}</span>
                                 </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Category</p>
+                                    <p className="font-bold text-slate-800 dark:text-white">{selectedTicket.category}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Submitted By</p>
+                                    <p className="font-bold text-slate-800 dark:text-white">{selectedTicket.user?.name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Opened</p>
+                                    <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{new Date(selectedTicket.createdAt).toLocaleString()}</p>
+                                </div>
+                                {selectedTicket.resolvedAt ? (
+                                    <div>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Resolved At</p>
+                                        <p className="font-semibold text-green-600 dark:text-green-400 text-sm">{new Date(selectedTicket.resolvedAt).toLocaleString()}</p>
+                                    </div>
+                                ) : selectedTicket.updatedAt && selectedTicket.updatedAt !== selectedTicket.createdAt ? (
+                                    <div>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Last Updated</p>
+                                        <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{new Date(selectedTicket.updatedAt).toLocaleString()}</p>
+                                    </div>
+                                ) : null}
                             </div>
+
+                            {/* Related Asset */}
+                            {selectedTicket.assetId && (() => {
+                                const relatedAsset = assets.find(a => a.id === selectedTicket.assetId);
+                                return relatedAsset ? (
+                                    <div>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Related Asset</p>
+                                        <button
+                                            onClick={() => { setSelectedTicket(null); navigate('assets'); }}
+                                            className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
+                                        >
+                                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
+                                                {ICONS.asset || '💻'}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{relatedAsset.name}</p>
+                                                <p className="text-xs text-slate-500 font-mono">{relatedAsset.assetId}</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                ) : null;
+                            })()}
+
                             <div>
                                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Description</p>
                                 <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-800">{selectedTicket.description}</div>

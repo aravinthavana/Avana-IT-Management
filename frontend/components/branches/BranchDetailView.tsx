@@ -11,7 +11,7 @@ interface BranchDetailViewProps {
 }
 
 const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack }) => {
-    const { branches, assets, setAssets, setNotification, logAssetHistory, setSelectedAssetId } = useAppContext();
+    const { branches, assets, setAssets, setNotification, setSelectedAssetId } = useAppContext();
     const branch = branches.find(b => b.id === branchId);
     const branchAssets = assets.filter(a => a.assigneeType === 'branch' && a.assigneeId === branchId);
     
@@ -33,7 +33,6 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
             ? { ...asset, assigneeId: branch.id, assigneeType: 'branch', status: 'Assigned', location: branch.location } 
             : asset
         ));
-        logAssetHistory(assetToAssign.id, 'Assigned', `Assigned to Branch: ${branch.name}.`);
         setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${branch.name}.`, type: 'success' });
         setIsAssignModalOpen(false);
     };
@@ -51,7 +50,6 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
         if (updatedAssetData.remarks) {
             details += ` Remarks: "${updatedAssetData.remarks}"`;
         }
-        logAssetHistory(assetToUnassign.id, 'Unassigned', details);
 
         setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         setAssetToUnassign(null);

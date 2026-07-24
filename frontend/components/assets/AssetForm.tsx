@@ -49,6 +49,7 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 
 const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, assetType, purchaseDate }) => {
     const { assets, users, departments, branches } = useAppContext();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const initialFormState: Omit<Asset, 'purchaseId'> & { purchaseId: number | '' } = {
         id: 0, assetId: '', assetCode: '', name: '', category: 'Laptop', brand: '', model: '', serialNumber: '', location: '', company: 'AMD',
         status: 'In Stock', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
@@ -144,7 +145,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
         setCustomFields(customFields.map(field => field.id === id ? { ...field, [name]: value } : field));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         // Validation for serial numbers
@@ -165,6 +166,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
 
         setSerialNumbers(newSerialStates);
         if (!isValid) return;
+        if (isSubmitting) return;
 
         const assetsToSave: Asset[] = [];
         const yearOfPurchase = purchaseDate ? new Date(purchaseDate).getFullYear().toString() : '';
@@ -179,10 +181,18 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
         }
 
         for (let i = 0; i < quantity; i++) {
-            const finalData = { ...formData, purchaseId: formData.purchaseId || 0 };
+            const finalData = { 
+                ...formData, 
+                purchaseId: formData.purchaseId ? Number(formData.purchaseId) : null,
+                assigneeId: formData.assigneeId ? Number(formData.assigneeId) : null,
+                assigneeType: formData.assigneeType || null,
+                warrantyStartDate: formData.warrantyStartDate ? new Date(formData.warrantyStartDate).toISOString() : null,
+                warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate).toISOString() : null
+            };
             let finalSpecs: AssetSpecs = { ...finalData.specs };
 
-            if (assetType === 'Device') {
+            const isDevice = assetType === 'Device' || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category);
+            if (isDevice) {
                 customFields.forEach(field => { if (field.fieldName.trim()) { finalSpecs[field.fieldName.trim()] = field.fieldValue; } });
                 Object.keys(finalSpecs).forEach(key => { if (finalSpecs[key] === '') { delete finalSpecs[key]; } });
             } else {
@@ -197,14 +207,21 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
             assetsToSave.push(finalData);
         }
         
-        onSave(assetsToSave);
+        try {
+            setIsSubmitting(true);
+            await onSave(assetsToSave);
+        } catch (error) {
+            console.error('Error saving asset:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const assigneeOptions = () => {
         switch (formData.assigneeType) {
-            case 'user': return users.filter(u => u.company === formData.company).map(u => <option key={u.id} value={u.id}>{u.name} ({u.employeeId})</option>);
-            case 'department': return departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>);
-            case 'branch': return branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>);
+            case 'User': return users.map(u => <option key={u.id} value={u.id}>{u.name} {u.employeeId ? `(${u.employeeId})` : ''}</option>);
+            case 'Department': return departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>);
+            case 'Branch': return branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>);
             default: return [];
         }
     };
@@ -269,9 +286,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                          <FormInput label="Location" type="text" name="location" value={formData.location} onChange={handleChange} required />
                          <FormSelect label="Assign To (Type)" name="assigneeType" value={formData.assigneeType ?? ''} onChange={handleChange}>
                             <option value="">Unassigned</option>
-                            <option value="user">User</option>
-                            <option value="department">Department</option>
-                            <option value="branch">Branch</option>
+                            <option value="User">User</option>
+                            <option value="Department">Department</option>
+                            <option value="Branch">Branch</option>
                         </FormSelect>
                         {formData.assigneeType && (
                             <FormSelect label={`Select ${formData.assigneeType.charAt(0).toUpperCase() + formData.assigneeType.slice(1)}`} name="assigneeId" value={formData.assigneeId ?? ''} onChange={handleChange}>
@@ -305,7 +322,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     )}
                 </fieldset>
 
-                {assetType === 'Device' && (
+                {(assetType === 'Device' || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category)) && (
                     <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                         <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Device Specifications</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -338,7 +355,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
 
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
                     <button type="button" onClick={onClose} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
-                    <button type="submit" className="w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center">Save Asset</button>
+                    <button type="submit" disabled={isSubmitting} className={`w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {isSubmitting ? 'Saving...' : 'Save Asset'}
+                    </button>
                 </div>
             </form>
         </Modal>

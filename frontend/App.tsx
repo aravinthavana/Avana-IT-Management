@@ -20,7 +20,33 @@ import Login from './components/auth/Login';
 import AssetRequestList from './components/requests/AssetRequestList';
 import SupportTickets from './components/tickets/SupportTickets';
 import KnowledgeBase from './components/kb/KnowledgeBase';
+import SelfAuditsList from './components/audits/SelfAuditsList';
 import { useAuth } from './contexts/AuthContext';
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error("Uncaught React Error:", error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-8 text-center bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl m-6">
+                    <h2 className="text-lg font-bold text-red-800 dark:text-red-400">Something went wrong</h2>
+                    <p className="text-sm text-red-600 dark:text-red-300 mt-2 mb-4">{this.state.error?.message || 'An unexpected rendering error occurred.'}</p>
+                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm">Reload Page</button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 export default function App() {
     const { 
@@ -86,6 +112,9 @@ export default function App() {
                 return <SupportTickets />;
             case 'kb':
                 return <KnowledgeBase />;
+            case 'audits':
+                if (user?.role === 'User') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                return <SelfAuditsList />;
             default:
                 return <Home />;
         }
@@ -111,7 +140,9 @@ export default function App() {
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Breadcrumbs />
                         <div key={view} className="page-transition">
-                            {renderView()}
+                            <ErrorBoundary>
+                                {renderView()}
+                            </ErrorBoundary>
                         </div>
                     </main>
                 </div>

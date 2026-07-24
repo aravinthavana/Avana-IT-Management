@@ -52,10 +52,17 @@ const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBac
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm">
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                          <DetailItem label="Invoice Number" value={<span className="font-semibold">{purchase.invoiceNumber}</span>} />
-                         <DetailItem label="Vendor" value={purchase.vendor} />
+                         <DetailItem label="Vendor" value={purchase.vendor || 'N/A'} />
                          <DetailItem label="Purchase Date" value={new Date(purchase.purchaseDate).toLocaleDateString()} />
-                         <DetailItem label="PO Number" value={(purchase as any).poNumber || 'N/A'} />
+                         <DetailItem label="PO Number" value={purchase.poNumber || 'N/A'} />
                          <DetailItem label="Assets Procured" value={purchaseAssets.length} />
+                         <DetailItem
+                             label="Total Amount"
+                             value={purchase.amount != null
+                                 ? <span className="font-semibold text-green-700 dark:text-green-400 text-lg">₹{purchase.amount.toLocaleString()}</span>
+                                 : 'N/A'
+                             }
+                         />
                          <DetailItem 
                             label="Invoice Attachment" 
                             value={
