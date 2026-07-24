@@ -29,14 +29,14 @@ if (!JWT_SECRET) {
 // --- Zod Schemas for Validation ---
 
 const userSchema = z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    password: z.string().min(6).optional().nullable(),
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().nullable().optional(),
     role: z.enum(['Admin', 'Manager', 'User']).default('User'),
     status: z.enum(['Active', 'Inactive']).default('Active'),
-    departmentId: z.number().nullable().optional(),
-    branchId: z.number().nullable().optional(),
-    managerId: z.number().nullable().optional(),
+    departmentId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
+    branchId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
+    managerId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
     avatar: z.string().nullable().optional(),
     mobile: z.string().nullable().optional(),
     jobTitle: z.string().nullable().optional(),
@@ -445,14 +445,21 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const validation = userSchema.safeParse(req.body);
-        if (!validation.success) return res.status(400).json({ error: validation.error.format() });
+        if (!validation.success) {
+            const firstErr = validation.error.issues[0]?.message || 'Invalid user data';
+            return res.status(400).json({ error: firstErr });
+        }
         
-        const { name, email, password, role, status, departmentId, branchId, managerId, accountType } = validation.data;
+        const { name, email, password, role, status, departmentId, branchId, managerId, accountType, mobile, jobTitle, company, employeeId, laptopStatus } = validation.data;
 
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) return res.status(409).json({ error: 'A user with this email already exists' });
 
-        const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+        if (password && password.trim().length > 0 && password.trim().length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const hashedPassword = (password && password.trim().length >= 6) ? await bcrypt.hash(password.trim(), 10) : null;
         const user = await prisma.user.create({
             data: {
                 name,
@@ -460,17 +467,23 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
                 password: hashedPassword,
                 role: role || 'User',
                 status: status || 'Active',
-                departmentId: departmentId ? Number(departmentId) : null,
-                branchId: branchId ? Number(branchId) : null,
-                managerId: managerId ? Number(managerId) : null,
+                departmentId: departmentId || null,
+                branchId: branchId || null,
+                managerId: managerId || null,
                 accountType: accountType || 'Employee',
+                mobile: mobile || null,
+                jobTitle: jobTitle || null,
+                company: company || null,
+                employeeId: employeeId || null,
+                laptopStatus: laptopStatus || null,
             },
             include: { department: true, branch: true, manager: true }
         });
         const { password: _, ...sanitized } = user;
         res.status(201).json(sanitized);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to create user' });
+    } catch (error: any) {
+        console.error('Failed to create user:', error);
+        res.status(500).json({ error: error.message || 'Failed to create user' });
     }
 });
 
@@ -487,8 +500,8 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
 
         const validation = userSchema.partial().safeParse(req.body);
         if (!validation.success) {
-            console.error('Validation error updating user:', validation.error.format());
-            return res.status(400).json({ error: validation.error.format() });
+            const firstErr = validation.error.issues[0]?.message || 'Invalid user data';
+            return res.status(400).json({ error: firstErr });
         }
         
         const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId, accountType, laptopStatus } = validation.data;
@@ -513,7 +526,10 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
             if (managerId !== undefined) updateData.managerId = managerId;
         }
 
-        if (password) {
+        if (password && password.trim().length > 0) {
+            if (password.trim().length < 6) {
+                return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+            }
             if (requestingUserRole !== 'Admin') {
                 const { currentPassword } = req.body;
                 if (!currentPassword) {
@@ -528,7 +544,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
                     return res.status(400).json({ error: 'Invalid current password.' });
                 }
             }
-            updateData.password = await bcrypt.hash(password, 10);
+            updateData.password = await bcrypt.hash(password.trim(), 10);
         }
 
         const user = await prisma.user.update({
@@ -538,8 +554,9 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
         });
         const { password: _, ...sanitized } = user;
         res.json(sanitized);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update user' });
+    } catch (error: any) {
+        console.error('Failed to update user:', error);
+        res.status(500).json({ error: error.message || 'Failed to update user' });
     }
 });
 

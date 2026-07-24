@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 export const userSchema = z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    password: z.string().min(6).optional().nullable(),
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().nullable().optional(),
     role: z.enum(['Admin', 'Manager', 'User']).default('User'),
     status: z.enum(['Active', 'Inactive']).default('Active'),
-    departmentId: z.number().nullable().optional(),
-    branchId: z.number().nullable().optional(),
-    managerId: z.number().nullable().optional(),
+    departmentId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
+    branchId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
+    managerId: z.any().transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : null).nullable().optional(),
     avatar: z.string().nullable().optional(),
     mobile: z.string().nullable().optional(),
     jobTitle: z.string().nullable().optional(),

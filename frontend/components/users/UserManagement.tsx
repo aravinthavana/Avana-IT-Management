@@ -44,7 +44,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    throw new Error(err.error || 'Failed to update user');
+                    const errMsg = typeof err.error === 'string' ? err.error : (typeof err.message === 'string' ? err.message : 'Failed to update user');
+                    throw new Error(errMsg);
                 }
                 const updated = await res.json();
                 setUsers(users.map(u => u.id === editingUser.id ? updated : u));
@@ -58,7 +59,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    throw new Error(err.error || 'Failed to create user');
+                    const errMsg = typeof err.error === 'string' ? err.error : (typeof err.message === 'string' ? err.message : 'Failed to create user');
+                    throw new Error(errMsg);
                 }
                 const created = await res.json();
                 setUsers([...users, created]);
