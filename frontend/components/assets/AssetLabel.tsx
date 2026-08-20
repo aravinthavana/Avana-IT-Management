@@ -8,15 +8,6 @@ interface AssetLabelProps {
     asset: Asset;
 }
 
-const CompanyLogo: React.FC<{ company: string }> = ({ company }) => {
-    return (
-        <div className="text-center flex flex-col items-center">
-            <img src="/logo.png" alt="Avana Logo" className="w-32 object-contain" />
-            <p className="text-[7px] font-light tracking-widest text-gray-600 mt-1">IT ASSET</p>
-        </div>
-    );
-};
-
 const AssetLabel: React.FC<AssetLabelProps> = ({ asset }) => {
     const qrCodeRef = useRef<HTMLCanvasElement>(null);
 
@@ -29,7 +20,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset }) => {
                 new iframeWindow.QRious({
                     element: canvas,
                     value: asset.assetId,
-                    size: 64,
+                    size: 56,
                     level: 'H'
                 });
             }
@@ -37,24 +28,24 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset }) => {
     }, [asset.assetId]);
 
     return (
-        // The main container, sized to 50x30mm, with overflow hidden to prevent visual bugs.
-        <div className="p-1 border border-dashed border-gray-400 bg-white overflow-hidden" style={{ width: '189px', height: '113px' }}>
-            <div className="flex flex-col h-full">
-                {/* Company Logo at the top */}
-                <CompanyLogo company={asset.company} />
+        <div className="bg-white overflow-hidden flex flex-col p-1 border border-dashed border-gray-400" style={{ width: '189px', height: '113px' }}>
+            {/* Header: Logo */}
+            <div className="w-full flex justify-center items-center shrink-0 mb-1" style={{ height: '22px' }}>
+                <img src="/logo.png" alt="Avana Logo" className="h-full object-contain" />
+            </div>
+            
+            <div className="w-full h-px bg-gray-300 shrink-0 mb-1"></div>
+
+            {/* Body: QR & Details */}
+            <div className="flex gap-1.5 items-center flex-grow overflow-hidden">
+                <canvas ref={qrCodeRef} className="shrink-0" style={{ width: '56px', height: '56px' }}></canvas>
                 
-                {/* Content area below the logo */}
-                <div className="flex-grow flex items-center gap-2 border-t border-gray-200 mt-1 pt-1">
-                    <canvas ref={qrCodeRef} className="flex-shrink-0"></canvas>
-                    
-                    <div className="text-[9px] overflow-hidden leading-tight w-full">
-                        <p className="font-bold truncate" title={asset.name}>{asset.name}</p>
-                        <p className="text-gray-600 truncate" title={asset.category}>{asset.category}</p>
-                        <div className="mt-1 pt-1 border-t border-gray-200">
-                             {/* Using break-words to handle long strings without breaking layout */}
-                             <p className="font-semibold text-gray-800 break-words leading-snug">S/N: {asset.serialNumber}</p>
-                             <p className="font-semibold text-gray-800 break-words leading-snug">{asset.assetId}</p>
-                        </div>
+                <div className="flex flex-col justify-center overflow-hidden w-full h-full text-[8.5px] leading-[1.2] text-gray-800">
+                    <p className="font-bold truncate text-[9px]">{asset.name}</p>
+                    <p className="text-gray-600 truncate text-[7.5px] uppercase tracking-wide">{asset.category}</p>
+                    <div className="mt-1 pt-0.5 border-t border-gray-200">
+                         <p className="font-semibold truncate">SN: {asset.serialNumber}</p>
+                         <p className="font-black text-[10.5px] truncate tracking-tight">{asset.assetId}</p>
                     </div>
                 </div>
             </div>
