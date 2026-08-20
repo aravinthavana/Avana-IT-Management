@@ -208,7 +208,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             placeholder="Search by name, email, department..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                     </div>
                     <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
@@ -222,30 +222,30 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 <span className="hidden sm:inline">Hierarchy</span>
                             </button>
                         </div>
-                        <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                        <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="All">All Companies</option>
                             <option value="Avana Medical Devices">Avana Medical</option>
                             <option value="Avana Surgical Systems">Avana Surgical</option>
                             <option value="Avana Technology Services">Avana Technology</option>
                         </select>
-                        <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                        <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="All">All Account Types</option>
                             <option value="Employee">Employees Only</option>
                             <option value="External Employee">External Employees</option>
                             <option value="Shared Account">Shared Accounts</option>
                             <option value="Others">Others</option>
                         </select>
-                        <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                        <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="All">All Laptop Statuses</option>
                             <option value="Has Assigned Laptop">Has Assigned Laptop</option>
                             <option value="No Laptop Assigned">No Laptop Assigned</option>
                             <option value="Uses Own Laptop">Uses Own Laptop</option>
                         </select>
-                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white dark:bg-slate-800">
+                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="name-asc">Name (A-Z)</option>
                             <option value="name-desc">Name (Z-A)</option>
                         </select>
-                        <button onClick={() => handleOpenModal()} className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 w-full sm:w-auto font-medium transition-all duration-200 active:scale-95 flex-shrink-0">
+                        <button onClick={() => handleOpenModal()} className="bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 w-full sm:w-auto font-medium transition-all duration-200 active:scale-95 flex-shrink-0">
                             Add New User
                         </button>
                     </div>
@@ -341,7 +341,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 <div className="flex items-center space-x-1 flex-shrink-0 mt-3 sm:mt-0" onClick={(e) => e.stopPropagation()}>
                                     <button
                                         onClick={() => handleOpenModal(user)}
-                                        className="p-2 text-slate-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-red-600"
+                                        className="p-2 text-slate-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600"
                                         title="Edit User"
                                     >
                                         {ICONS.edit}
@@ -370,7 +370,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                     {!isSelf && (
                                         <button
                                             onClick={() => setConfirmAction({ type: 'delete', userId: user.id, userName: user.name })}
-                                            className="p-2 text-slate-500 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-red-600"
+                                            className="p-2 text-slate-500 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-brand-600"
                                             title="Permanently Delete"
                                         >
                                             {ICONS.delete}

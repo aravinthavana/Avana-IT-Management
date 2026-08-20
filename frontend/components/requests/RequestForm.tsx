@@ -40,7 +40,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                         name="requestType"
                         value={requestType} 
                         onChange={e => setRequestType(e.target.value)}
-                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                     >
                         <option value="New Asset">New Asset</option>
                         <option value="Replacement">Replacement</option>
@@ -55,7 +55,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                         name="category"
                         value={category} 
                         onChange={e => setCategory(e.target.value)}
-                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                     >
                         <option value="Laptop">Laptop</option>
                         <option value="Desktop">Desktop</option>
@@ -85,13 +85,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                         onChange={e => setDescription(e.target.value)}
                         required
                         rows={4}
-                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                         placeholder="Please explain why you need this asset..."
                     />
                 </div>
                 <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-medium">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">Submit Request</button>
+                    <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium">Submit Request</button>
                 </div>
             </form>
         </Modal>

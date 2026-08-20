@@ -117,7 +117,7 @@ const SupportTickets: React.FC = () => {
 
     const getPriorityColor = (p: string) => {
         switch (p) {
-            case 'Urgent': return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
+            case 'Urgent': return 'text-brand-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
             case 'High': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
             case 'Medium': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
             default: return 'text-slate-600 bg-slate-100 dark:bg-slate-900/30 dark:text-slate-400';
@@ -142,7 +142,7 @@ const SupportTickets: React.FC = () => {
                     <p className="text-slate-500 dark:text-slate-400 text-sm">Submit and track your technical support requests.</p>
                 </div>
                 {user?.role === 'User' && (
-                    <button onClick={() => setIsModalOpen(true)} className="bg-red-600 text-white px-5 py-2.5 rounded-xl hover:bg-red-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-red-600/20 font-bold">
+                    <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 font-bold">
                         {ICONS.add} New Ticket
                     </button>
                 )}
@@ -179,7 +179,7 @@ const SupportTickets: React.FC = () => {
                                         </td>
                                     )}
                                     <td className="px-6 py-4 text-right">
-                                        <button onClick={() => setSelectedTicket(ticket)} className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                                        <button onClick={() => setSelectedTicket(ticket)} className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
                                             {ICONS.view}
                                         </button>
                                     </td>
@@ -237,7 +237,7 @@ const SupportTickets: React.FC = () => {
                             </div>
                             <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-4 shrink-0">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-3 rounded-2xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]">Cancel</button>
-                                <button type="submit" className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Submit Ticket</button>
+                                <button type="submit" className="flex-1 bg-brand-600 text-white py-3 rounded-2xl font-bold hover:bg-brand-700 transition-all active:scale-[0.98] shadow-xl shadow-brand-600/20">Submit Ticket</button>
                             </div>
                         </form>
                     </div>
@@ -300,11 +300,11 @@ const SupportTickets: React.FC = () => {
                                             onClick={() => { setSelectedTicket(null); navigate('assets'); }}
                                             className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
                                         >
-                                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
+                                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center text-brand-600 dark:text-red-400 flex-shrink-0">
                                                 {ICONS.asset || '💻'}
                                             </div>
                                             <div className="text-left">
-                                                <p className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{relatedAsset.name}</p>
+                                                <p className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-brand-600 dark:group-hover:text-red-400 transition-colors">{relatedAsset.name}</p>
                                                 <p className="text-xs text-slate-500 font-mono">{relatedAsset.assetId}</p>
                                             </div>
                                         </button>
@@ -339,7 +339,7 @@ const SupportTickets: React.FC = () => {
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-bold text-xs text-slate-800 dark:text-white">{c.user?.name || 'User'}</span>
                                                         {isAuthorAdmin && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 rounded-full text-[10px] font-black uppercase">IT Admin</span>
+                                                            <span className="px-2 py-0.5 bg-red-100 text-brand-600 dark:bg-red-950/60 dark:text-red-400 rounded-full text-[10px] font-black uppercase">IT Admin</span>
                                                         )}
                                                     </div>
                                                     <span className="text-[10px] font-medium text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
@@ -357,12 +357,12 @@ const SupportTickets: React.FC = () => {
                                         value={newComment}
                                         onChange={e => setNewComment(e.target.value)}
                                         placeholder="Add a reply..."
-                                        className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-red-500 transition-colors"
+                                        className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                                     />
                                     <button
                                         type="submit"
                                         disabled={submittingComment || !newComment.trim()}
-                                        className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-red-600/20 active:scale-95 shrink-0"
+                                        className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-brand-600/20 active:scale-95 shrink-0"
                                     >
                                         {submittingComment ? 'Sending...' : 'Send'}
                                     </button>
@@ -372,7 +372,7 @@ const SupportTickets: React.FC = () => {
                             {user?.role === 'Admin' && (
                                 <div className="pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-3">
                                     {statuses.map(s => (
-                                        <button key={s} onClick={() => handleUpdateStatus(selectedTicket.id, s)} className={`px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${selectedTicket.status === s ? 'bg-red-600 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}>
+                                        <button key={s} onClick={() => handleUpdateStatus(selectedTicket.id, s)} className={`px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${selectedTicket.status === s ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}>
                                             {s}
                                         </button>
                                     ))}

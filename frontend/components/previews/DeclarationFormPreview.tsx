@@ -62,7 +62,7 @@ export default function DeclarationFormPreview() {
             <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-center justify-center text-slate-800 dark:text-slate-100">
                 <div className="text-center p-4">
                     <p className="font-semibold text-lg">Error: Could not find user or asset data for preview.</p>
-                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700">Go Back</button>
+                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700">Go Back</button>
                 </div>
             </div>
         );
@@ -75,7 +75,7 @@ export default function DeclarationFormPreview() {
                     &larr; <span className="ml-2">Back</span>
                 </button>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 hidden sm:block">Declaration Form Preview</h2>
-                <button onClick={handlePrint} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm font-medium transition-colors">
+                <button onClick={handlePrint} className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-medium transition-colors">
                     {ICONS.print}
                     <span>Print / Export PDF</span>
                 </button>

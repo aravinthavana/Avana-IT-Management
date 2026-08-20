@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                                     onClick={() => { setTheme(t); setDropdownOpen(false); }}
                                     className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
                                         theme === t 
-                                        ? 'bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400' 
+                                        ? 'bg-red-50 dark:bg-red-900/50 text-brand-600 dark:text-red-400' 
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                     }`}
                                 >
@@ -91,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                     <div className="relative" ref={userMenuRef}>
                         <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center space-x-3 focus:outline-none">
                             <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">{user?.name}</span>
-                            <div className="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">
+                            <div className="w-9 h-9 rounded-full bg-red-100 text-brand-600 flex items-center justify-center font-bold">
                                 {user?.name?.charAt(0)}
                             </div>
                         </button>
@@ -102,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                             </div>
                             <button
                                 onClick={logout}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                className="w-full text-left px-4 py-2 text-sm text-brand-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                                 Sign out
                             </button>

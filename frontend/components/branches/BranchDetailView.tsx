@@ -22,7 +22,7 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
         return (
             <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
                 <h2 className="text-xl font-semibold">Branch not found</h2>
-                <button onClick={onBack} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">&larr; Back to Branches</button>
+                <button onClick={onBack} className="mt-4 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">&larr; Back to Branches</button>
             </div>
         );
     }
@@ -69,7 +69,7 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
                             <p className="text-xs text-slate-500 dark:text-slate-400">{branch.location}</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
+                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
                         {ICONS.add} <span className="hidden sm:inline">Assign Asset</span>
                     </button>
                 </div>

@@ -145,7 +145,7 @@ const KnowledgeBase: React.FC = () => {
                         <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-600/20 transition-all" placeholder="Search articles..." />
                     </div>
                     {user?.role === 'Admin' && (
-                        <button onClick={() => { setSelectedArticle(null); setFormData({ title: '', category: 'Troubleshooting', content: '' }); setIsModalOpen(true); }} className="bg-red-600 text-white px-5 py-2.5 rounded-2xl hover:bg-red-700 font-bold transition-all active:scale-95 shadow-lg shadow-red-600/20">
+                        <button onClick={() => { setSelectedArticle(null); setFormData({ title: '', category: 'Troubleshooting', content: '' }); setIsModalOpen(true); }} className="bg-brand-600 text-white px-5 py-2.5 rounded-2xl hover:bg-brand-700 font-bold transition-all active:scale-95 shadow-lg shadow-brand-600/20">
                             {ICONS.add} Create
                         </button>
                     )}
@@ -162,7 +162,7 @@ const KnowledgeBase: React.FC = () => {
                                 const count = kbArticles.filter(a => a.category === cat).length;
                                 return (
                                     <button key={cat} onClick={() => setSearchTerm(cat)} className="w-full flex justify-between items-center px-4 py-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group">
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-red-600">{cat}</span>
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-brand-600">{cat}</span>
                                         <span className="text-xs font-black bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-slate-500">{count}</span>
                                     </button>
                                 );
@@ -193,7 +193,7 @@ const KnowledgeBase: React.FC = () => {
                                     className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed"
                                     dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
                                 />
-                                <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2 hover:underline">
+                                <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold text-brand-600 dark:text-red-400 flex items-center gap-2 hover:underline">
                                     &larr; Back to list
                                 </button>
                             </div>
@@ -202,14 +202,14 @@ const KnowledgeBase: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredArticles.map(article => (
                                 <button key={article.id} onClick={() => setSelectedArticle(article)} className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 text-left hover:shadow-xl hover:-translate-y-1 transition-all group">
-                                    <span className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest block mb-2">{article.category}</span>
-                                    <h4 className="text-lg font-black text-slate-800 dark:text-white mb-2 group-hover:text-red-600 transition-colors line-clamp-2">{article.title}</h4>
+                                    <span className="text-[10px] font-black text-brand-600 dark:text-red-400 uppercase tracking-widest block mb-2">{article.category}</span>
+                                    <h4 className="text-lg font-black text-slate-800 dark:text-white mb-2 group-hover:text-brand-600 transition-colors line-clamp-2">{article.title}</h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
                                         {article.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...'}
                                     </p>
                                     <div className="flex items-center justify-between mt-auto">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{new Date(article.updatedAt).toLocaleDateString()}</span>
-                                        <span className="text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                                        <span className="text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
                                     </div>
                                 </button>
                             ))}
@@ -264,7 +264,7 @@ const KnowledgeBase: React.FC = () => {
                             </div>
                             <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-4 shrink-0">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-4 rounded-2xl font-black text-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]">Cancel</button>
-                                <button type="submit" className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all active:scale-[0.98] shadow-xl shadow-red-600/20">Save Article</button>
+                                <button type="submit" className="flex-1 bg-brand-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-brand-700 transition-all active:scale-[0.98] shadow-xl shadow-brand-600/20">Save Article</button>
                             </div>
                         </form>
                     </div>

@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                         className="block"
                         aria-label="Go to dashboard"
                     >
-                        <img src="https://avanamedical.com/wp-content/themes/avana/assets/images/logo.png" alt="Company Logo" className="h-10" />
+                        <img src="/logo.png" alt="Company Logo" className="h-10" />
                     </a>
                 </div>
                 <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
@@ -96,18 +96,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                                         handleNav(item.view);
                                     }
                                 }} 
-                                className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium ${currentView === item.view ? 'bg-red-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium ${currentView === item.view ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
                             >
                                 <div className="flex items-center flex-1">
                                     <span className="w-6 h-6 mr-3 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 ease-in-out">{item.icon}</span>
                                     <span className="flex-1">{item.name}</span>
                                     {item.view === 'requests' && pendingCount > 0 && (
-                                        <span className="ml-2 bg-white text-red-600 dark:bg-red-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
+                                        <span className="ml-2 bg-white text-brand-600 dark:bg-brand-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
                                             {pendingCount}
                                         </span>
                                     )}
                                     {item.view === 'tickets' && user?.role === 'Admin' && useAppContext().tickets?.filter((t: any) => t.status === 'Open').length > 0 && (
-                                        <span className="ml-2 bg-white text-red-600 dark:bg-red-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                                        <span className="ml-2 bg-white text-brand-600 dark:bg-brand-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                                             {useAppContext().tickets.filter((t: any) => t.status === 'Open').length}
                                         </span>
                                     )}
@@ -118,9 +118,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                             </a>
                             {item.subItems && isAssetsSubMenuOpen && (
                                 <div className="pl-8 py-1 space-y-1">
-                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-semibold text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-semibold text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
                                     {item.subItems.map(subItem => (
-                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-semibold text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-semibold text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
                                             {subItem.name}
                                         </a>
                                     ))}

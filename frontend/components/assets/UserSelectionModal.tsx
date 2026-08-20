@@ -38,7 +38,7 @@ const UserSelectionModal: React.FC<UserSelectionModalProps> = ({ isOpen, onClose
                         placeholder="Search by name or employee ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                        className="pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
                     />
                 </div>
                 <ul className="space-y-2 max-h-80 overflow-y-auto">
@@ -53,7 +53,7 @@ const UserSelectionModal: React.FC<UserSelectionModalProps> = ({ isOpen, onClose
                             </div>
                             <button
                                 onClick={() => handleSelect(user)}
-                                className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700"
+                                className="px-4 py-1.5 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700"
                             >
                                 Select
                             </button>

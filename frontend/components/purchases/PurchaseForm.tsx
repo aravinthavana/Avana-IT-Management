@@ -19,7 +19,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
     return (
         <div>
             <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
         </div>
     );
 };
@@ -203,7 +203,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                     <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                         <div className="flex justify-between items-center mb-4">
                             <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200">Assets in this Purchase ({assetsInPurchase.length})</legend>
-                            <button type="button" onClick={handleOpenAssetChoice} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm font-medium transition-colors">Add Asset</button>
+                            <button type="button" onClick={handleOpenAssetChoice} className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 text-sm font-medium transition-colors">Add Asset</button>
                         </div>
                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                              {assetsInPurchase.map(asset => (
@@ -223,7 +223,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                     
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
                         <button type="button" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">Cancel</button>
-                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">{isSubmitting ? 'Saving...' : 'Save Purchase'}</button>
+                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">{isSubmitting ? 'Saving...' : 'Save Purchase'}</button>
                     </div>
                 </form>
             </Modal>

@@ -40,7 +40,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
                 <div className="p-8 text-center bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl m-6">
                     <h2 className="text-lg font-bold text-red-800 dark:text-red-400">Something went wrong</h2>
                     <p className="text-sm text-red-600 dark:text-red-300 mt-2 mb-4">{this.state.error?.message || 'An unexpected rendering error occurred.'}</p>
-                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm">Reload Page</button>
+                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 text-sm">Reload Page</button>
                 </div>
             );
         }
@@ -90,21 +90,21 @@ export default function App() {
             case 'assets':
                 return <AssetManagement />;
             case 'users':
-                if (user?.role === 'User') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <UserManagement initialFilters={pageState?.initialFilters} onFiltersApplied={clearPageState} />;
             case 'requests':
                 return <AssetRequestList />;
             case 'departments':
-                if (user?.role === 'User') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <DepartmentManagement />;
             case 'branches':
-                if (user?.role === 'User') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <BranchManagement />;
             case 'purchases':
-                if (user?.role !== 'Admin') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role !== 'Admin') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <PurchaseManagement pageState={pageState} onPageStateConsumed={clearPageState} />;
             case 'licenses':
-                if (user?.role !== 'Admin') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role !== 'Admin') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                  return <LicenseManagement />;
             case 'profile':
                 return <UserProfile />;
@@ -113,7 +113,7 @@ export default function App() {
             case 'kb':
                 return <KnowledgeBase />;
             case 'audits':
-                if (user?.role === 'User') return <div className="p-8 text-center text-red-500">Access Denied</div>;
+                if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <SelfAuditsList />;
             default:
                 return <Home />;

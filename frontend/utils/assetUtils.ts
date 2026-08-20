@@ -18,7 +18,7 @@ export const getWarrantyStatus = (asset: Asset): { label: string, text: string, 
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-        return { label: 'Expired', text: `Expired on ${endDate.toLocaleDateString()}`, color: 'text-red-600 dark:text-red-400' };
+        return { label: 'Expired', text: `Expired on ${endDate.toLocaleDateString()}`, color: 'text-brand-600 dark:text-red-400' };
     } else if (diffDays <= 30) {
         return { label: 'Expiring Soon', text: `Expiring Soon: ${endDate.toLocaleDateString()}`, color: 'text-yellow-600 dark:text-yellow-400' };
     } else {

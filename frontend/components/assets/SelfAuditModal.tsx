@@ -128,16 +128,16 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset 
             <div className="space-y-6 py-2">
                 {/* Stepper Header */}
                 <div className="flex justify-between items-center px-4">
-                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 1 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-600'}`}>1</span>
-                    <div className={`flex-1 h-0.5 mx-2 ${step >= 2 ? 'bg-red-600' : 'bg-slate-200'}`}></div>
-                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 2 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-600'}`}>2</span>
-                    <div className={`flex-1 h-0.5 mx-2 ${step >= 3 ? 'bg-red-600' : 'bg-slate-200'}`}></div>
-                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 3 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-600'}`}>3</span>
+                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 1 ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600'}`}>1</span>
+                    <div className={`flex-1 h-0.5 mx-2 ${step >= 2 ? 'bg-brand-600' : 'bg-slate-200'}`}></div>
+                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 2 ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600'}`}>2</span>
+                    <div className={`flex-1 h-0.5 mx-2 ${step >= 3 ? 'bg-brand-600' : 'bg-slate-200'}`}></div>
+                    <span className={`text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center ${step >= 3 ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-600'}`}>3</span>
                 </div>
 
                 {step === 1 && (
                     <div className="space-y-4 text-center">
-                        <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-3xl font-bold">
+                        <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-900/20 text-brand-600 dark:text-red-400 rounded-full flex items-center justify-center text-3xl font-bold">
                             🔍
                         </div>
                         <h3 className="text-base font-bold text-slate-800 dark:text-white">Step 1: Scan QR Code</h3>
@@ -149,7 +149,7 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset 
                                 value={scannedId} 
                                 onChange={(e) => setScannedId(e.target.value)} 
                                 placeholder="Enter Asset ID manually"
-                                className="w-full text-center px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 text-slate-900 dark:text-slate-100"
+                                className="w-full text-center px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
                             />
                         </div>
 
@@ -157,7 +157,7 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset 
                             <button onClick={handleSimulateScan} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                                 Simulate Scan
                             </button>
-                            <button onClick={handleVerifyScan} disabled={!scannedId.trim()} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-red-700 disabled:opacity-50 transition-colors shadow-md">
+                            <button onClick={handleVerifyScan} disabled={!scannedId.trim()} className="flex-1 bg-brand-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-brand-700 disabled:opacity-50 transition-colors shadow-md">
                                 Verify & Proceed
                             </button>
                         </div>
@@ -166,7 +166,7 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset 
 
                 {step === 2 && (
                     <div className="space-y-4 text-center">
-                        <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-3xl">
+                        <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-900/20 text-brand-600 dark:text-red-400 rounded-full flex items-center justify-center text-3xl">
                             📷
                         </div>
                         <h3 className="text-base font-bold text-slate-800 dark:text-white">Step 2: Take Asset Photo</h3>
@@ -212,7 +212,7 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset 
                                 onChange={(e) => setRemarks(e.target.value)} 
                                 rows={3} 
                                 placeholder="Describe current state (e.g. Good condition, small scratch on lid)"
-                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 text-slate-900 dark:text-slate-100"
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
                             ></textarea>
                         </div>
 

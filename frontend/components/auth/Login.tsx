@@ -56,10 +56,10 @@ const Login: React.FC = () => {
         <div className="min-h-screen flex text-slate-800 dark:text-slate-200">
             {/* Left Side - Visual */}
             <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-600/90 via-slate-900 to-slate-900 z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-600/90 via-slate-900 to-slate-900 z-10" />
                 <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
                 <div className="relative z-20 flex flex-col items-center justify-center p-12 text-center text-white">
-                    <img src="https://avanamedical.com/wp-content/themes/avana/assets/images/logo.png" alt="Avana Logo" className="h-20 mb-8 filter brightness-0 invert" />
+                    <img src="/logo.png" alt="Avana Logo" className="h-20 mb-8 filter brightness-0 invert" />
                     <h1 className="text-4xl font-bold mb-4 tracking-tight">IT Asset Management</h1>
                     <p className="text-lg text-slate-300 max-w-md">Streamline your hardware, licenses, and user requests with our secure enterprise platform.</p>
                 </div>
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-red-600" />
                     
                     <div className="text-center mb-10">
-                        <img src="https://avanamedical.com/wp-content/themes/avana/assets/images/logo.png" alt="Company Logo" className="h-12 mx-auto mb-6 lg:hidden" />
+                        <img src="/logo.png" alt="Company Logo" className="h-12 mx-auto mb-6 lg:hidden" />
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Welcome Back</h2>
                         <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Access your IT workspace</p>
                     </div>
@@ -91,7 +91,7 @@ const Login: React.FC = () => {
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 text-sm rounded-xl flex items-center animate-shake">
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-brand-500 text-red-700 dark:text-red-400 text-sm rounded-xl flex items-center animate-shake">
                             <span className="mr-3 text-lg">⚠️</span>
                             {error}
                         </div>
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-slate-400"
+                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all placeholder:text-slate-400"
                                         placeholder="name@avana.com"
                                     />
                             </div>
@@ -120,7 +120,7 @@ const Login: React.FC = () => {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <label htmlFor="loginPassword" className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Password</label>
-                                <a href="#" className="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Forgot?</a>
+                                <a href="#" className="text-xs font-bold text-brand-600 hover:text-brand-500 dark:text-red-400">Forgot?</a>
                             </div>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
@@ -133,7 +133,7 @@ const Login: React.FC = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-slate-400"
+                                    className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all placeholder:text-slate-400"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -142,7 +142,7 @@ const Login: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-xl text-lg font-black text-white bg-red-600 hover:bg-red-700 transition-all transform active:scale-[0.98] disabled:opacity-50"
+                            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-xl text-lg font-black text-white bg-brand-600 hover:bg-brand-700 transition-all transform active:scale-[0.98] disabled:opacity-50"
                         >
                             {isLoading ? 'Processing...' : 'Sign In'}
                         </button>

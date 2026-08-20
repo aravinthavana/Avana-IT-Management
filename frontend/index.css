@@ -1,6 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Arimo', sans-serif;
+  --font-heading: 'Fira Sans', sans-serif;
+  --font-subheading: 'Zalando Sans', 'Arimo', sans-serif;
+
+  --color-brand-50: #faefd6;
+  --color-brand-100: #f1ddad;
+  --color-brand-200: #e7ca83;
+  --color-brand-300: #deb859;
+  --color-brand-400: #d5a52e;
+  --color-brand-500: #b27f0d;
+  --color-brand-600: #936709;
+  --color-brand-700: #745106;
+  --color-brand-800: #553b03;
+  --color-brand-900: #3c2901;
+  --color-brand-950: #2a1c00;
+
+  --color-avana-dark: #172025;
+  --color-avana-olive: #404131;
+  --color-avana-beige: #d7d0bc;
+  --color-avana-gray: #aab2b2;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
 
 
 @keyframes page-in {

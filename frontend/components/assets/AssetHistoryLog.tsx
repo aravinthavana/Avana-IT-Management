@@ -28,7 +28,7 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId }) => {
                 {relevantHistory.map(entry => (
                     <div key={entry.id} className="flex gap-4">
                         <div className="flex flex-col items-center">
-                            <span className="w-3 h-3 bg-red-500 rounded-full mt-1"></span>
+                            <span className="w-3 h-3 bg-brand-500 rounded-full mt-1"></span>
                             <span className="flex-grow w-px bg-slate-300 dark:bg-slate-600"></span>
                         </div>
                         <div className="pb-4 flex-1">

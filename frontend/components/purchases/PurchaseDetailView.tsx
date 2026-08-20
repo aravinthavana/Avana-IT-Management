@@ -72,7 +72,7 @@ const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBac
                                         download={purchase.invoiceAttachmentFilename} 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:underline font-semibold"
+                                        className="flex items-center gap-2 text-brand-600 dark:text-red-400 hover:underline font-semibold"
                                     >
                                         {ICONS.paperclip}
                                         <span>{purchase.invoiceAttachmentFilename}</span>
@@ -89,7 +89,7 @@ const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase, onBac
                                         download={purchase.poAttachmentFilename} 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:underline font-semibold"
+                                        className="flex items-center gap-2 text-brand-600 dark:text-red-400 hover:underline font-semibold"
                                     >
                                         {ICONS.paperclip}
                                         <span>{purchase.poAttachmentFilename}</span>

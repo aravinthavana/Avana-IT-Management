@@ -11,7 +11,7 @@ const BarChart: React.FC<BarChartProps> = ({ title, data, onItemClick }) => {
     // for sorting and calculations, resolving TypeScript errors about arithmetic operations.
     const dataEntries = (Object.entries(data) as [string, number][]).sort((a, b) => b[1] - a[1]);
     const maxValue = Math.max(...dataEntries.map(([, value]) => value), 0);
-    const colors = ['bg-red-500', 'bg-sky-500', 'bg-amber-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-pink-500'];
+    const colors = ['bg-brand-500', 'bg-sky-500', 'bg-amber-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-pink-500'];
 
     if (dataEntries.length === 0) {
         return (
@@ -37,7 +37,7 @@ const BarChart: React.FC<BarChartProps> = ({ title, data, onItemClick }) => {
                         role="button"
                     >
                         <div className="flex justify-between items-center text-sm mb-1">
-                            <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{key}</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-red-400 transition-colors">{key}</span>
                             <span className="font-bold text-slate-800 dark:text-slate-100">{value}</span>
                         </div>
                         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">

@@ -76,7 +76,7 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
                             <select 
                                 value={assigneeType} 
                                 onChange={(e) => { setAssigneeType(e.target.value as any); setSelectedAssigneeId(''); }} 
-                                className="w-full sm:w-1/3 px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none text-sm"
+                                className="w-full sm:w-1/3 px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm"
                             >
                                 <option value="User">To User</option>
                                 <option value="Asset">To Asset (Device)</option>
@@ -85,7 +85,7 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
                             <select 
                                 value={selectedAssigneeId} 
                                 onChange={(e) => setSelectedAssigneeId(Number(e.target.value))} 
-                                className="w-full flex-1 px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none text-sm"
+                                className="w-full flex-1 px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm"
                             >
                                 <option value="">Select Assignee...</option>
                                 {assigneeType === 'User' 
@@ -97,7 +97,7 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
                             <button 
                                 onClick={handleAssign} 
                                 disabled={!selectedAssigneeId || availableSeats <= 0}
-                                className="bg-red-600 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm whitespace-nowrap"
+                                className="bg-brand-600 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors font-medium text-sm whitespace-nowrap"
                             >
                                 Assign
                             </button>
@@ -125,7 +125,7 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
                                     </div>
                                     <button 
                                         onClick={() => handleUnassign(assignment.id)} 
-                                        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors flex items-center justify-center" 
+                                        className="text-brand-500 hover:text-red-700 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors flex items-center justify-center" 
                                         title="Revoke Seat"
                                     >
                                         {ICONS.unassign || 'Revoke'}

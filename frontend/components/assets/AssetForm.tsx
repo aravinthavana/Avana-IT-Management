@@ -30,7 +30,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
     return (
         <div>
             <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <select id={selectId} name={name} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 text-slate-900 dark:text-slate-100">
+            <select id={selectId} name={name} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 text-slate-900 dark:text-slate-100">
                 {children}
             </select>
         </div>
@@ -42,7 +42,7 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
     return (
         <div>
             <label htmlFor={textareaId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <textarea id={textareaId} name={name} {...props} rows={3} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100"></textarea>
+            <textarea id={textareaId} name={name} {...props} rows={3} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"></textarea>
         </div>
     );
 };
@@ -335,7 +335,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                              {Object.keys(initialFormState.specs).map(key => (
                                  <div key={key}>
                                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
-                                     <input type="text" name={key} value={(formData.specs as any)[key] || ''} onChange={handleSpecChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                                     <input type="text" name={key} value={(formData.specs as any)[key] || ''} onChange={handleSpecChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                                  </div>
                              ))}
                         </div>
@@ -344,13 +344,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                             <div className="space-y-3">
                                 {customFields.map((field) => (
                                     <div key={field.id} className="flex items-center gap-2">
-                                        <input type="text" name="fieldName" value={field.fieldName} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Name (e.g. GPU)" className="w-1/2 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100"/>
-                                        <input type="text" name="fieldValue" value={field.fieldValue} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Value (e.g. NVIDIA RTX 3080)" className="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100"/>
+                                        <input type="text" name="fieldName" value={field.fieldName} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Name (e.g. GPU)" className="w-1/2 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"/>
+                                        <input type="text" name="fieldValue" value={field.fieldValue} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Value (e.g. NVIDIA RTX 3080)" className="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"/>
                                         <button type="button" onClick={() => removeCustomField(field.id)} className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 rounded-full hover:bg-red-200 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">{ICONS.remove}</button>
                                     </div>
                                 ))}
                             </div>
-                            <button type="button" onClick={addCustomField} className="mt-4 text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1"><span className="w-5 h-5">{ICONS.add}</span> Add Custom Field</button>
+                            <button type="button" onClick={addCustomField} className="mt-4 text-sm font-medium text-brand-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1"><span className="w-5 h-5">{ICONS.add}</span> Add Custom Field</button>
                         </div>
                     </fieldset>
                 )}
@@ -361,7 +361,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
 
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
                     <button type="button" onClick={onClose} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
-                    <button type="submit" disabled={isSubmitting} className={`w-full sm:w-auto justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <button type="submit" disabled={isSubmitting} className={`w-full sm:w-auto justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         {isSubmitting ? 'Saving...' : 'Save Asset'}
                     </button>
                 </div>

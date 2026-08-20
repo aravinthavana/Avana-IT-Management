@@ -27,7 +27,7 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
         return (
             <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
                 <h2 className="text-xl font-semibold">Department not found</h2>
-                <button onClick={onBack} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">&larr; Back to Departments</button>
+                <button onClick={onBack} className="mt-4 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">&larr; Back to Departments</button>
             </div>
         );
     }
@@ -76,7 +76,7 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
                         <button onClick={onBack} className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center text-sm transition-colors flex-shrink-0">&larr; <span className="hidden sm:inline ml-2 font-medium">Back</span></button>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate" title={department.name}>{department.name} Department</h2>
                     </div>
-                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
+                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
                         {ICONS.add} <span className="hidden sm:inline">Assign Asset</span>
                     </button>
                 </div>

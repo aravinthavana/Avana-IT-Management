@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [logout]);
 
     if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div></div>;
+        return <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-600"></div></div>;
     }
 
     return (

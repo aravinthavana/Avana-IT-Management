@@ -66,10 +66,10 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                             placeholder="Search by invoice or vendor..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                     </div>
-                    <button onClick={() => handleOpenForm()} className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 w-full sm:w-auto font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2">
+                    <button onClick={() => handleOpenForm()} className="bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 w-full sm:w-auto font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2">
                         <div className="w-4 h-4">{ICONS.add}</div>
                         Add New Purchase
                     </button>
@@ -79,7 +79,7 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                         <div key={purchase.id} onClick={() => setSelectedPurchaseId(purchase.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-semibold text-red-600 dark:text-red-400">{purchase.invoiceNumber}</p>
+                                    <p className="font-semibold text-brand-600 dark:text-red-400">{purchase.invoiceNumber}</p>
                                     {(purchase as any).poNumber && (
                                         <span className="text-xs bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-mono">
                                             PO: {(purchase as any).poNumber}

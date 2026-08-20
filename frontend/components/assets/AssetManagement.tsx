@@ -409,7 +409,7 @@ const AssetManagement: React.FC = () => {
                  <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <div className="relative w-full sm:w-auto flex-1 max-w-md">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">{ICONS.search}</span>
-                        <input type="text" placeholder="Search assets..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm" />
+                        <input type="text" placeholder="Search assets..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all shadow-sm" />
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                          <button onClick={handleExportCSV} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm" title="Export to CSV">
@@ -422,7 +422,7 @@ const AssetManagement: React.FC = () => {
                                 ) : (
                                     <button onClick={() => setIsSelectMode(true)} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 px-5 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 w-full sm:w-auto font-medium transition-all active:scale-95 shadow-sm">Select</button>
                                 )}
-                                <button onClick={handleOpenCreationMethod} className="bg-red-600 text-white px-5 py-2.5 rounded-xl hover:bg-red-700 w-full sm:w-auto font-bold transition-all active:scale-95 shadow-lg shadow-red-600/20">Add New Asset</button>
+                                <button onClick={handleOpenCreationMethod} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 w-full sm:w-auto font-bold transition-all active:scale-95 shadow-lg shadow-brand-600/20">Add New Asset</button>
                              </>
                          )}
                     </div>
@@ -432,7 +432,7 @@ const AssetManagement: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">{ICONS.filter} Filters:</span>
                          {assetFilters.length < Object.keys(filterableAssetFields).length && (
-                            <button onClick={addFilter} className="flex items-center justify-center w-7 h-7 bg-red-100 text-red-600 rounded-full hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400 transition-colors">{ICONS.add}</button>
+                            <button onClick={addFilter} className="flex items-center justify-center w-7 h-7 bg-red-100 text-brand-600 rounded-full hover:bg-red-200 dark:bg-red-900/50 dark:text-red-400 transition-colors">{ICONS.add}</button>
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -444,7 +444,7 @@ const AssetManagement: React.FC = () => {
                                         <option value={filter.field}>{filterableAssetFields[filter.field]}</option>
                                         {availableFields.map(fieldKey => <option key={fieldKey} value={fieldKey}>{filterableAssetFields[fieldKey]}</option>)}
                                     </select>
-                                    <select value={filter.value} onChange={(e) => updateFilter(filter.id, null, { value: e.target.value })} className="flex-1 text-sm bg-transparent border-none focus:ring-0 font-semibold text-red-600 dark:text-red-400">
+                                    <select value={filter.value} onChange={(e) => updateFilter(filter.id, null, { value: e.target.value })} className="flex-1 text-sm bg-transparent border-none focus:ring-0 font-semibold text-brand-600 dark:text-red-400">
                                         {getOptionsForAssetField(filter.field).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                     </select>
                                     {assetFilters.length > 1 && ( <button onClick={() => removeFilter(filter.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">{ICONS.close}</button> )}
@@ -454,7 +454,7 @@ const AssetManagement: React.FC = () => {
                     </div>
                      <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-2">
                         <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">{ICONS.sort} Sort by:</span>
-                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm bg-slate-100 dark:bg-slate-900 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-red-500 text-slate-700 dark:text-slate-200">
+                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm bg-slate-100 dark:bg-slate-900 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-brand-500 text-slate-700 dark:text-slate-200">
                            <option value="name-asc">Name (A-Z)</option><option value="name-desc">Name (Z-A)</option>
                            <option value="purchaseDate-desc">Purchase Date (Newest)</option><option value="purchaseDate-asc">Purchase Date (Oldest)</option>
                            <option value="category-asc">Category (A-Z)</option><option value="category-desc">Category (Z-A)</option>
@@ -468,7 +468,7 @@ const AssetManagement: React.FC = () => {
                            <input
                                 id="select-all-assets"
                                 type="checkbox"
-                                className="h-5 w-5 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                className="h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                 checked={selectedAssetIds.size === processedAssets.length}
                                 onChange={handleToggleSelectAll}
                            />
@@ -481,10 +481,10 @@ const AssetManagement: React.FC = () => {
                     {paginatedAssets.map((asset) => {
                         const assignee = getAssignee(asset.assigneeId, asset.assigneeType);
                         return (
-                            <div key={asset.id} onClick={() => handleRowClick(asset.id)} className={`group relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${selectedAssetIds.has(asset.id) ? 'border-red-500 ring-2 ring-red-500/10 bg-red-50/30 dark:bg-red-900/10' : 'border-slate-100 dark:border-slate-700 dark:hover:bg-slate-700/50'}`}>
+                            <div key={asset.id} onClick={() => handleRowClick(asset.id)} className={`group relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${selectedAssetIds.has(asset.id) ? 'border-brand-500 ring-2 ring-brand-500/10 bg-red-50/30 dark:bg-red-900/10' : 'border-slate-100 dark:border-slate-700 dark:hover:bg-slate-700/50'}`}>
                                 <div className="flex items-center gap-4 w-full sm:w-auto flex-1 min-w-0">
                                     {isSelectMode && (
-                                        <input type="checkbox" checked={selectedAssetIds.has(asset.id)} onChange={() => handleToggleSelect(asset.id)} onClick={(e) => e.stopPropagation()} className="w-5 h-5 text-red-600 rounded-lg focus:ring-red-500 border-slate-300 dark:border-slate-600" />
+                                        <input type="checkbox" checked={selectedAssetIds.has(asset.id)} onChange={() => handleToggleSelect(asset.id)} onClick={(e) => e.stopPropagation()} className="w-5 h-5 text-brand-600 rounded-lg focus:ring-brand-500 border-slate-300 dark:border-slate-600" />
                                     )}
                                     <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform shadow-inner">
                                         {ASSET_ICONS[asset.category] || ASSET_ICONS.default}
@@ -521,7 +521,7 @@ const AssetManagement: React.FC = () => {
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isAdminOrManager && (
                                         <>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditAsset(asset); }} className="p-2.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.edit}</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditAsset(asset); }} className="p-2.5 text-slate-400 hover:text-brand-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.edit}</button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(asset.id); }} className="p-2.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.delete}</button>
                                         </>
                                     )}
@@ -537,7 +537,7 @@ const AssetManagement: React.FC = () => {
                             </div>
                             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">No assets found</h3>
                             <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your filters or search terms.</p>
-                             <button onClick={() => { setSearchTerm(''); setAssetFilters(defaultAssetFilter); }} className="px-6 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 transition-all">Reset All Filters</button>
+                             <button onClick={() => { setSearchTerm(''); setAssetFilters(defaultAssetFilter); }} className="px-6 py-2 bg-red-50 text-brand-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 transition-all">Reset All Filters</button>
                         </div>
                     )}
 
@@ -564,7 +564,7 @@ const AssetManagement: React.FC = () => {
                                             <button 
                                                 key={page}
                                                 onClick={() => setCurrentPage(page)}
-                                                className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === page ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === page ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                                             >
                                                 {page}
                                             </button>

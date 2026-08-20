@@ -16,7 +16,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
     return (
         <div>
             <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
         </div>
     );
 };
@@ -26,7 +26,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
     return (
         <div>
             <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <select id={selectId} name={name} value={value ?? ''} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100">
+            <select id={selectId} name={name} value={value ?? ''} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100">
                 {children}
             </select>
         </div>
@@ -188,7 +188,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                 </div>
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
                     <button type="button" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">Cancel</button>
-                    <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">
+                    <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">
                         {isLoading ? 'Saving...' : 'Save User'}
                     </button>
                 </div>

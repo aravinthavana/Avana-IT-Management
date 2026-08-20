@@ -97,12 +97,12 @@ const LicenseManagement: React.FC = () => {
                         placeholder="Search licenses..." 
                         value={searchTerm} 
                         onChange={(e) => setSearchTerm(e.target.value)} 
-                        className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-red-500" 
+                        className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-500" 
                     />
                 </div>
                 <button 
                     onClick={openAddForm} 
-                    className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95 w-full sm:w-auto"
+                    className="bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 w-full sm:w-auto"
                 >
                     Add License
                 </button>
@@ -154,7 +154,7 @@ const LicenseManagement: React.FC = () => {
                         {/* Progress Bar for Seats */}
                         <div className="w-full bg-slate-200 rounded-full h-2 mb-4 dark:bg-slate-700">
                             <div 
-                                className={`h-2 rounded-full ${(license.assignedSeats || (license.assignments?.length || 0)) >= license.seats ? 'bg-red-500' : 'bg-green-500'}`} 
+                                className={`h-2 rounded-full ${(license.assignedSeats || (license.assignments?.length || 0)) >= license.seats ? 'bg-brand-500' : 'bg-green-500'}`} 
                                 style={{ width: `${Math.min((((license.assignedSeats || (license.assignments?.length || 0)) / license.seats) * 100), 100)}%` }}
                             ></div>
                         </div>

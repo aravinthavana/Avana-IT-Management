@@ -42,7 +42,7 @@ const Home: React.FC = () => {
             <div className="space-y-8 animate-fade-in">
                 <PendingHandovers />
                 {/* Hero / Welcome Section */}
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-3xl p-8 sm:p-10 text-white shadow-2xl relative overflow-hidden">
+                <div className="bg-gradient-to-br from-brand-600 to-red-800 rounded-3xl p-8 sm:p-10 text-white shadow-2xl relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
                     <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-black/10 rounded-full blur-2xl" />
                     
@@ -51,13 +51,13 @@ const Home: React.FC = () => {
                         <p className="text-red-100 text-lg max-w-lg opacity-90">Welcome to your IT service portal. Manage your assets and requests in one place.</p>
                         
                         <div className="mt-8 flex flex-wrap gap-4">
-                            <button onClick={() => navigate('requests')} className="px-6 py-3 bg-white text-red-600 rounded-xl font-bold transition-all hover:bg-red-50 active:scale-95 flex items-center gap-2 shadow-lg">
+                            <button onClick={() => navigate('requests')} className="px-6 py-3 bg-white text-brand-600 rounded-xl font-bold transition-all hover:bg-red-50 active:scale-95 flex items-center gap-2 shadow-lg">
                                 {ICONS.add} Submit New Request
                             </button>
-                            <button onClick={() => navigate('tickets')} className="px-6 py-3 bg-red-500/30 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold transition-all hover:bg-red-500/40 active:scale-95 flex items-center gap-2">
+                            <button onClick={() => navigate('tickets')} className="px-6 py-3 bg-brand-500/30 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold transition-all hover:bg-brand-500/40 active:scale-95 flex items-center gap-2">
                                 {ICONS.tickets} Get Support
                             </button>
-                            <button onClick={() => navigate('kb')} className="px-6 py-3 bg-red-500/30 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold transition-all hover:bg-red-500/40 active:scale-95 flex items-center gap-2">
+                            <button onClick={() => navigate('kb')} className="px-6 py-3 bg-brand-500/30 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold transition-all hover:bg-brand-500/40 active:scale-95 flex items-center gap-2">
                                 {ICONS.kb} Knowledge Base
                             </button>
                         </div>
@@ -127,7 +127,7 @@ const Home: React.FC = () => {
                                             <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{new Date(req.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     ))}
-                                    <button onClick={() => navigate('requests')} className="w-full py-2 text-sm font-bold text-red-600 dark:text-red-400 hover:underline">
+                                    <button onClick={() => navigate('requests')} className="w-full py-2 text-sm font-bold text-brand-600 dark:text-red-400 hover:underline">
                                         View All Requests &rarr;
                                     </button>
                                 </div>
@@ -149,7 +149,7 @@ const Home: React.FC = () => {
                                             <span className={`w-2 h-2 rounded-full ${ticket.status === 'Open' ? 'bg-green-500 animate-pulse' : ticket.status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-300'}`} />
                                         </div>
                                     ))}
-                                    <button onClick={() => navigate('tickets')} className="w-full py-2 text-sm font-bold text-red-600 dark:text-red-400 hover:underline text-center">
+                                    <button onClick={() => navigate('tickets')} className="w-full py-2 text-sm font-bold text-brand-600 dark:text-red-400 hover:underline text-center">
                                         View All Tickets &rarr;
                                     </button>
                                 </div>
@@ -163,7 +163,7 @@ const Home: React.FC = () => {
                                 {ICONS.info} Need Help?
                             </h4>
                             <p className="text-sm text-red-700/80 dark:text-red-300/80 mb-4">Contact IT support if you're having issues with your equipment.</p>
-                            <a href="mailto:it-support@avana.com" className="block w-full py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 rounded-lg text-center text-sm font-bold shadow-sm hover:shadow-md transition-all">
+                            <a href="mailto:it-support@avana.com" className="block w-full py-2 bg-white dark:bg-slate-800 text-brand-600 dark:text-red-400 rounded-lg text-center text-sm font-bold shadow-sm hover:shadow-md transition-all">
                                 Email IT Support
                             </a>
                         </div>

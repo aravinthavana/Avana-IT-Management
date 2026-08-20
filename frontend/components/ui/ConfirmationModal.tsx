@@ -32,7 +32,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
                     <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">{children}</p>
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-center gap-3">
                         <button onClick={onClose} className="w-full sm:w-auto justify-center px-6 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
-                        <button onClick={onConfirm} className="w-full sm:w-auto justify-center px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 active:scale-95 flex items-center">Confirm</button>
+                        <button onClick={onConfirm} className="w-full sm:w-auto justify-center px-6 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition-all duration-200 active:scale-95 flex items-center">Confirm</button>
                     </div>
                 </div>
             </div>

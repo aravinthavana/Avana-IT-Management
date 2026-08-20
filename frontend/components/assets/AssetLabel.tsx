@@ -11,7 +11,7 @@ interface AssetLabelProps {
 const CompanyLogo: React.FC<{ company: string }> = ({ company }) => {
     return (
         <div className="text-center flex flex-col items-center">
-            <img src="https://avanamedical.com/wp-content/themes/avana/assets/images/logo.png" alt="Avana Logo" className="h-6" />
+            <img src="/logo.png" alt="Avana Logo" className="h-6" />
             <p className="text-[7px] font-light tracking-widest text-gray-600 -mt-1">IT ASSET</p>
         </div>
     );

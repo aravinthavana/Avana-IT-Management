@@ -12,7 +12,7 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
     <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-        <input {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+        <input {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
     </div>
 );
 
@@ -136,7 +136,7 @@ const BranchManagement: React.FC = () => {
                     />
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
                         <button type="button" onClick={handleCloseForm} className="w-full sm:w-auto flex justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95">Cancel</button>
-                        <button type="submit" className="w-full sm:w-auto flex justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95">Save</button>
+                        <button type="submit" className="w-full sm:w-auto flex justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95">Save</button>
                     </div>
                 </form>
             </Modal>
@@ -144,7 +144,7 @@ const BranchManagement: React.FC = () => {
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md">
                 <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Manage Branches</h2>
-                    <button onClick={() => handleOpenForm()} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 font-medium transition-all duration-200 active:scale-95">
+                    <button onClick={() => handleOpenForm()} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 font-medium transition-all duration-200 active:scale-95">
                         <div className="w-4 h-4">{ICONS.add}</div>
                         <span className="hidden sm:inline">Add Branch</span>
                     </button>
@@ -157,7 +157,7 @@ const BranchManagement: React.FC = () => {
                                  <p className="text-sm text-slate-500 dark:text-slate-400">{branch.location} &bull; Assets: {assetCounts[branch.id] || 0}</p>
                              </div>
                              <div className="flex items-center space-x-2">
-                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-500" title="Edit">{ICONS.edit}</button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-brand-600 dark:hover:text-brand-500" title="Edit">{ICONS.edit}</button>
                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-500" title="Delete">{ICONS.delete}</button>
                              </div>
                          </div>

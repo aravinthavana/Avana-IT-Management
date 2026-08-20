@@ -183,7 +183,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                     </div>
                                 )}
 
-                                <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors flex-shrink-0">
+                                <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm transition-colors flex-shrink-0">
                                     {ICONS.qr} <span className="hidden sm:inline">Print Label</span>
                                 </button>
                             </>
@@ -221,7 +221,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         <DetailItem label="Location" value={asset.location} />
                         {purchase && (
                             <DetailItem label="Invoice Number" value={
-                                <a href="#" onClick={handlePurchaseClick} className="text-red-600 dark:text-red-400 hover:underline font-semibold">
+                                <a href="#" onClick={handlePurchaseClick} className="text-brand-600 dark:text-red-400 hover:underline font-semibold">
                                     {purchase.invoiceNumber}
                                 </a>
                             } />

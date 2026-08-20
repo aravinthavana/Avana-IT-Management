@@ -96,27 +96,27 @@ const UserProfile: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
-                            <input id="fullName" name="fullName" type="text" value={name} onChange={(e) => setName(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`} />
+                            <input id="fullName" name="fullName" type="text" value={name} onChange={(e) => setName(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-brand-500 focus:ring-brand-500'}`} />
                         </div>
                         <div>
                             <label htmlFor="profileEmail" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-                            <input id="profileEmail" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`} />
+                            <input id="profileEmail" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-brand-500 focus:ring-brand-500'}`} />
                         </div>
                         <div>
                             <label htmlFor="mobile" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Mobile Number</label>
-                            <input id="mobile" name="mobile" type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="mobile" name="mobile" type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                         <div>
                             <label htmlFor="jobTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
-                            <input id="jobTitle" name="jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="jobTitle" name="jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                         <div>
                             <label htmlFor="company" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Company</label>
-                            <input id="company" name="company" type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="company" name="company" type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                         <div>
                             <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Employee ID</label>
-                            <input id="employeeId" name="employeeId" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="employeeId" name="employeeId" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                     </div>
 
@@ -124,20 +124,20 @@ const UserProfile: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">
                             <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
-                            <input id="currentPassword" name="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Required if changing password" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="currentPassword" name="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Required if changing password" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                         <div>
                             <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
-                            <input id="newPassword" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="newPassword" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
-                            <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-slate-100" />
+                            <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
                         </div>
                     </div>
 
                     <div className="flex justify-end pt-6">
-                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-red-600 text-white px-8 py-2.5 rounded-xl hover:bg-red-700 font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md">
+                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-brand-600 text-white px-8 py-2.5 rounded-xl hover:bg-brand-700 font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md">
                             {isSubmitting ? 'Updating...' : 'Save All Changes'}
                         </button>
                     </div>

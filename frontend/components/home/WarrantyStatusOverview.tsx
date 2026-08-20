@@ -30,7 +30,7 @@ const WarrantyStatusOverview: React.FC<WarrantyStatusOverviewProps> = ({ onStatu
     const statusItems = [
         { label: 'Active', color: 'border-green-500', textColor: 'text-green-600 dark:text-green-400' },
         { label: 'Expiring Soon', color: 'border-yellow-500', textColor: 'text-yellow-600 dark:text-yellow-400' },
-        { label: 'Expired', color: 'border-red-500', textColor: 'text-red-600 dark:text-red-400' },
+        { label: 'Expired', color: 'border-brand-500', textColor: 'text-brand-600 dark:text-red-400' },
     ] as const;
 
     return (

@@ -88,7 +88,7 @@ const AssetRequestList: React.FC = () => {
                 </div>
                 <button 
                     onClick={() => setIsFormOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors shadow-sm active:scale-95"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium transition-colors shadow-sm active:scale-95"
                 >
                     {ICONS.add} New Request
                 </button>
