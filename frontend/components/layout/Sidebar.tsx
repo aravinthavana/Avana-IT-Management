@@ -67,17 +67,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
     return (
         <>
             <aside className={`bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-slate-200 dark:border-slate-800 flex flex-col`}>
-                <div className="p-4 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 h-16 shrink-0">
+                <div className="p-4 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 h-20 shrink-0">
                     <a
                         href="#"
                         onClick={(e) => {
                             e.preventDefault();
                             navigate('dashboard');
                         }}
-                        className="block"
+                        className="flex justify-center"
                         aria-label="Go to dashboard"
                     >
-                        <img src="/logo.png" alt="Company Logo" className="h-10" />
+                        <img src="/logo.png" alt="Company Logo" className="h-14 object-contain" />
                     </a>
                 </div>
                 <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">

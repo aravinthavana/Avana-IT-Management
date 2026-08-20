@@ -59,7 +59,7 @@ const Login: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-600/90 via-slate-900 to-slate-900 z-10" />
                 <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
                 <div className="relative z-20 flex flex-col items-center justify-center p-12 text-center text-white">
-                    <img src="/logo.png" alt="Avana Logo" className="h-20 mb-8 filter brightness-0 invert" />
+                    <img src="/logo-light.png" alt="Avana Logo" className="h-32 object-contain mb-8" />
                     <h1 className="text-4xl font-bold mb-4 tracking-tight">IT Asset Management</h1>
                     <p className="text-lg text-slate-300 max-w-md">Streamline your hardware, licenses, and user requests with our secure enterprise platform.</p>
                 </div>
@@ -68,10 +68,10 @@ const Login: React.FC = () => {
             {/* Right Side - Login Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50 dark:bg-slate-900">
                 <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-10 border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-red-600" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-500 to-brand-600" />
                     
                     <div className="text-center mb-10">
-                        <img src="/logo.png" alt="Company Logo" className="h-12 mx-auto mb-6 lg:hidden" />
+                        <img src="/logo.png" alt="Company Logo" className="h-24 object-contain mx-auto mb-6 lg:hidden" />
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Welcome Back</h2>
                         <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Access your IT workspace</p>
                     </div>
