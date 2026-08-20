@@ -11,8 +11,8 @@ interface AssetLabelProps {
 const CompanyLogo: React.FC<{ company: string }> = ({ company }) => {
     return (
         <div className="text-center flex flex-col items-center">
-            <img src="/logo.png" alt="Avana Logo" className="h-10 object-contain" />
-            <p className="text-[7px] font-light tracking-widest text-gray-600 mt-0.5">IT ASSET</p>
+            <img src="/logo.png" alt="Avana Logo" className="w-32 object-contain" />
+            <p className="text-[7px] font-light tracking-widest text-gray-600 mt-1">IT ASSET</p>
         </div>
     );
 };

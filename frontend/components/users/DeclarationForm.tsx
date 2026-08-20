@@ -69,7 +69,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                     {currentCompany.cin && <p>CIN No. : {currentCompany.cin}</p>}
                 </div>
                 <div className="text-right flex flex-col items-end">
-                     <img src="/logo.png" alt="Avana Logo" className="h-16 object-contain" />
+                     <img src="/logo.png" alt="Avana Logo" className="w-64 object-contain" />
                 </div>
             </header>
             
