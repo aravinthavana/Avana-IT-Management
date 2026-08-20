@@ -78,7 +78,14 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                     {filteredPurchases.map(purchase => (
                         <div key={purchase.id} onClick={() => setSelectedPurchaseId(purchase.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
                             <div className="min-w-0 flex-1">
-                                <p className="font-semibold text-red-600 dark:text-red-400">{purchase.invoiceNumber}</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-red-600 dark:text-red-400">{purchase.invoiceNumber}</p>
+                                    {(purchase as any).poNumber && (
+                                        <span className="text-xs bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-mono">
+                                            PO: {(purchase as any).poNumber}
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-slate-600 dark:text-slate-300">{purchase.vendor || 'No Vendor'}</p>
                                 <div className="flex items-center gap-3 mt-1 flex-wrap">
                                     <p className="text-xs text-slate-500 dark:text-slate-400">

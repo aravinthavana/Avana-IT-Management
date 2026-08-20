@@ -101,7 +101,8 @@ const AssetRequestList: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-4 font-semibold">Request ID</th>
                                 <th className="px-6 py-4 font-semibold">Requester</th>
-                                <th className="px-6 py-4 font-semibold">Details</th>
+                                <th className="px-6 py-4 font-semibold">Type & Category</th>
+                                <th className="px-6 py-4 font-semibold">Description</th>
                                 <th className="px-6 py-4 font-semibold">Status</th>
                                 <th className="px-6 py-4 font-semibold">Date</th>
                                 <th className="px-6 py-4 font-semibold text-right">Actions</th>
@@ -110,16 +111,22 @@ const AssetRequestList: React.FC = () => {
                         <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                             {requests.map(req => (
                                 <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium">REQ-{req.id.toString().padStart(4, '0')}</td>
+                                    <td className="px-6 py-4 font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">REQ-{req.id.toString().padStart(4, '0')}</td>
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-slate-900 dark:text-white">{req.user?.name || 'Unknown User'}</div>
+                                        {req.user?.email && <div className="text-xs text-slate-400">{req.user.email}</div>}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">{req.requestType}</span>
+                                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">{req.category}</span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 max-w-xs">
-                                        <div className="font-medium">{req.requestType} - {req.category}</div>
-                                        <div className="text-xs text-slate-500 truncate mt-1" title={req.description}>{req.description}</div>
+                                        <div className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2" title={req.description}>{req.description || '-'}</div>
                                     </td>
-                                    <td className="px-6 py-4">{getStatusBadge(req.status)}</td>
-                                    <td className="px-6 py-4">{new Date(req.createdAt).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(req.status)}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500">{new Date(req.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right space-x-2">
                                         {/* Manager Actions */}
                                         {user?.role === 'Manager' && req.status === 'Pending Manager' && (

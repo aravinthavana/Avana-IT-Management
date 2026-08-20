@@ -236,14 +236,20 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput label="Asset Name" type="text" name="name" value={formData.name} onChange={handleChange} required />
                         <FormSelect label="Company" name="company" value={formData.company} onChange={handleChange} disabled={!!purchaseDate || isEditing}>
-                            <option>AMD</option><option>ASSP</option><option>ATS</option>
+                            <option value="AMD">AMD — Avana Medical Devices</option>
+                            <option value="ASSP">ASSP — Avana Surgical Systems</option>
+                            <option value="ATS">ATS — Avana Technology Services</option>
                         </FormSelect>
                         {assetType === 'Device' ? (
                             <FormSelect label="Device Type" name="category" value={formData.category} onChange={handleChange}>
-                                <option>Laptop</option><option>Desktop</option><option>Phone</option><option>Tablet</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Desktop">Desktop</option>
+                                <option value="Server">Server</option>
+                                <option value="Mobile">Mobile / Smartphone</option>
+                                <option value="Tablet">Tablet</option>
                             </FormSelect>
                         ) : (
-                            <FormInput label="Category" type="text" name="category" value={formData.category} onChange={handleChange} placeholder="e.g., Monitor, Keyboard" required />
+                            <FormInput label="Category" type="text" name="category" value={formData.category} onChange={handleChange} placeholder="e.g., Monitor, Keyboard, Printer, Switch" required />
                         )}
                         <FormInput label="Brand" type="text" name="brand" value={formData.brand} onChange={handleChange} />
                         <FormInput label="Model" type="text" name="model" value={formData.model} onChange={handleChange} />

@@ -290,17 +290,27 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                         </div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {user.employeeId && <span className="font-medium mr-1">[{user.employeeId}]</span>}
-                                            {user.email} {deptName ? `• ${deptName}` : ''}
+                                            {user.email} {deptName ? `• ${deptName}` : ''} {user.mobile ? `• ${user.mobile}` : ''}
                                         </p>
-                                        {user.jobTitle && (
-                                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                                {user.jobTitle} {user.branch?.name ? `• ${user.branch.name}` : ''}
-                                            </p>
-                                        )}
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                            {[user.jobTitle, user.branch?.name, user.location].filter(Boolean).join(' • ')}
+                                        </p>
                                     </div>
                                 </div>
 
                                 <div className="hidden lg:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 text-center">
+                                    <div>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Laptop</p>
+                                        <div className="mt-1">
+                                            {user.laptopStatus ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300" title={user.laptopStatus}>
+                                                    {user.laptopStatus.length > 12 ? user.laptopStatus.substring(0, 10) + '...' : user.laptopStatus}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">-</span>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">License</p>
                                         <div className="mt-1">

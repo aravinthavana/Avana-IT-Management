@@ -502,6 +502,14 @@ const AssetManagement: React.FC = () => {
                                 </div>
                                 <div className="hidden lg:flex items-center gap-8 px-6 border-x border-slate-50 dark:border-slate-700 mx-4 text-xs">
                                     <div className="text-center">
+                                        <p className="text-slate-400 mb-1 font-bold uppercase tracking-tighter text-[9px]">Brand & Model</p>
+                                        <p className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[120px]" title={`${asset.brand || ''} ${asset.model || ''}`}>{asset.brand || '-'} {asset.model || '-'}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-slate-400 mb-1 font-bold uppercase tracking-tighter text-[9px]">Company</p>
+                                        <p className="text-slate-700 dark:text-slate-300 font-semibold">{asset.company || 'N/A'}</p>
+                                    </div>
+                                    <div className="text-center">
                                         <p className="text-slate-400 mb-1 font-bold uppercase tracking-tighter text-[9px]">Category</p>
                                         <p className="text-slate-700 dark:text-slate-300 font-semibold">{asset.category}</p>
                                     </div>
