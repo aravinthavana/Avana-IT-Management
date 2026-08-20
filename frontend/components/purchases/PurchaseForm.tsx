@@ -29,7 +29,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
     const invoiceFileInputRef = useRef<HTMLInputElement>(null);
     const poFileInputRef = useRef<HTMLInputElement>(null);
     
-    const [formData, setFormData] = useState({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: '', invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
+    const [formData, setFormData] = useState({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: '', amount: '', invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
     const [assetsInPurchase, setAssetsInPurchase] = useState<Asset[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -39,9 +39,9 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
 
     useEffect(() => {
         if (purchase) {
-            setFormData({ invoiceNumber: purchase.invoiceNumber, poNumber: (purchase as any).poNumber || '', vendor: purchase.vendor || '', purchaseDate: purchase.purchaseDate, invoiceAttachmentUrl: (purchase as any).invoiceAttachmentUrl || '', invoiceAttachmentFilename: (purchase as any).invoiceAttachmentFilename || '', poAttachmentUrl: (purchase as any).poAttachmentUrl || '', poAttachmentFilename: (purchase as any).poAttachmentFilename || '' });
+            setFormData({ invoiceNumber: purchase.invoiceNumber, poNumber: (purchase as any).poNumber || '', vendor: purchase.vendor || '', purchaseDate: purchase.purchaseDate, amount: purchase.amount?.toString() || '', invoiceAttachmentUrl: (purchase as any).invoiceAttachmentUrl || '', invoiceAttachmentFilename: (purchase as any).invoiceAttachmentFilename || '', poAttachmentUrl: (purchase as any).poAttachmentUrl || '', poAttachmentFilename: (purchase as any).poAttachmentFilename || '' });
         } else {
-            setFormData({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: new Date().toISOString().split('T')[0], invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
+            setFormData({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: new Date().toISOString().split('T')[0], amount: '', invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
             setAssetsInPurchase([]);
         }
     }, [purchase, isOpen]);
@@ -100,9 +100,14 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
             // 1. Create the purchase record
             const purchasePayload = {
                 invoiceNumber: formData.invoiceNumber,
+                poNumber: formData.poNumber || null,
                 vendor: formData.vendor,
                 purchaseDate: new Date(formData.purchaseDate).toISOString(),
-                amount: 0,
+                amount: formData.amount ? Number(formData.amount) : 0,
+                invoiceAttachmentUrl: formData.invoiceAttachmentUrl || null,
+                invoiceAttachmentFilename: formData.invoiceAttachmentFilename || null,
+                poAttachmentUrl: formData.poAttachmentUrl || null,
+                poAttachmentFilename: formData.poAttachmentFilename || null,
             };
             const purchaseRes = await fetch(`${API_URL}/api/purchases`, {
                 method: 'POST', headers: getHeaders(), credentials: 'include', body: JSON.stringify(purchasePayload),
@@ -141,13 +146,15 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                     <fieldset>
                         <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Purchase Details</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormInput label="Invoice Number" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} required />
-                            <FormInput label="Purchase Order (PO) Number (Optional)" name="poNumber" value={formData.poNumber} onChange={handleChange} />
-                            <FormInput label="Vendor" name="vendor" value={formData.vendor} onChange={handleChange} required />
-                            <FormInput label="Purchase Date" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={handleChange} required />
+                            <FormInput label="Invoice Number *" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} required />
+                            <FormInput label="Purchase Order (PO) Number" name="poNumber" value={formData.poNumber} onChange={handleChange} />
+                            <FormInput label="Vendor *" name="vendor" value={formData.vendor} onChange={handleChange} required />
+                            <FormInput label="Purchase Date *" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={handleChange} required />
+                            <FormInput label="Total Amount (₹) *" name="amount" type="number" step="0.01" min="0" value={formData.amount} onChange={handleChange} required />
+                            <div className="hidden md:block"></div> {/* empty div for layout alignment */}
                             
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Invoice Attachment (Optional)</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Invoice Attachment</label>
                                 {formData.invoiceAttachmentFilename ? (
                                     <div className="mt-1 flex justify-between items-center p-2 pl-3 bg-slate-100 dark:bg-slate-900/50 rounded-md border border-slate-300 dark:border-slate-600">
                                         <div className="flex items-center gap-2 min-w-0">

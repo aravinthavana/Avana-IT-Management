@@ -108,6 +108,13 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                     </span>
                                 )}
                             </h2>
+                            <p className="text-slate-600 dark:text-slate-300 mt-2"><strong>Email:</strong> {user.email || 'N/A'}</p>
+                            <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2 mb-2">
+                                <strong>Role:</strong>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' : user.role === 'Manager' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>{user.role || 'User'}</span>
+                                <strong className="ml-3">Status:</strong>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${user.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>{user.status || 'Active'}</span>
+                            </p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Employee ID:</strong> {user.employeeId || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Mobile:</strong> {user.mobile || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Job Title:</strong> {user.jobTitle || 'N/A'}</p>
