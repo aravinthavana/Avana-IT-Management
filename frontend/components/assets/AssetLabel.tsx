@@ -28,7 +28,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset }) => {
     }, [asset.assetId]);
 
     return (
-        <div className="bg-white overflow-hidden flex flex-col p-1 border border-dashed border-gray-400" style={{ width: '189px', height: '113px' }}>
+        <div className="bg-white overflow-hidden flex flex-col p-1" style={{ width: '189px', height: '113px' }}>
             {/* Header: Logo with Cropped Transparency */}
             <div className="relative w-full flex justify-center items-center shrink-0 overflow-hidden" style={{ height: '36px' }}>
                 <img src="/logo.png" alt="Avana Logo" className="absolute" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />

@@ -21,10 +21,13 @@ export default function PrintLabelPreview() {
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
         <style>
-          body { background-color: transparent; display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; }
+          html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+          body { background-color: transparent; display: flex; align-items: center; justify-content: center; }
           @media print {
-            body { background-color: #FFFFFF; padding: 0; margin: 0; display: block; }
-            #label-container { position: absolute; top: 0; left: 0; }
+            @page { size: 50mm 30mm; margin: 0; }
+            html, body { width: 50mm; height: 30mm; overflow: hidden; background-color: #FFFFFF; }
+            #mount-point { width: 100%; height: 100%; }
+            #label-container { position: absolute; top: 0; left: 0; margin: 0; padding: 0; overflow: hidden; }
           }
         </style>
       </head>
