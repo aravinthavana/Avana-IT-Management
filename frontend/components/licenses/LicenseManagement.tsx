@@ -4,6 +4,7 @@ import { ICONS } from '../../constants';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import LicenseForm from './LicenseForm';
 import LicenseAssignmentModal from './LicenseAssignmentModal';
+import LicenseProRataModal from './LicenseProRataModal';
 import { License } from '../../types';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
@@ -15,6 +16,13 @@ const LicenseManagement: React.FC = () => {
     // Modal controls
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isProRataOpen, setIsProRataOpen] = useState(false);
+
+    const openProRataForm = (license: License) => {
+        setSelectedLicense(license);
+        setIsProRataOpen(true);
+    };
+
     const [licenseToDelete, setLicenseToDelete] = useState<number | null>(null);
     const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
 
@@ -161,6 +169,7 @@ const LicenseManagement: React.FC = () => {
 
                         <div className="flex justify-between mt-4 gap-2">
                             <button onClick={() => handleOpenAssign(license)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">Assign</button>
+                            <button onClick={() => openProRataForm(license)} className="p-1.5 text-brand-600 hover:text-brand-800 transition-colors" title="Add Seats (Pro-Rata)">{ICONS.add}</button>
                             <button onClick={() => openEditForm(license)} className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors" title="Edit">{ICONS.edit}</button>
                             <button onClick={() => setLicenseToDelete(license.id)} className="p-1.5 text-red-500 hover:text-red-700 transition-colors" title="Delete">{ICONS.delete}</button>
                         </div>
@@ -171,6 +180,15 @@ const LicenseManagement: React.FC = () => {
             <ConfirmationModal isOpen={!!licenseToDelete} onClose={() => setLicenseToDelete(null)} onConfirm={handleDelete} title="Delete License">
                 Are you sure you want to delete this license?
             </ConfirmationModal>
+
+            {isProRataOpen && selectedLicense && (
+                <LicenseProRataModal 
+                    isOpen={isProRataOpen} 
+                    onClose={() => setIsProRataOpen(false)} 
+                    onSave={handleSave} 
+                    license={selectedLicense} 
+                />
+            )}
 
             {isFormOpen && (
                 <LicenseForm 
