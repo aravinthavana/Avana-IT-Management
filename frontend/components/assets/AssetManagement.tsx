@@ -108,7 +108,7 @@ const AssetManagement: React.FC = () => {
                 if (!res.ok) throw new Error((await res.json()).error);
                 const updated = await res.json();
                 
-                setAssets(assets.map(a => a.id === editingAsset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+                setAssets(assets.map(a => a.id === editingAsset.id ? { ...updated, specs: typeof updated.specs === 'string' ? (() => { try { const p = JSON.parse(updated.specs); return typeof p === 'string' ? JSON.parse(p) : p; } catch { return {}; } })() : updated.specs } : a));
                 setNotification({ message: `Asset "${updatedAssetData.name}" updated successfully.`, type: 'success' });
             } else {
                 // Creating new assets
@@ -128,7 +128,7 @@ const AssetManagement: React.FC = () => {
                         throw new Error(errData.error || `Failed to create asset "${asset.name}"`);
                     }
                     const saved = await res.json();
-                    const parsed = { ...saved, specs: typeof saved.specs === 'string' ? JSON.parse(saved.specs) : saved.specs };
+                    const parsed = { ...saved, specs: typeof saved.specs === 'string' ? (() => { try { const p = JSON.parse(saved.specs); return typeof p === 'string' ? JSON.parse(p) : p; } catch { return {}; } })() : saved.specs };
                     savedAssets.push(parsed);
                 }
 

@@ -41,7 +41,13 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
     const { user } = useAuth();
     const assignee = getAssigneeDisplayInfo(asset.assigneeId, asset.assigneeType, users, departments, branches);
     const purchase = purchaseRecords.find(p => p.id === asset.purchaseId);
-    const specEntries = Object.entries(asset.specs || {});
+    const parsedSpecs = typeof asset.specs === 'string' ? (() => { 
+        try { 
+            const p = JSON.parse(asset.specs); 
+            return typeof p === 'string' ? JSON.parse(p) : p; 
+        } catch { return { details: asset.specs }; } 
+    })() : (asset.specs || {});
+    const specEntries = Object.entries(parsedSpecs);
     const warrantyStatus = getWarrantyStatus(asset);
     const [isAuditModalOpen, setIsAuditModalOpen] = React.useState(false);
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);

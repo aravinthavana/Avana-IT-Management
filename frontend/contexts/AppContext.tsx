@@ -87,7 +87,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 const rawAssets = await assetsRes.json();
                 setAssets(rawAssets.map((a: any) => ({
                     ...a,
-                    specs: typeof a.specs === 'string' ? (() => { try { return JSON.parse(a.specs); } catch { return {}; } })() : (a.specs || {}),
+                    specs: typeof a.specs === 'string' ? (() => { 
+                        try { 
+                            const parsed = JSON.parse(a.specs); 
+                            return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+                        } catch { return {}; } 
+                    })() : (a.specs || {}),
                     assigneeType: a.userId ? 'User' : undefined,
                     assigneeId: a.userId || undefined,
                 })));
