@@ -4,7 +4,7 @@ import { Configuration, PopupRequest } from "@azure/msal-browser";
 export const msalConfig: Configuration = {
     auth: {
         clientId: (import.meta as any).env.VITE_AZURE_CLIENT_ID || "PASTE_CLIENT_ID_HERE",
-        authority: `https://login.microsoftonline.com/${(import.meta as any).env.VITE_AZURE_TENANT_ID || "common"}`,
+        authority: `https://login.microsoftonline.com/${(import.meta as any).env.VITE_AZURE_TENANT_ID || "organizations"}`,
         redirectUri: window.location.origin,
         postLogoutRedirectUri: window.location.origin,
     },
