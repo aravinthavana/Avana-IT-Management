@@ -15,6 +15,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -25,6 +26,89 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET.length < 32 || JWT_SECRET.includes('avana-it-management-secure-secret')) {
     console.error('FATAL SECURITY ERROR: JWT_SECRET must be defined and at least 32 characters long. Default/weak secrets are rejected.');
     process.exit(1);
+}
+
+dotenv.config();
+
+// --- Backend Email Helper (Nodemailer via Microsoft 365 SMTP) ---
+async function sendTicketEmail(options: {
+    toEmail: string;
+    toName: string;
+    ticketId: number;
+    ticketSubject: string;
+    senderName: string;
+    messageBody: string;
+    category?: string;
+    priority?: string;
+    status?: string;
+    assetName?: string;
+    isReply: boolean;
+}): Promise<void> {
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    if (!smtpUser || !smtpPass) {
+        console.warn('[Email] SMTP_USER or SMTP_PASS not set. Skipping email.');
+        return;
+    }
+
+    const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
+    const cleanSubject = options.ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
+    const subject = options.isReply ? `RE: ${trackingTag} ${cleanSubject}` : `${trackingTag} ${cleanSubject}`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f8fafc;margin:0;padding:20px;color:#1e293b}
+  .container{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+  .header{background:#0f172a;color:#fff;padding:24px;text-align:left}
+  .badge{display:inline-block;background:#dc2626;color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:9999px;text-transform:uppercase;letter-spacing:.05em}
+  .title{font-size:20px;font-weight:800;margin:12px 0 4px 0;color:#fff}
+  .meta{font-size:12px;color:#94a3b8}
+  .content{padding:24px;line-height:1.6;font-size:14px;color:#334155}
+  .message-box{background:#f1f5f9;border-left:4px solid #dc2626;padding:16px;border-radius:8px;margin:16px 0;font-size:14px;white-space:pre-wrap}
+  .footer{padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
+  .hint{font-weight:600;color:#0284c7}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="badge">${options.category || 'IT Support'}</span>
+    <div class="title">${options.isReply ? 'New Response Added' : 'New Support Ticket'}</div>
+    <div class="meta">Ticket #${options.ticketId} &bull; From: ${options.senderName}</div>
+  </div>
+  <div class="content">
+    <p>Hello <strong>${options.toName}</strong>,</p>
+    <p>${options.isReply ? `<strong>${options.senderName}</strong> posted an update:` : 'A new IT support ticket has been submitted:'}</p>
+    <div class="message-box">${options.messageBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+    ${options.priority ? `<p><strong>Priority:</strong> ${options.priority}</p>` : ''}
+    ${options.status ? `<p><strong>Status:</strong> ${options.status}</p>` : ''}
+    ${options.assetName ? `<p><strong>Related Asset:</strong> ${options.assetName}</p>` : ''}
+  </div>
+  <div class="footer">
+    <span class="hint">&#9993; Reply to this email directly from Outlook to respond to this ticket.</span><br>
+    Avana IT Management &bull; Do not modify the subject line tag ${trackingTag}
+  </div>
+</div>
+</body>
+</html>`;
+
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.office365.com',
+        port: 587,
+        secure: false,
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { ciphers: 'SSLv3' }
+    });
+
+    await transporter.sendMail({
+        from: `"Avana IT Support" <${smtpUser}>`,
+        to: `"${options.toName}" <${options.toEmail}>`,
+        subject,
+        html: htmlContent,
+    });
+    console.log(`[Email] Sent ticket #${options.ticketId} email to ${options.toEmail}`);
 }
 
 // --- Zod Schemas for Validation ---
@@ -1366,6 +1450,25 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
             include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
         res.status(201).json(ticket);
+
+        // Send notification email to all Admins (fire-and-forget)
+        setImmediate(async () => {
+            try {
+                const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
+                const assetName = ticket.asset ? `${(ticket.asset as any).name} (${(ticket.asset as any).assetId})` : undefined;
+                for (const admin of admins) {
+                    await sendTicketEmail({
+                        toEmail: admin.email, toName: admin.name,
+                        ticketId: ticket.id, ticketSubject: ticket.subject,
+                        senderName: ticket.user?.name || 'Employee',
+                        messageBody: ticket.description,
+                        category: ticket.category, priority: ticket.priority,
+                        status: ticket.status, assetName,
+                        isReply: false,
+                    }).catch(e => console.warn('[Email] Failed to notify admin:', e));
+                }
+            } catch (e) { console.warn('[Email] Error fetching admins for ticket notification:', e); }
+        });
     } catch (error) {
         console.error('Failed to create ticket:', error);
         res.status(500).json({ error: 'Failed to create ticket' });
@@ -1464,6 +1567,45 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
         });
 
         res.json(comment);
+
+        // Send notification email (fire-and-forget)
+        setImmediate(async () => {
+            try {
+                const fullTicket = await prisma.supportTicket.findUnique({
+                    where: { id: Number(id) },
+                    include: { user: { select: { id: true, name: true, email: true } } }
+                });
+                if (!fullTicket) return;
+
+                const commenter = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, role: true } });
+                if (!commenter) return;
+
+                if (commenter.role === 'Admin' || commenter.role === 'Manager') {
+                    // Admin replied → notify ticket owner
+                    if (fullTicket.user?.email && fullTicket.user.id !== userId) {
+                        await sendTicketEmail({
+                            toEmail: fullTicket.user.email, toName: fullTicket.user.name,
+                            ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
+                            senderName: commenter.name, messageBody: message.trim(),
+                            status: fullTicket.status, priority: fullTicket.priority,
+                            isReply: true,
+                        });
+                    }
+                } else {
+                    // User replied → notify all admins
+                    const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
+                    for (const admin of admins) {
+                        await sendTicketEmail({
+                            toEmail: admin.email, toName: admin.name,
+                            ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
+                            senderName: commenter.name, messageBody: message.trim(),
+                            status: fullTicket.status, priority: fullTicket.priority,
+                            isReply: true,
+                        }).catch(e => console.warn('[Email] Failed to notify admin on reply:', e));
+                    }
+                }
+            } catch (e) { console.warn('[Email] Error sending comment notification:', e); }
+        });
     } catch (error) {
         console.error('Failed to post ticket comment:', error);
         res.status(500).json({ error: 'Failed to post comment' });
@@ -1721,9 +1863,17 @@ const upload = multer({
 });
 
 app.post('/api/upload', authenticateToken, (req, res) => {
+    // Ensure uploads directory still exists (can get wiped in serverless envs)
+    if (!fs.existsSync(uploadsDir)) {
+        try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (mkdirErr) {
+            console.error('Upload dir creation failed:', mkdirErr);
+            return res.status(500).json({ error: 'Upload directory unavailable' });
+        }
+    }
+
     upload.any()(req, res, (err: any) => {
         if (err) {
-            console.error('Multer upload error:', err);
+            console.error('Multer upload error:', err.message, err.code);
             return res.status(400).json({ error: err.message || 'File upload failed' });
         }
 
