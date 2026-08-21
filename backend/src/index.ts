@@ -1344,8 +1344,14 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
     try {
         // @ts-ignore
         const { id } = req.user;
-        const { subject, category, priority, description, assetId } = req.body;
+        const { subject, category, priority, description, assetId, attachments } = req.body;
         
+        if (!subject || !category || !description) {
+            return res.status(400).json({ error: 'Subject, category, and description are required' });
+        }
+
+        const attachmentsStr = attachments ? (typeof attachments === 'string' ? attachments : JSON.stringify(attachments)) : null;
+
         const ticket = await prisma.supportTicket.create({
             data: {
                 userId: id,
@@ -1353,12 +1359,14 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
                 category,
                 priority: priority || 'Medium',
                 description,
-                assetId: assetId ? Number(assetId) : null
+                assetId: assetId ? Number(assetId) : null,
+                attachments: attachmentsStr
             },
-            include: { user: { select: { id: true, name: true, email: true } } }
+            include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
-        res.json(ticket);
+        res.status(201).json(ticket);
     } catch (error) {
+        console.error('Failed to create ticket:', error);
         res.status(500).json({ error: 'Failed to create ticket' });
     }
 });
@@ -1379,7 +1387,7 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
                 priority,
                 resolvedAt: status === 'Resolved' ? new Date() : (resolvedAt ? new Date(resolvedAt) : null)
             },
-            include: { user: { select: { id: true, name: true, email: true } } }
+            include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
         res.json(ticket);
     } catch (error) {
@@ -1418,7 +1426,7 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
         const { id } = req.params;
         // @ts-ignore
         const { id: userId, role } = req.user;
-        const { message } = req.body;
+        const { message, attachments, source, emailMessageId } = req.body;
 
         if (!message || typeof message !== 'string' || !message.trim()) {
             return res.status(400).json({ error: 'Comment message is required' });
@@ -1433,11 +1441,16 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Access denied to post on this ticket' });
         }
 
+        const attachmentsStr = attachments ? (typeof attachments === 'string' ? attachments : JSON.stringify(attachments)) : null;
+
         const comment = await prisma.ticketComment.create({
             data: {
                 ticketId: Number(id),
                 userId,
-                message: message.trim().slice(0, 3000)
+                message: message.trim().slice(0, 5000),
+                attachments: attachmentsStr,
+                source: source || 'Portal',
+                emailMessageId: emailMessageId || null
             },
             include: {
                 user: { select: { id: true, name: true, role: true, avatar: true } }
@@ -1601,43 +1614,86 @@ app.put('/api/self-audits/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
-// --- Upload Route for Rich Text Editor ---
+// --- Upload Route for Rich Text Editor & Ticket Attachments ---
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, uploadsDir);
     },
     filename: function (req, file, cb) {
+        const cleanName = path.basename(file.originalname).replace(/[^a-zA-Z0-9.-]/g, '_');
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+        cb(null, uniqueSuffix + '-' + cleanName);
     }
 });
+
+const allowedMimes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf', 'text/plain', 'text/csv', 'application/zip',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
+        if (file.mimetype.startsWith('image/') || allowedMimes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only image files are allowed.'));
+            cb(new Error('File type not supported. Allowed formats: Images, PDF, TXT, CSV, DOC, DOCX, XLS, XLSX, ZIP.'));
         }
     }
 });
 
-app.post('/api/upload', authenticateToken, upload.single('image'), (req, res) => {
+app.post('/api/upload', authenticateToken, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'file', maxCount: 1 }]), (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No image file provided' });
+        // @ts-ignore
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const file = (files?.image && files.image[0]) || (files?.file && files.file[0]);
+
+        if (!file) {
+            return res.status(400).json({ error: 'No file provided for upload' });
         }
         
-        // Return the URL to the uploaded file
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers.host;
-        const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+        const url = `${protocol}://${host}/uploads/${file.filename}`;
         
-        res.json({ url });
+        res.json({ 
+            url, 
+            name: file.originalname,
+            size: file.size,
+            type: file.mimetype,
+            filename: file.filename
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to upload image' });
+        console.error('File upload error:', error);
+        res.status(500).json({ error: 'Failed to upload file' });
+    }
+});
+
+// --- Microsoft Graph Inbound Email Webhook ---
+app.post('/api/webhooks/graph', async (req, res) => {
+    try {
+        // 1. Microsoft Graph Validation Handshake
+        if (req.query.validationToken) {
+            res.set('Content-Type', 'text/plain');
+            return res.status(200).send(req.query.validationToken as string);
+        }
+
+        // 2. Process Change Notifications
+        const { value } = req.body;
+        if (Array.isArray(value)) {
+            for (const notification of value) {
+                console.log('Received MS Graph Notification for resource:', notification.resource);
+                // Background async processor will ingest message
+            }
+        }
+
+        res.status(202).send('Accepted');
+    } catch (error) {
+        console.error('Webhook processing error:', error);
+        res.status(500).send('Webhook processing error');
     }
 });
 

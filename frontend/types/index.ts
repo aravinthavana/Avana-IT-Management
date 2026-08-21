@@ -201,6 +201,13 @@ export interface LicenseAssignment {
     asset?: Asset;
 }
 
+export interface TicketAttachment {
+    url: string;
+    name: string;
+    size: number;
+    type: string;
+}
+
 export interface SupportTicket {
     id: number;
     userId: number;
@@ -210,7 +217,9 @@ export interface SupportTicket {
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
     status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
     description: string;
+    attachments?: TicketAttachment[] | string;
     assetId?: number;
+    asset?: Asset;
     createdAt: string;
     updatedAt: string;
     resolvedAt?: string;
@@ -223,6 +232,9 @@ export interface TicketComment {
     userId: number;
     user?: { id: number; name: string; role: string; avatar?: string };
     message: string;
+    attachments?: TicketAttachment[] | string;
+    source?: 'Portal' | 'Email';
+    emailMessageId?: string;
     createdAt: string;
 }
 

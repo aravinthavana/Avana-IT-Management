@@ -215,6 +215,7 @@ model SupportTicket {
   priority    String   @default("Medium") // Low, Medium, High, Urgent
   status      String   @default("Open")   // Open, In Progress, Resolved, Closed
   description String
+  attachments String?  // JSON Array: [{ url, name, size, type }]
   
   assetId     Int?
   asset       Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
@@ -231,13 +232,16 @@ model SupportTicket {
 }
 
 model TicketComment {
-  id        Int           @id @default(autoincrement())
-  ticketId  Int
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User          @relation(fields: [userId], references: [id])
-  message   String
-  createdAt DateTime      @default(now())
+  id             Int           @id @default(autoincrement())
+  ticketId       Int
+  ticket         SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
+  message        String
+  attachments    String?       // JSON Array: [{ url, name, size, type }]
+  source         String        @default("Portal") // "Portal" | "Email"
+  emailMessageId String?       @unique
+  createdAt      DateTime      @default(now())
 
   @@index([ticketId])
   @@index([userId])
