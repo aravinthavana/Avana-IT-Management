@@ -63,18 +63,18 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
     }
 
     try {
-        // 1. Acquire Access Token with Mail.Send scope
+        // 1. Acquire Access Token with Mail.Send and Mail.Read scopes
         let tokenResponse;
         try {
             tokenResponse = await msalInstance.acquireTokenSilent({
-                scopes: ["Mail.Send"],
+                scopes: ["Mail.Send", "Mail.Read"],
                 account
             });
         } catch (silentErr) {
-            console.warn('[GraphMail] Silent token acquisition for Mail.Send failed:', silentErr);
+            console.warn('[GraphMail] Silent token acquisition failed:', silentErr);
             try {
                 tokenResponse = await msalInstance.acquireTokenPopup({
-                    scopes: ["Mail.Send"],
+                    scopes: ["Mail.Send", "Mail.Read"],
                     account
                 });
             } catch (popupErr) {
@@ -84,7 +84,7 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         }
 
         if (!tokenResponse?.accessToken) {
-            console.warn('[GraphMail] No Graph access token available for Mail.Send.');
+            console.warn('[GraphMail] No Graph access token available.');
             return false;
         }
 
@@ -167,6 +167,54 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
 `;
 
         // 4. Dispatch Email via Graph API
+        let targetMessageId: string | null = null;
+
+        if (isReply) {
+            try {
+                const searchFilter = `contains(subject, '[AVANA-TICKET #${ticketId}]')`;
+                const searchUrl = `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(searchFilter)}&$select=id&$top=1&$orderby=receivedDateTime desc`;
+                const searchRes = await fetch(searchUrl, {
+                    headers: { "Authorization": `Bearer ${tokenResponse.accessToken}` }
+                });
+                if (searchRes.ok) {
+                    const searchData = await searchRes.json();
+                    if (searchData.value && searchData.value.length > 0) {
+                        targetMessageId = searchData.value[0].id;
+                    }
+                }
+            } catch (err) {
+                console.warn('[GraphMail] Failed to search for existing thread to replyAll', err);
+            }
+        }
+
+        if (targetMessageId) {
+            // Use Graph API /replyAll
+            const replyPayload = {
+                comment: htmlContent,
+                message: {
+                    toRecipients: [{ emailAddress: { address: toEmail } }],
+                    ...(graphAttachments.length > 0 ? { attachments: graphAttachments } : {})
+                }
+            };
+            
+            const replyRes = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${targetMessageId}/replyAll`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${tokenResponse.accessToken}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(replyPayload)
+            });
+
+            if (replyRes.ok || replyRes.status === 202) {
+                console.log(`[GraphMail] Successfully sent replyAll to thread #${ticketId}`);
+                return true;
+            } else {
+                console.warn('[GraphMail] replyAll failed, falling back to sendMail:', await replyRes.json().catch(() => ({})));
+            }
+        }
+
+        // Fallback or Initial message: Use sendMail
         const payload: any = {
             message: {
                 subject: emailSubject,
