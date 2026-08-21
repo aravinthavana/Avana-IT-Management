@@ -253,7 +253,8 @@ export async function syncIncomingEmailReplies(
     msalInstance: IPublicClientApplication | undefined,
     ticketId: number,
     getHeaders: () => Record<string, string>,
-    onCommentSynced?: (comment: any) => void
+    onCommentSynced?: (comment: any) => void,
+    isManual: boolean = false
 ): Promise<number> {
     if (!msalInstance) return 0;
     const accounts = msalInstance.getAllAccounts();
@@ -270,15 +271,25 @@ export async function syncIncomingEmailReplies(
                 scopes: ["Mail.Read"],
                 account
             });
-        } catch {
-            return 0; // Don't interrupt user with popups on passive sync
+        } catch (silentErr) {
+            if (!isManual) return 0; // Don't interrupt user with popups on passive sync
+            console.warn('[GraphMail] Silent sync failed, attempting manual popup for Mail.Read:', silentErr);
+            try {
+                tokenResponse = await msalInstance.acquireTokenPopup({
+                    scopes: ["Mail.Read"],
+                    account
+                });
+            } catch (popupErr) {
+                console.warn('[GraphMail] Manual popup sync failed:', popupErr);
+                return 0;
+            }
         }
 
         if (!tokenResponse?.accessToken) return 0;
 
-        // 2. Query Microsoft Graph for messages matching this ticket ID
+        // 2. Query Microsoft Graph for ALL messages (Inbox & Sent Items) matching this ticket ID
         const filter = `contains(subject, '[AVANA-TICKET #${ticketId}]')`;
-        const graphUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=${encodeURIComponent(filter)}&$select=id,internetMessageId,subject,body,from,receivedDateTime,hasAttachments&$expand=attachments&$top=15&$orderby=receivedDateTime desc`;
+        const graphUrl = `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(filter)}&$select=id,internetMessageId,subject,body,from,receivedDateTime,hasAttachments&$expand=attachments&$top=15&$orderby=receivedDateTime desc`;
 
         const graphRes = await fetch(graphUrl, {
             headers: {

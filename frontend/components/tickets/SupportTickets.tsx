@@ -82,7 +82,7 @@ const SupportTickets: React.FC = () => {
         }
     }, [getHeaders]);
 
-    const handleSyncReplies = useCallback(async (ticketId: number) => {
+    const handleSyncReplies = useCallback(async (ticketId: number, isManual = false) => {
         setIsSyncingReplies(true);
         try {
             const count = await syncIncomingEmailReplies(instance, ticketId, getHeaders, (newComment) => {
@@ -92,9 +92,11 @@ const SupportTickets: React.FC = () => {
                     }
                     return [...prev, newComment];
                 });
-            });
+            }, isManual);
             if (count > 0) {
                 setNotification({ message: `Synced ${count} new reply from Outlook!`, type: 'success' });
+            } else if (isManual) {
+                setNotification({ message: 'No new replies found.', type: 'info' });
             }
         } catch (e) {
             console.warn('Sync replies failed:', e);
@@ -107,8 +109,8 @@ const SupportTickets: React.FC = () => {
         if (selectedTicket) {
             fetchComments(selectedTicket.id);
             setCommentAttachments([]);
-            // Auto-check for any Outlook replies for this ticket
-            handleSyncReplies(selectedTicket.id);
+            // Auto-check for any Outlook replies for this ticket (passive, no popups)
+            handleSyncReplies(selectedTicket.id, false);
         } else {
             setComments([]);
             setNewComment('');
@@ -658,7 +660,7 @@ const SupportTickets: React.FC = () => {
                                     </h4>
                                     <button
                                         type="button"
-                                        onClick={() => handleSyncReplies(selectedTicket.id)}
+                                        onClick={() => handleSyncReplies(selectedTicket.id, true)}
                                         disabled={isSyncingReplies}
                                         className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-red-400 flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/40 rounded-lg transition-all"
                                     >
