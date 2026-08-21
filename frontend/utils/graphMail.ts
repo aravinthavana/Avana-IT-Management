@@ -167,68 +167,84 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
 `;
 
         // 4. Dispatch Email via Graph API
-        let targetMessageId: string | null = null;
+        //    For replies: createReply draft → PATCH to set HTML body + attachments → send
+        //    For first email: sendMail directly
+        const accessToken = tokenResponse.accessToken;
+        const authHeader = { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" };
 
         if (isReply) {
+            // Step A: Find the original message in the thread
+            let originalMsgId: string | null = null;
             try {
                 const searchFilter = `contains(subject, '[AVANA-TICKET #${ticketId}]')`;
-                const searchUrl = `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(searchFilter)}&$select=id&$top=1&$orderby=receivedDateTime desc`;
-                const searchRes = await fetch(searchUrl, {
-                    headers: { "Authorization": `Bearer ${tokenResponse.accessToken}` }
-                });
+                const searchUrl = `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(searchFilter)}&$select=id,internetMessageId&$top=1&$orderby=receivedDateTime asc`;
+                const searchRes = await fetch(searchUrl, { headers: { "Authorization": `Bearer ${accessToken}` } });
                 if (searchRes.ok) {
                     const searchData = await searchRes.json();
-                    if (searchData.value && searchData.value.length > 0) {
-                        targetMessageId = searchData.value[0].id;
+                    if (searchData.value?.length > 0) {
+                        originalMsgId = searchData.value[0].id;
                     }
                 }
             } catch (err) {
-                console.warn('[GraphMail] Failed to search for existing thread to replyAll', err);
+                console.warn('[GraphMail] Thread search failed, will send fresh email:', err);
             }
-        }
 
-        if (targetMessageId) {
-            // Use Graph API /replyAll
-            const replyPayload = {
-                comment: htmlContent,
-                message: {
-                    toRecipients: [{ emailAddress: { address: toEmail } }],
-                    ...(graphAttachments.length > 0 ? { attachments: graphAttachments } : {})
+            if (originalMsgId) {
+                // Step B: Create a reply draft from the original message
+                const draftRes = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${originalMsgId}/createReply`, {
+                    method: "POST",
+                    headers: authHeader,
+                    body: JSON.stringify({})
+                });
+
+                if (draftRes.ok) {
+                    const draft = await draftRes.json();
+                    const draftId = draft.id;
+
+                    // Step C: PATCH the draft with proper HTML body, recipient, and attachments
+                    const patchBody: any = {
+                        body: { contentType: "HTML", content: htmlContent },
+                        toRecipients: [{ emailAddress: { address: toEmail, name: toName || '' } }],
+                        subject: emailSubject,
+                    };
+                    if (graphAttachments.length > 0) {
+                        patchBody.attachments = graphAttachments;
+                    }
+
+                    const patchRes = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${draftId}`, {
+                        method: "PATCH",
+                        headers: authHeader,
+                        body: JSON.stringify(patchBody)
+                    });
+
+                    if (patchRes.ok) {
+                        // Step D: Send the draft
+                        const sendRes = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${draftId}/send`, {
+                            method: "POST",
+                            headers: { "Authorization": `Bearer ${accessToken}` }
+                        });
+                        if (sendRes.ok || sendRes.status === 202) {
+                            console.log(`[GraphMail] Successfully sent threaded reply for ticket #${ticketId}`);
+                            return true;
+                        } else {
+                            console.warn('[GraphMail] Draft send failed:', await sendRes.json().catch(() => ({})));
+                        }
+                    } else {
+                        console.warn('[GraphMail] Draft PATCH failed:', await patchRes.json().catch(() => ({})));
+                    }
+                } else {
+                    console.warn('[GraphMail] createReply failed:', await draftRes.json().catch(() => ({})));
                 }
-            };
-            
-            const replyRes = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${targetMessageId}/replyAll`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${tokenResponse.accessToken}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(replyPayload)
-            });
-
-            if (replyRes.ok || replyRes.status === 202) {
-                console.log(`[GraphMail] Successfully sent replyAll to thread #${ticketId}`);
-                return true;
-            } else {
-                console.warn('[GraphMail] replyAll failed, falling back to sendMail:', await replyRes.json().catch(() => ({})));
+                // Fall through to sendMail if any step above failed
             }
         }
 
-        // Fallback or Initial message: Use sendMail
+        // First email or reply fallback: use sendMail
         const payload: any = {
             message: {
                 subject: emailSubject,
-                body: {
-                    contentType: "HTML",
-                    content: htmlContent
-                },
-                toRecipients: [
-                    {
-                        emailAddress: {
-                            address: toEmail
-                        }
-                    }
-                ],
+                body: { contentType: "HTML", content: htmlContent },
+                toRecipients: [{ emailAddress: { address: toEmail, name: toName || '' } }],
                 ...(graphAttachments.length > 0 ? { attachments: graphAttachments } : {})
             },
             saveToSentItems: "true"
@@ -236,10 +252,7 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
 
         const response = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
             method: "POST",
-            headers: {
-                "Authorization": `Bearer ${tokenResponse.accessToken}`,
-                "Content-Type": "application/json"
-            },
+            headers: authHeader,
             body: JSON.stringify(payload)
         });
 

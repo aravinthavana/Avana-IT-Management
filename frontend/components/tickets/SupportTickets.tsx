@@ -127,6 +127,27 @@ const SupportTickets: React.FC = () => {
         }
     }, [selectedTicket?.id, fetchComments, handleSyncReplies]);
 
+    // Auto-poll comments every 10 seconds while a ticket is open
+    useEffect(() => {
+        if (!selectedTicket) return;
+        const ticketId = selectedTicket.id;
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/tickets/${ticketId}/comments`, {
+                    headers: getHeaders(),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setComments(data);
+                }
+            } catch {
+                // Silently ignore
+            }
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [selectedTicket?.id, getHeaders]);
+
     // Upload helper for attachments
     const handleFileUpload = async (file: File, isForComment: boolean) => {
         if (isForComment) setIsUploadingCommentFile(true);

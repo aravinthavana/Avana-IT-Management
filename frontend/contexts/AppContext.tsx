@@ -133,6 +133,26 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return () => window.removeEventListener('app:login', handler);
     }, [fetchAllData]);
 
+    // Auto-poll tickets list every 15 seconds so new tickets appear without refresh
+    useEffect(() => {
+        const fetchTickets = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/tickets`, {
+                    headers: getHeaders(),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTickets(data);
+                }
+            } catch {
+                // Silently ignore polling errors
+            }
+        };
+        const interval = setInterval(fetchTickets, 15000);
+        return () => clearInterval(interval);
+    }, [getHeaders]);
+
     useEffect(() => {
         const root = window.document.documentElement;
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');

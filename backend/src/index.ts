@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 dotenv.config();
 
@@ -126,7 +127,7 @@ app.use('/api/login', authLimiter);
 app.use('/api/auth/m365', authLimiter);
 
 // Protected Static File Serving for Uploads (Requires Authentication)
-const uploadsDir = path.join(process.cwd(), 'uploads');
+const uploadsDir = path.join(os.tmpdir(), 'avana-uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
