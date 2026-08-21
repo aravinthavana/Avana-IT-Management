@@ -172,9 +172,13 @@ export interface AppContextType {
     setTickets: (t: SupportTicket[]) => void;
     kbArticles: KnowledgeBaseArticle[];
     setKbArticles: (k: KnowledgeBaseArticle[]) => void;
+    selfAudits: SelfAudit[];
+    setSelfAudits: (s: SelfAudit[]) => void;
     fetchAllData: () => Promise<void>;
     getHeaders: () => Record<string, string>;
 }
+
+export type WarrantyStatus = 'Active' | 'Expiring Soon' | 'Expired' | 'Lifetime' | 'N/A';
 
 export interface License {
     id: number;

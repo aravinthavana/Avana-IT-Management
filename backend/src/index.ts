@@ -1469,6 +1469,80 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
     }
 });
 
+// --- Support Contacts Endpoint ---
+app.get('/api/support-contacts', authenticateToken, async (req, res) => {
+    try {
+        const admins = await prisma.user.findMany({
+            where: { role: 'Admin', status: 'Active' },
+            select: { id: true, name: true, email: true }
+        });
+        res.json(admins);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch support contacts' });
+    }
+});
+
+// --- Sync Email Reply from Outlook/Graph ---
+app.post('/api/tickets/:id/sync-email-reply', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { message, emailMessageId, senderEmail, attachments, receivedAt } = req.body;
+
+        if (!emailMessageId || !message) {
+            return res.status(400).json({ error: 'Message and emailMessageId are required' });
+        }
+
+        // Idempotency: check if already ingested
+        const existing = await prisma.ticketComment.findUnique({
+            where: { emailMessageId }
+        });
+        if (existing) {
+            return res.json({ status: 'already_synced', comment: existing });
+        }
+
+        const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) } });
+        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+        // Match sender by email or fallback to current user
+        let commentUser = senderEmail ? await prisma.user.findUnique({ where: { email: senderEmail.toLowerCase() } }) : null;
+        if (!commentUser) {
+            // @ts-ignore
+            commentUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+        }
+
+        if (!commentUser) {
+            return res.status(400).json({ error: 'Unable to identify comment author' });
+        }
+
+        const attachmentsStr = attachments ? (typeof attachments === 'string' ? attachments : JSON.stringify(attachments)) : null;
+
+        const comment = await prisma.ticketComment.create({
+            data: {
+                ticketId: Number(id),
+                userId: commentUser.id,
+                message: message.trim().slice(0, 5000),
+                attachments: attachmentsStr,
+                source: 'Email',
+                emailMessageId,
+                createdAt: receivedAt ? new Date(receivedAt) : new Date()
+            },
+            include: {
+                user: { select: { id: true, name: true, role: true, avatar: true } }
+            }
+        });
+
+        await prisma.supportTicket.update({
+            where: { id: Number(id) },
+            data: { updatedAt: new Date() }
+        });
+
+        res.status(201).json({ status: 'synced', comment });
+    } catch (error) {
+        console.error('Failed to sync email reply:', error);
+        res.status(500).json({ error: 'Failed to sync email reply' });
+    }
+});
+
 // --- Knowledge Base ---
 
 app.get('/api/kb', authenticateToken, async (req, res) => {
@@ -1645,11 +1719,17 @@ const upload = multer({
     }
 });
 
-app.post('/api/upload', authenticateToken, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'file', maxCount: 1 }]), (req, res) => {
-    try {
+app.post('/api/upload', authenticateToken, (req, res) => {
+    upload.any()(req, res, (err: any) => {
+        if (err) {
+            console.error('Multer upload error:', err);
+            return res.status(400).json({ error: err.message || 'File upload failed' });
+        }
+
         // @ts-ignore
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-        const file = (files?.image && files.image[0]) || (files?.file && files.file[0]);
+        const files = req.files as Express.Multer.File[];
+        // @ts-ignore
+        const file = (files && files.length > 0 ? files[0] : req.file);
 
         if (!file) {
             return res.status(400).json({ error: 'No file provided for upload' });
@@ -1666,10 +1746,7 @@ app.post('/api/upload', authenticateToken, upload.fields([{ name: 'image', maxCo
             type: file.mimetype,
             filename: file.filename
         });
-    } catch (error) {
-        console.error('File upload error:', error);
-        res.status(500).json({ error: 'Failed to upload file' });
-    }
+    });
 });
 
 // --- Microsoft Graph Inbound Email Webhook ---

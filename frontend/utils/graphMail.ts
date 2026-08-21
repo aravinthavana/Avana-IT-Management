@@ -201,3 +201,163 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         return false;
     }
 }
+
+/**
+ * Extracts clean user reply text from an incoming Outlook email body (stripping quoted thread history).
+ */
+export function cleanOutlookEmailBody(bodyContent: string): string {
+    if (!bodyContent) return '';
+    try {
+        // Parse HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(bodyContent, 'text/html');
+
+        // Remove Outlook quotation blocks if present
+        const quotedDivs = doc.querySelectorAll('#divRplyFwdMsg, .OutlookReply, #OLK_SRC_BODY_SECTION, blockquote');
+        quotedDivs.forEach(el => el.remove());
+
+        let text = doc.body.textContent || '';
+        
+        // Strip classic text separators
+        const separators = [
+            /-----Original Message-----/i,
+            /From:.*Sent:.*To:/i,
+            /On\s+.*,\s+.*wrote:/i,
+            /_{10,}/,
+            /-{10,}/
+        ];
+
+        for (const sep of separators) {
+            const match = text.search(sep);
+            if (match !== -1) {
+                text = text.substring(0, match);
+            }
+        }
+
+        return text.trim();
+    } catch {
+        return bodyContent.substring(0, 1000).trim();
+    }
+}
+
+/**
+ * Checks the user's Microsoft 365 inbox for new replies to a specific ticket and syncs them to the backend portal.
+ */
+export async function syncIncomingEmailReplies(
+    msalInstance: IPublicClientApplication | undefined,
+    ticketId: number,
+    getHeaders: () => Record<string, string>,
+    onCommentSynced?: (comment: any) => void
+): Promise<number> {
+    if (!msalInstance) return 0;
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length === 0) return 0;
+
+    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
+    try {
+        // 1. Acquire Token with Mail.Read scope
+        let tokenResponse;
+        try {
+            tokenResponse = await msalInstance.acquireTokenSilent({
+                ...loginRequest,
+                account: accounts[0]
+            });
+        } catch {
+            return 0; // Don't interrupt user with popups on passive sync
+        }
+
+        if (!tokenResponse?.accessToken) return 0;
+
+        // 2. Query Microsoft Graph for messages matching this ticket ID
+        const filter = `contains(subject, '[AVANA-TICKET #${ticketId}]')`;
+        const graphUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=${encodeURIComponent(filter)}&$select=id,internetMessageId,subject,body,from,receivedDateTime,hasAttachments&$expand=attachments&$top=15&$orderby=receivedDateTime desc`;
+
+        const graphRes = await fetch(graphUrl, {
+            headers: {
+                "Authorization": `Bearer ${tokenResponse.accessToken}`
+            }
+        });
+
+        if (!graphRes.ok) return 0;
+        const data = await graphRes.json();
+        const messages: any[] = data.value || [];
+
+        let syncedCount = 0;
+
+        for (const msg of messages) {
+            if (!msg.internetMessageId) continue;
+
+            const cleanText = cleanOutlookEmailBody(msg.body?.content || '');
+            if (!cleanText) continue;
+
+            // Process any attachments
+            const attachedFiles: TicketAttachment[] = [];
+            if (msg.hasAttachments && Array.isArray(msg.attachments)) {
+                for (const att of msg.attachments) {
+                    if (att['@odata.type'] === '#microsoft.graph.fileAttachment' && att.contentBytes) {
+                        try {
+                            // Convert base64 back to Blob and upload to backend
+                            const byteChars = atob(att.contentBytes);
+                            const byteNumbers = new Array(byteChars.length);
+                            for (let i = 0; i < byteChars.length; i++) {
+                                byteNumbers[i] = byteChars.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], { type: att.contentType || 'application/octet-stream' });
+                            const file = new File([blob], att.name, { type: att.contentType || 'application/octet-stream' });
+
+                            const formData = new FormData();
+                            formData.append('file', file);
+
+                            const uploadHeaders = getHeaders() as any;
+                            delete uploadHeaders['Content-Type'];
+
+                            const upRes = await fetch(`${API_URL}/api/upload`, {
+                                method: 'POST',
+                                headers: uploadHeaders,
+                                body: formData,
+                                credentials: 'include'
+                            });
+
+                            if (upRes.ok) {
+                                attachedFiles.push(await upRes.json());
+                            }
+                        } catch (attErr) {
+                            console.warn('Failed to upload email attachment:', attErr);
+                        }
+                    }
+                }
+            }
+
+            // Sync to backend
+            const syncRes = await fetch(`${API_URL}/api/tickets/${ticketId}/sync-email-reply`, {
+                method: 'POST',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    message: cleanText,
+                    emailMessageId: msg.internetMessageId,
+                    senderEmail: msg.from?.emailAddress?.address,
+                    senderName: msg.from?.emailAddress?.name,
+                    receivedAt: msg.receivedDateTime,
+                    attachments: attachedFiles.length > 0 ? attachedFiles : null
+                })
+            });
+
+            if (syncRes.ok) {
+                const resData = await syncRes.json();
+                if (resData.status === 'synced') {
+                    syncedCount++;
+                    if (onCommentSynced) onCommentSynced(resData.comment);
+                }
+            }
+        }
+
+        return syncedCount;
+    } catch (err) {
+        console.warn('[GraphMail] Error syncing email replies:', err);
+        return 0;
+    }
+}
+

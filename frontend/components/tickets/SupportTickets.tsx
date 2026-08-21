@@ -1,13 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { SupportTicket, TicketComment, TicketAttachment } from '../../types';
 import { useMsal } from "@azure/msal-react";
-import { sendTicketEmailViaGraph } from '../../utils/graphMail';
+import { sendTicketEmailViaGraph, syncIncomingEmailReplies } from '../../utils/graphMail';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
-const DEFAULT_SUPPORT_EMAIL = (import.meta as any).env.VITE_SUPPORT_EMAIL || 'itsupport@avanamedical.com';
 
 const SupportTickets: React.FC = () => {
     const { tickets, setTickets, getHeaders, setNotification, assets, navigate, users } = useAppContext();
@@ -21,6 +20,10 @@ const SupportTickets: React.FC = () => {
     const [loadingComments, setLoadingComments] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [submittingTicket, setSubmittingTicket] = useState(false);
+    const [isSyncingReplies, setIsSyncingReplies] = useState(false);
+
+    // Support Admin Contacts
+    const [supportAdmins, setSupportAdmins] = useState<Array<{ id: number; name: string; email: string }>>([]);
 
     // Attachments State
     const [ticketAttachments, setTicketAttachments] = useState<TicketAttachment[]>([]);
@@ -43,18 +46,25 @@ const SupportTickets: React.FC = () => {
     const priorities: Array<'Low' | 'Medium' | 'High' | 'Urgent'> = ['Low', 'Medium', 'High', 'Urgent'];
     const statuses: Array<'Open' | 'In Progress' | 'Resolved' | 'Closed'> = ['Open', 'In Progress', 'Resolved', 'Closed'];
 
-    React.useEffect(() => {
-        if (selectedTicket) {
-            fetchComments(selectedTicket.id);
-            setCommentAttachments([]);
-        } else {
-            setComments([]);
-            setNewComment('');
-            setCommentAttachments([]);
-        }
-    }, [selectedTicket?.id]);
+    // Fetch support contacts on mount
+    useEffect(() => {
+        const fetchContacts = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/support-contacts`, {
+                    headers: getHeaders(),
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    setSupportAdmins(await res.json());
+                }
+            } catch {
+                // Fallback
+            }
+        };
+        fetchContacts();
+    }, [getHeaders]);
 
-    const fetchComments = async (ticketId: number) => {
+    const fetchComments = useCallback(async (ticketId: number) => {
         setLoadingComments(true);
         try {
             const res = await fetch(`${API_URL}/api/tickets/${ticketId}/comments`, {
@@ -70,7 +80,41 @@ const SupportTickets: React.FC = () => {
         } finally {
             setLoadingComments(false);
         }
-    };
+    }, [getHeaders]);
+
+    const handleSyncReplies = useCallback(async (ticketId: number) => {
+        setIsSyncingReplies(true);
+        try {
+            const count = await syncIncomingEmailReplies(instance, ticketId, getHeaders, (newComment) => {
+                setComments(prev => {
+                    if (prev.some(c => c.id === newComment.id || (newComment.emailMessageId && c.emailMessageId === newComment.emailMessageId))) {
+                        return prev;
+                    }
+                    return [...prev, newComment];
+                });
+            });
+            if (count > 0) {
+                setNotification({ message: `Synced ${count} new reply from Outlook!`, type: 'success' });
+            }
+        } catch (e) {
+            console.warn('Sync replies failed:', e);
+        } finally {
+            setIsSyncingReplies(false);
+        }
+    }, [instance, getHeaders, setNotification]);
+
+    useEffect(() => {
+        if (selectedTicket) {
+            fetchComments(selectedTicket.id);
+            setCommentAttachments([]);
+            // Auto-check for any Outlook replies for this ticket
+            handleSyncReplies(selectedTicket.id);
+        } else {
+            setComments([]);
+            setNewComment('');
+            setCommentAttachments([]);
+        }
+    }, [selectedTicket?.id, fetchComments, handleSyncReplies]);
 
     // Upload helper for attachments
     const handleFileUpload = async (file: File, isForComment: boolean) => {
@@ -143,26 +187,36 @@ const SupportTickets: React.FC = () => {
 
             // Dispatch Microsoft Graph Email in Background
             const isUserAdmin = user?.role === 'Admin';
-            const recipientEmail = isUserAdmin 
-                ? (selectedTicket.user?.email || DEFAULT_SUPPORT_EMAIL)
-                : (users.find(u => u.role === 'Admin')?.email || DEFAULT_SUPPORT_EMAIL);
-            const recipientName = isUserAdmin ? (selectedTicket.user?.name || 'User') : 'IT Admin';
+            
+            // Recipient: if admin replies, send to ticket owner; if user replies, send to Admin
+            let recipientEmail = '';
+            let recipientName = '';
 
-            sendTicketEmailViaGraph({
-                msalInstance: instance,
-                toEmail: recipientEmail,
-                toName: recipientName,
-                subject: selectedTicket.subject,
-                ticketId: selectedTicket.id,
-                ticketSubject: selectedTicket.subject,
-                senderName: user?.name || 'Avana Team Member',
-                senderEmail: user?.email,
-                messageBody: payload.message,
-                status: selectedTicket.status,
-                priority: selectedTicket.priority,
-                attachments: sentAttachments,
-                isReply: true
-            }).catch(console.warn);
+            if (isUserAdmin) {
+                recipientEmail = selectedTicket.user?.email || '';
+                recipientName = selectedTicket.user?.name || 'User';
+            } else {
+                recipientEmail = supportAdmins[0]?.email || 'aravinth@avanamedical.com';
+                recipientName = supportAdmins[0]?.name || 'IT Admin';
+            }
+
+            if (recipientEmail) {
+                sendTicketEmailViaGraph({
+                    msalInstance: instance,
+                    toEmail: recipientEmail,
+                    toName: recipientName,
+                    subject: selectedTicket.subject,
+                    ticketId: selectedTicket.id,
+                    ticketSubject: selectedTicket.subject,
+                    senderName: user?.name || 'Avana Team Member',
+                    senderEmail: user?.email,
+                    messageBody: payload.message,
+                    status: selectedTicket.status,
+                    priority: selectedTicket.priority,
+                    attachments: sentAttachments,
+                    isReply: true
+                }).catch(console.warn);
+            }
 
         } catch (err: any) {
             setNotification({ message: err.message || 'Failed to post comment', type: 'error' });
@@ -200,8 +254,10 @@ const SupportTickets: React.FC = () => {
             setTicketAttachments([]);
             setNotification({ message: 'Ticket submitted successfully!', type: 'success' });
 
-            // Dispatch Microsoft Graph Email from Employee to IT Admin in Background
-            const adminEmail = users.find(u => u.role === 'Admin')?.email || DEFAULT_SUPPORT_EMAIL;
+            // Dispatch Microsoft Graph Email from Requester to IT Admin
+            // If logged-in user is NOT the admin, send to the admin
+            // If logged-in user IS the admin, send confirmation to themselves or another admin
+            const adminEmail = supportAdmins.find(a => a.email !== user?.email)?.email || supportAdmins[0]?.email || 'aravinth@avanamedical.com';
             const assetObj = assets.find(a => a.id === Number(formData.assetId));
 
             sendTicketEmailViaGraph({
@@ -313,7 +369,7 @@ const SupportTickets: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Support Tickets</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Submit and track your technical support requests with 2-way email sync.</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Submit and track technical support requests with live 2-way Outlook email sync.</p>
                 </div>
                 <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 font-bold">
                     {ICONS.add} New Ticket
@@ -459,7 +515,7 @@ const SupportTickets: React.FC = () => {
                                     <input
                                         type="file"
                                         ref={ticketFileInputRef}
-                                        onChange={e => e.target.files && handleFileUpload(e.target.files[0], false)}
+                                        onChange={e => e.target.files && e.target.files[0] && handleFileUpload(e.target.files[0], false)}
                                         className="hidden"
                                         accept="image/*,.pdf,.txt,.docx,.xlsx,.zip"
                                     />
@@ -557,7 +613,7 @@ const SupportTickets: React.FC = () => {
                                             className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
                                         >
                                             <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center text-brand-600 dark:text-red-400 flex-shrink-0">
-                                                {ICONS.asset || '💻'}
+                                                {ICONS.assets || '💻'}
                                             </div>
                                             <div className="text-left">
                                                 <p className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-brand-600 dark:group-hover:text-red-400 transition-colors">{relatedAsset.name}</p>
@@ -596,9 +652,20 @@ const SupportTickets: React.FC = () => {
 
                             {/* Discussion / Comment Thread */}
                             <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
-                                <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    💬 Discussion ({comments.length})
-                                </h4>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                                        💬 Discussion ({comments.length})
+                                    </h4>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSyncReplies(selectedTicket.id)}
+                                        disabled={isSyncingReplies}
+                                        className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-red-400 flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/40 rounded-lg transition-all"
+                                    >
+                                        <span className={isSyncingReplies ? 'animate-spin' : ''}>🔄</span>
+                                        {isSyncingReplies ? 'Syncing Outlook...' : 'Check Outlook Replies'}
+                                    </button>
+                                </div>
 
                                 {/* Comments list */}
                                 <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-1">
@@ -672,7 +739,7 @@ const SupportTickets: React.FC = () => {
                                         <input
                                             type="file"
                                             ref={commentFileInputRef}
-                                            onChange={e => e.target.files && handleFileUpload(e.target.files[0], true)}
+                                            onChange={e => e.target.files && e.target.files[0] && handleFileUpload(e.target.files[0], true)}
                                             className="hidden"
                                             accept="image/*,.pdf,.txt,.docx,.xlsx,.zip"
                                         />
