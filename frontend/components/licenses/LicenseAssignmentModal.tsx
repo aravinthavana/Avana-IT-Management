@@ -10,51 +10,87 @@ interface AssignmentModalProps {
 }
 
 const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClose, license }) => {
-    const { users, assets, setLicenses, licenses, setNotification } = useAppContext();
+    const { users, assets, setLicenses, licenses, setNotification, getHeaders } = useAppContext();
     const [assigneeType, setAssigneeType] = useState<'User' | 'Asset'>('User');
     const [selectedAssigneeId, setSelectedAssigneeId] = useState<number | ''>('');
+    const [isProcessing, setIsProcessing] = useState(false);
 
     if (!isOpen) return null;
 
     const currentAssignments = license.assignments || [];
     const availableSeats = license.seats - currentAssignments.length;
+    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
-    const handleAssign = () => {
+    const handleAssign = async () => {
         if (!selectedAssigneeId) return;
         if (availableSeats <= 0) {
             setNotification({ message: 'No available seats remaining!', type: 'error' });
             return;
         }
 
-        const newAssignment: LicenseAssignment = {
-            id: Date.now(),
-            licenseId: license.id,
-            userId: assigneeType === 'User' ? Number(selectedAssigneeId) : undefined,
-            assetId: assigneeType === 'Asset' ? Number(selectedAssigneeId) : undefined,
-            user: assigneeType === 'User' ? users.find(u => u.id === Number(selectedAssigneeId)) : undefined,
-            asset: assigneeType === 'Asset' ? assets.find(a => a.id === Number(selectedAssigneeId)) : undefined,
-            assignedAt: new Date().toISOString()
-        };
+        setIsProcessing(true);
+        try {
+            const payload = {
+                licenseId: license.id,
+                userId: assigneeType === 'User' ? Number(selectedAssigneeId) : null,
+                assetId: assigneeType === 'Asset' ? Number(selectedAssigneeId) : null
+            };
 
-        const updatedLicense = {
-            ...license,
-            assignments: [...currentAssignments, newAssignment],
-            assignedSeats: license.assignedSeats + 1
-        };
+            const res = await fetch(`${API_URL}/api/license-assignments`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload),
+                credentials: 'include'
+            });
 
-        setLicenses(licenses.map(l => l.id === license.id ? updatedLicense : l));
-        setNotification({ message: 'License assigned successfully.', type: 'success' });
-        setSelectedAssigneeId('');
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to assign license');
+            }
+
+            const createdAssignment = await res.json();
+            const updatedLicense = {
+                ...license,
+                assignments: [...currentAssignments, createdAssignment],
+                assignedSeats: (license.assignedSeats || 0) + 1
+            };
+
+            setLicenses(licenses.map(l => l.id === license.id ? updatedLicense : l));
+            setNotification({ message: 'License assigned successfully.', type: 'success' });
+            setSelectedAssigneeId('');
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to assign license', type: 'error' });
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
-    const handleUnassign = (assignmentId: number) => {
-        const updatedLicense = {
-            ...license,
-            assignments: currentAssignments.filter(a => a.id !== assignmentId),
-            assignedSeats: license.assignedSeats - 1
-        };
-        setLicenses(licenses.map(l => l.id === license.id ? updatedLicense : l));
-        setNotification({ message: 'License seat unassigned.', type: 'info' });
+    const handleUnassign = async (assignmentId: number) => {
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`${API_URL}/api/license-assignments/${assignmentId}`, {
+                method: 'DELETE',
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to unassign license seat');
+            }
+
+            const updatedLicense = {
+                ...license,
+                assignments: currentAssignments.filter(a => a.id !== assignmentId),
+                assignedSeats: Math.max(0, (license.assignedSeats || 1) - 1)
+            };
+            setLicenses(licenses.map(l => l.id === license.id ? updatedLicense : l));
+            setNotification({ message: 'License seat unassigned.', type: 'info' });
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to unassign seat', type: 'error' });
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -96,10 +132,10 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
                             
                             <button 
                                 onClick={handleAssign} 
-                                disabled={!selectedAssigneeId || availableSeats <= 0}
+                                disabled={!selectedAssigneeId || availableSeats <= 0 || isProcessing}
                                 className="bg-brand-600 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors font-medium text-sm whitespace-nowrap"
                             >
-                                Assign
+                                {isProcessing ? 'Processing...' : 'Assign'}
                             </button>
                         </div>
                     </div>

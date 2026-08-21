@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import SignatureCanvas from './SignatureCanvas';
+import { useAppContext } from '../../hooks/useAppContext';
 
 interface Handover {
     id: number;
@@ -19,6 +20,7 @@ interface Handover {
 }
 
 export default function PendingHandovers() {
+    const { getHeaders, setNotification } = useAppContext();
     const [handovers, setHandovers] = useState<Handover[]>([]);
     const [selectedHandover, setSelectedHandover] = useState<Handover | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +28,7 @@ export default function PendingHandovers() {
 
     const fetchPending = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/handovers/pending`, { credentials: 'include' });
+            const res = await fetch(`${API_URL}/api/handovers/pending`, { headers: getHeaders(), credentials: 'include' });
             if (res.ok) {
                 setHandovers(await res.json());
             }
@@ -46,7 +48,7 @@ export default function PendingHandovers() {
         try {
             const res = await fetch(`${API_URL}/api/handovers/${selectedHandover.id}/sign`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 body: JSON.stringify({ signature: signatureBase64 }),
                 credentials: 'include'
             });
@@ -54,11 +56,16 @@ export default function PendingHandovers() {
                 // Remove from list
                 setHandovers(prev => prev.filter(h => h.id !== selectedHandover.id));
                 setSelectedHandover(null);
+                setNotification({ message: 'Handover signed successfully! Asset status updated.', type: 'success' });
                 // Refresh global asset state if possible
                 window.dispatchEvent(new Event('app:login')); // Triggers data refetch in AppContext
+            } else {
+                const err = await res.json().catch(() => ({}));
+                setNotification({ message: err.error || 'Failed to sign handover', type: 'error' });
             }
         } catch (error) {
             console.error('Failed to sign handover', error);
+            setNotification({ message: 'Failed to sign handover', type: 'error' });
         }
     };
 
