@@ -56,9 +56,9 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         return false;
     }
 
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length === 0) {
-        console.warn('No active Microsoft 365 account found.');
+    const account = msalInstance.getActiveAccount() || (msalInstance.getAllAccounts().length > 0 ? msalInstance.getAllAccounts()[0] : null);
+    if (!account) {
+        console.warn('[GraphMail] No active Microsoft 365 account found in MSAL.');
         return false;
     }
 
@@ -68,17 +68,18 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         try {
             tokenResponse = await msalInstance.acquireTokenSilent({
                 ...loginRequest,
-                account: accounts[0]
+                account
             });
         } catch (silentErr) {
+            console.warn('[GraphMail] Silent token acquisition failed, attempting popup:', silentErr);
             tokenResponse = await msalInstance.acquireTokenPopup({
                 ...loginRequest,
-                account: accounts[0]
+                account
             });
         }
 
         if (!tokenResponse?.accessToken) {
-            console.error('Failed to obtain Graph access token.');
+            console.error('[GraphMail] Failed to obtain Graph access token.');
             return false;
         }
 

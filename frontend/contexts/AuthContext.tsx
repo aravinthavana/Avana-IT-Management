@@ -54,6 +54,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
                 const response = await instance.handleRedirectPromise();
                 if (response && response.idToken) {
+                    if (response.account) {
+                        instance.setActiveAccount(response.account);
+                    }
                     // Sync with our backend
                     const res = await fetch(`${API_URL}/api/auth/m365`, {
                         method: 'POST',
@@ -66,6 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         login(data.user);
                     }
                 } else if (accounts.length > 0) {
+                    instance.setActiveAccount(accounts[0]);
                     // If already logged in to MSAL but no local session, try to get a token silently
                     const silentRes = await instance.acquireTokenSilent({
                         ...loginRequest,
