@@ -104,9 +104,10 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
 
         // 3. Format Subject and HTML Template
         const trackingTag = `[AVANA-TICKET #${ticketId}]`;
+        const cleanSubject = ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
         const emailSubject = isReply 
-            ? `Re: ${trackingTag} ${ticketSubject}`
-            : `${trackingTag} ${ticketSubject}`;
+            ? `RE: ${trackingTag} ${cleanSubject}`
+            : `${trackingTag} ${cleanSubject}`;
 
         const htmlContent = `
 <!DOCTYPE html>

@@ -670,49 +670,64 @@ const SupportTickets: React.FC = () => {
                                 </div>
 
                                 {/* Comments list */}
-                                <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-1">
+                                <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                                     {loadingComments && (
-                                        <p className="text-xs text-slate-400 font-medium">Loading messages...</p>
+                                        <div className="flex justify-center py-4"><span className="animate-pulse text-xs text-slate-400 font-medium">Loading messages...</span></div>
                                     )}
                                     {!loadingComments && comments.length === 0 && (
-                                        <p className="text-xs text-slate-400 font-medium italic">No comments yet. Start the discussion below or reply directly from Outlook.</p>
+                                        <p className="text-xs text-center text-slate-400 font-medium italic py-4">No comments yet. Start the discussion below or reply directly from Outlook.</p>
                                     )}
                                     {comments.map(c => {
                                         const isAuthorAdmin = c.user?.role === 'Admin';
+                                        const isMe = c.user?.email === user?.email;
                                         const commentAtts = parseAttachments(c.attachments);
+                                        
                                         return (
-                                            <div key={c.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-xs text-slate-800 dark:text-white">{c.user?.name || 'User'}</span>
-                                                        {isAuthorAdmin && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-brand-600 dark:bg-red-950/60 dark:text-red-400 rounded-full text-[10px] font-black uppercase">IT Admin</span>
-                                                        )}
-                                                        {c.source === 'Email' && (
-                                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 rounded-full text-[10px] font-bold">Via Outlook</span>
-                                                        )}
-                                                    </div>
-                                                    <span className="text-[10px] font-medium text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
+                                            <div key={c.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                                <div className="flex items-center gap-2 mb-1 px-1">
+                                                    {!isMe && (
+                                                        <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wide">{c.user?.name || 'User'}</span>
+                                                    )}
+                                                    {isAuthorAdmin && !isMe && (
+                                                        <span className="px-1.5 py-0.5 bg-red-100 text-brand-600 dark:bg-red-950/60 dark:text-red-400 rounded text-[9px] font-black uppercase">IT Admin</span>
+                                                    )}
+                                                    {c.source === 'Email' && (
+                                                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 rounded text-[9px] font-bold">Via Outlook</span>
+                                                    )}
+                                                    <span className="text-[9px] font-medium text-slate-400">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{c.message}</p>
                                                 
-                                                {/* Comment Attachments */}
-                                                {commentAtts.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 pt-1">
-                                                        {commentAtts.map((att, idx) => (
-                                                            <a
-                                                                key={idx}
-                                                                href={att.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium text-brand-600 dark:text-red-400 hover:underline"
-                                                            >
-                                                                <span>📎 {att.name}</span>
-                                                                <span className="text-[10px] text-slate-400">({(att.size / 1024).toFixed(1)} KB)</span>
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                <div className={`p-3.5 rounded-2xl max-w-[85%] sm:max-w-[75%] shadow-sm ${
+                                                    isMe 
+                                                        ? 'bg-brand-600 text-white rounded-tr-sm' 
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-sm'
+                                                }`}>
+                                                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isMe ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                        {c.message}
+                                                    </p>
+                                                    
+                                                    {/* Comment Attachments */}
+                                                    {commentAtts.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 pt-2 mt-2 border-t border-black/10 dark:border-white/10">
+                                                            {commentAtts.map((att, idx) => (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={att.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity ${
+                                                                        isMe 
+                                                                            ? 'bg-black/20 text-white' 
+                                                                            : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-brand-600 dark:text-red-400'
+                                                                    }`}
+                                                                >
+                                                                    <span>📎 {att.name}</span>
+                                                                    <span className="text-[10px] opacity-75">({(att.size / 1024).toFixed(1)} KB)</span>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}
