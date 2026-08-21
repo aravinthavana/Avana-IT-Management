@@ -195,7 +195,7 @@ const Home: React.FC = () => {
         navigate('assets');
     };
 
-    const handleWarrantyFilter = (status: WarrantyStatus['label']) => {
+    const handleWarrantyFilter = (status: any) => {
         setAssetFilters([{ id: Date.now(), field: 'warrantyStatus', value: status }]);
         navigate('assets');
     }

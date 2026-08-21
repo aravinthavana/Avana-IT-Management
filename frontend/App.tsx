@@ -23,11 +23,8 @@ import KnowledgeBase from './components/kb/KnowledgeBase';
 import SelfAuditsList from './components/audits/SelfAuditsList';
 import { useAuth } from './contexts/AuthContext';
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
-    constructor(props: { children: React.ReactNode }) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
+class ErrorBoundary extends React.Component<any, any> {
+    public state = { hasError: false, error: null as Error | null };
     static getDerivedStateFromError(error: Error) {
         return { hasError: true, error };
     }
@@ -44,7 +41,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
                 </div>
             );
         }
-        return this.props.children;
+        return (this as any).props.children;
     }
 }
 

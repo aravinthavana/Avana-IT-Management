@@ -171,7 +171,7 @@ const AssetManagement: React.FC = () => {
     };
     
     const getAssignee = useMemo(() => (assigneeId: number | '' | null, assigneeType: 'user' | 'department' | 'branch' | null) => {
-        return getAssigneeDisplayInfo(assigneeId, assigneeType, users, departments, branches);
+        return getAssigneeDisplayInfo(assigneeId as any, assigneeType as any, users, departments, branches);
     }, [users, departments, branches]);
     
     const addFilter = () => {
@@ -537,7 +537,7 @@ const AssetManagement: React.FC = () => {
                             </div>
                             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">No assets found</h3>
                             <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your filters or search terms.</p>
-                             <button onClick={() => { setSearchTerm(''); setAssetFilters(defaultAssetFilter); }} className="px-6 py-2 bg-red-50 text-brand-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 transition-all">Reset All Filters</button>
+                             <button onClick={() => { setSearchTerm(''); setAssetFilters([{ id: Date.now(), field: 'status', value: 'All' }]); }} className="px-6 py-2 bg-red-50 text-brand-600 dark:bg-red-900/20 dark:text-red-400 rounded-xl font-bold hover:bg-red-100 transition-all">Reset All Filters</button>
                         </div>
                     )}
 

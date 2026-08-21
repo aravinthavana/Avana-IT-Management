@@ -255,6 +255,7 @@ const KnowledgeBase: React.FC = () => {
                                 <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Content</label>
                                 <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
                                     <ReactQuill 
+                                        // @ts-ignore
                                         ref={quillRef}
                                         theme="snow" 
                                         value={formData.content} 

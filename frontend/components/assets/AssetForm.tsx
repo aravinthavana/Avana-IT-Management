@@ -50,14 +50,14 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, assetType, purchaseDate }) => {
     const { assets, users, departments, branches } = useAppContext();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const initialFormState: Omit<Asset, 'purchaseId'> & { purchaseId: number | '' } = {
+    const initialFormState: any = {
         id: 0, assetId: '', assetCode: '', name: '', category: 'Laptop', brand: '', model: '', serialNumber: '', location: '', company: 'AMD',
-        status: 'In Stock', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
-        warrantyType: 'None', warrantyYears: '', warrantyStartDate: '', warrantyEndDate: '',
+        status: 'Available', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
+        warrantyType: 'Years', warrantyYears: '', warrantyStartDate: '', warrantyEndDate: '',
         specs: { os: '', storage: '', ram: '', processor: '', color: '', serviceTag: '', chargerAdapter: '', graphics: '', memoryTechnology: '', battery: '', dimensions: '', audio: '', displaySize: '', itemWeight: '', software: '' }
     };
 
-    const [formData, setFormData] = useState<Omit<Asset, 'purchaseId'> & { purchaseId: number | '' }>(initialFormState);
+    const [formData, setFormData] = useState<any>(initialFormState);
     const [customFields, setCustomFields] = useState<{ id: number; fieldName: string; fieldValue: string; }[]>([]);
     const [quantity, setQuantity] = useState(1);
     const [serialNumbers, setSerialNumbers] = useState<{ value: string; error?: string }[]>([{ value: '' }]);

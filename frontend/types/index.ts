@@ -178,7 +178,7 @@ export interface AppContextType {
     getHeaders: () => Record<string, string>;
 }
 
-export type WarrantyStatus = 'Active' | 'Expiring Soon' | 'Expired' | 'Lifetime' | 'N/A';
+export type WarrantyStatus = 'Active' | 'Expiring Soon' | 'Expired' | 'Lifetime' | 'None' | 'Unknown' | 'N/A';
 
 export interface License {
     id: number;

@@ -4,24 +4,26 @@ import { getWarrantyStatus } from '../../utils/assetUtils';
 import { WarrantyStatus } from '../../types';
 
 interface WarrantyStatusOverviewProps {
-    onStatusClick: (status: WarrantyStatus['label']) => void;
+    onStatusClick: (status: WarrantyStatus) => void;
 }
 
 const WarrantyStatusOverview: React.FC<WarrantyStatusOverviewProps> = ({ onStatusClick }) => {
     const { assets } = useAppContext();
 
     const warrantyStats = useMemo(() => {
-        const stats: { [key in WarrantyStatus['label']]: number } = {
+        const stats: { [key in WarrantyStatus]: number } = {
             'Active': 0,
             'Expiring Soon': 0,
             'Expired': 0,
             'None': 0,
             'N/A': 0,
+            'Lifetime': 0,
+            'Unknown': 0,
         };
         assets.forEach(asset => {
-            const status = getWarrantyStatus(asset);
-            if (stats[status.label] !== undefined) {
-                stats[status.label]++;
+            const label = getWarrantyStatus(asset).label as WarrantyStatus;
+            if (stats[label] !== undefined) {
+                stats[label]++;
             }
         });
         return stats;
