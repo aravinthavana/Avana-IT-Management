@@ -67,19 +67,24 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         let tokenResponse;
         try {
             tokenResponse = await msalInstance.acquireTokenSilent({
-                ...loginRequest,
+                scopes: ["Mail.Send"],
                 account
             });
         } catch (silentErr) {
-            console.warn('[GraphMail] Silent token acquisition failed, attempting popup:', silentErr);
-            tokenResponse = await msalInstance.acquireTokenPopup({
-                ...loginRequest,
-                account
-            });
+            console.warn('[GraphMail] Silent token acquisition for Mail.Send failed:', silentErr);
+            try {
+                tokenResponse = await msalInstance.acquireTokenPopup({
+                    scopes: ["Mail.Send"],
+                    account
+                });
+            } catch (popupErr) {
+                console.warn('[GraphMail] Popup token acquisition failed or blocked by tenant policy:', popupErr);
+                return false;
+            }
         }
 
         if (!tokenResponse?.accessToken) {
-            console.error('[GraphMail] Failed to obtain Graph access token.');
+            console.warn('[GraphMail] No Graph access token available for Mail.Send.');
             return false;
         }
 
@@ -252,7 +257,8 @@ export async function syncIncomingEmailReplies(
 ): Promise<number> {
     if (!msalInstance) return 0;
     const accounts = msalInstance.getAllAccounts();
-    if (accounts.length === 0) return 0;
+    const account = msalInstance.getActiveAccount() || accounts[0];
+    if (!account) return 0;
 
     const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
@@ -261,8 +267,8 @@ export async function syncIncomingEmailReplies(
         let tokenResponse;
         try {
             tokenResponse = await msalInstance.acquireTokenSilent({
-                ...loginRequest,
-                account: accounts[0]
+                scopes: ["Mail.Read"],
+                account
             });
         } catch {
             return 0; // Don't interrupt user with popups on passive sync
