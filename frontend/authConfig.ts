@@ -16,7 +16,7 @@ export const msalConfig: Configuration = {
 
 // Scopes for user authentication
 export const loginRequest: PopupRequest = {
-    scopes: ["User.Read"]
+    scopes: ["User.Read", "Mail.Send", "Mail.Read"]
 };
 
 // Add here the endpoints for MS Graph API services you would like to use.
