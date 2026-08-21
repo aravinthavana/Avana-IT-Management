@@ -47,6 +47,25 @@ export interface Branch {
     location?: string;
 }
 
+export interface AssetSpecs {
+    os?: string;
+    storage?: string;
+    ram?: string;
+    processor?: string;
+    color?: string;
+    serviceTag?: string;
+    chargerAdapter?: string;
+    graphics?: string;
+    memoryTechnology?: string;
+    battery?: string;
+    dimensions?: string;
+    audio?: string;
+    displaySize?: string;
+    itemWeight?: string;
+    software?: string;
+    [key: string]: any;
+}
+
 export interface Asset {
     id: number;
     assetId: string;
@@ -66,7 +85,7 @@ export interface Asset {
     warrantyYears?: number | string;
     warrantyEndDate?: string;
     remarks?: string;
-    specs?: Record<string, any>;
+    specs?: AssetSpecs;
 }
 
 export interface AssetHistory {

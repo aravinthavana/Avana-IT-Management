@@ -20,8 +20,8 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     }
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        console.error('JWT_SECRET is missing in middleware!');
+    if (!secret || secret.length < 32) {
+        console.error('JWT_SECRET is missing or invalid in middleware!');
         return res.status(500).json({ error: 'Internal server configuration error.' });
     }
 

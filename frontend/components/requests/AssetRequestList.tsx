@@ -1,52 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { AssetRequest } from '../../types';
+import { useAppContext } from '../../hooks/useAppContext';
 import RequestForm from './RequestForm';
 import { ICONS } from '../../constants';
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
+
 const AssetRequestList: React.FC = () => {
-    const { user, token } = useAuth();
-    const [requests, setRequests] = useState<AssetRequest[]>([]);
+    const { user } = useAuth();
+    const { assetRequests, setAssetRequests, getHeaders, setNotification } = useAppContext();
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:8080';
-
-    const fetchRequests = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch(`${API_URL}/api/requests`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('Failed to fetch requests');
-            const data = await res.json();
-            setRequests(data);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (token) fetchRequests();
-    }, [token]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleCreateRequest = async (data: any) => {
+        setIsSubmitting(true);
         try {
             const res = await fetch(`${API_URL}/api/requests`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: getHeaders(),
+                credentials: 'include',
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                fetchRequests();
+                const newReq = await res.json();
+                setAssetRequests([newReq, ...assetRequests]);
+                setIsFormOpen(false);
+                setNotification({ message: 'Request submitted successfully.', type: 'success' });
             } else {
-                throw new Error('Failed to create request');
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to create request');
             }
-        } catch(err: any) {
-            setError(err.message);
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Failed to submit request', type: 'error' });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -54,16 +41,20 @@ const AssetRequestList: React.FC = () => {
         try {
             const res = await fetch(`${API_URL}/api/requests/${id}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: getHeaders(),
+                credentials: 'include',
                 body: JSON.stringify({ status: newStatus })
             });
             if (res.ok) {
-                fetchRequests();
+                const updated = await res.json();
+                setAssetRequests(assetRequests.map(r => r.id === id ? updated : r));
+                setNotification({ message: `Request updated to ${newStatus}`, type: 'success' });
             } else {
-                 setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus as any } : r));
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to update request status');
             }
-        } catch (e) {
-            setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus as any } : r));
+        } catch (e: any) {
+            setNotification({ message: e.message || 'Failed to update status', type: 'error' });
         }
     };
 
@@ -109,7 +100,7 @@ const AssetRequestList: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                            {requests.map(req => (
+                            {assetRequests.map(req => (
                                 <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                     <td className="px-6 py-4 font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">REQ-{req.id.toString().padStart(4, '0')}</td>
                                     <td className="px-6 py-4">
@@ -151,9 +142,9 @@ const AssetRequestList: React.FC = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {requests.length === 0 && !isLoading && (
+                            {assetRequests.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                                         No asset requests found.
                                     </td>
                                 </tr>

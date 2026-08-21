@@ -21,8 +21,8 @@ const app = express();
 const port = process.env.PORT || 8080;
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    console.error('FATAL ERROR: JWT_SECRET is not defined.');
+if (!JWT_SECRET || JWT_SECRET.length < 32 || JWT_SECRET.includes('avana-it-management-secure-secret')) {
+    console.error('FATAL SECURITY ERROR: JWT_SECRET must be defined and at least 32 characters long. Default/weak secrets are rejected.');
     process.exit(1);
 }
 
@@ -101,6 +101,10 @@ app.use(cors({
     credentials: true,
 }));
 
+// Global parsing middleware
+app.use(express.json());
+app.use(cookieParser());
+
 // Rate Limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -110,15 +114,23 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-// Static file serving for uploads
+// Strict Rate Limiting for Authentication Endpoints (Brute-Force Protection)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 15, // 15 attempts per IP per 15 minutes
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
+});
+app.use('/api/login', authLimiter);
+app.use('/api/auth/m365', authLimiter);
+
+// Protected Static File Serving for Uploads (Requires Authentication)
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadsDir));
-
-app.use(express.json());
-app.use(cookieParser());
+app.use('/uploads', authenticateToken, express.static(uploadsDir));
 
 // Request Logger
 app.use((req, res, next) => {
@@ -1336,11 +1348,16 @@ app.get('/api/self-audits', authenticateToken, async (req, res) => {
 app.post('/api/self-audits', authenticateToken, async (req, res) => {
     try {
         // @ts-ignore
-        const { id: userId } = req.user;
+        const { id: userId, role } = req.user;
         const { assetId, scannedAssetId, imageUrl, remarks } = req.body;
 
         const asset = await prisma.asset.findUnique({ where: { id: Number(assetId) } });
         if (!asset) return res.status(404).json({ error: 'Asset not found.' });
+
+        // Security check: Only the assigned user (or Admin) can submit a self-audit for this asset
+        if (role !== 'Admin' && asset.userId !== userId) {
+            return res.status(403).json({ error: 'Access denied. You can only submit audits for assets assigned to you.' });
+        }
 
         const audit = await prisma.selfAudit.create({
             data: {

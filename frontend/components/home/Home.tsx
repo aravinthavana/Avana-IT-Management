@@ -15,7 +15,7 @@ import PendingHandovers from '../handovers/PendingHandovers';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Home: React.FC = () => {
-    const { assets, users, navigate, setAssetFilters, setSelectedAssetId, tickets } = useAppContext();
+    const { assets, users, navigate, setAssetFilters, setSelectedAssetId, tickets, assetRequests } = useAppContext();
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [auditTargetAsset, setAuditTargetAsset] = useState<any>(null);
     const { user } = useAuth();
@@ -35,7 +35,6 @@ const Home: React.FC = () => {
 
     // USER VIEW
     if (user?.role === 'User') {
-        const { assetRequests } = useAppContext();
         const myRequests = assetRequests.filter(r => r.userId === user.id).slice(0, 3);
         
         return (
