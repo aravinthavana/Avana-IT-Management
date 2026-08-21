@@ -33,6 +33,15 @@ const SupportTickets: React.FC = () => {
     
     const ticketFileInputRef = useRef<HTMLInputElement>(null);
     const commentFileInputRef = useRef<HTMLInputElement>(null);
+    const commentsEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [comments]);
 
     const [formData, setFormData] = useState({
         subject: '',
@@ -249,7 +258,7 @@ const SupportTickets: React.FC = () => {
             }
 
             const newTicket = await res.json();
-            setTickets([newTicket, ...tickets]);
+            setTickets(prev => [newTicket, ...prev]);
             setIsModalOpen(false);
             const sentAttachments = [...ticketAttachments];
             setFormData({ subject: '', category: 'Hardware', priority: 'Medium', description: '', assetId: '' });
@@ -731,6 +740,7 @@ const SupportTickets: React.FC = () => {
                                             </div>
                                         );
                                     })}
+                                    <div ref={commentsEndRef} />
                                 </div>
 
                                 {/* Comment Form */}

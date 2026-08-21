@@ -126,7 +126,7 @@ app.use('/api/login', authLimiter);
 app.use('/api/auth/m365', authLimiter);
 
 // Protected Static File Serving for Uploads (Requires Authentication)
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
