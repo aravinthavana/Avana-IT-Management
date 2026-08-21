@@ -37,6 +37,7 @@ async function sendTicketEmail(options: {
     ticketId: number;
     ticketSubject: string;
     senderName: string;
+    senderEmail?: string;  // actual sender's email for Reply-To
     messageBody: string;
     category?: string;
     priority?: string;
@@ -76,7 +77,7 @@ async function sendTicketEmail(options: {
   <div class="header">
     <span class="badge">${options.category || 'IT Support'}</span>
     <div class="title">${options.isReply ? 'New Response Added' : 'New Support Ticket'}</div>
-    <div class="meta">Ticket #${options.ticketId} &bull; From: ${options.senderName}</div>
+    <div class="meta">Ticket #${options.ticketId} &bull; From: ${options.senderName}${options.senderEmail ? ` &lt;${options.senderEmail}&gt;` : ''}</div>
   </div>
   <div class="content">
     <p>Hello <strong>${options.toName}</strong>,</p>
@@ -102,13 +103,16 @@ async function sendTicketEmail(options: {
         tls: { ciphers: 'SSLv3' }
     });
 
+    // From shows sender's name via the shared mailbox
+    // Reply-To directs replies to the actual sender's personal mailbox
     await transporter.sendMail({
-        from: `"Avana IT Support" <${smtpUser}>`,
+        from: `"${options.senderName} via Avana IT Support" <${smtpUser}>`,
         to: `"${options.toName}" <${options.toEmail}>`,
+        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : smtpUser,
         subject,
         html: htmlContent,
     });
-    console.log(`[Email] Sent ticket #${options.ticketId} email to ${options.toEmail}`);
+    console.log(`[Email] Sent ticket #${options.ticketId} email from ${options.senderName} (${options.senderEmail}) to ${options.toEmail}`);
 }
 
 // --- Zod Schemas for Validation ---
@@ -1461,6 +1465,7 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
                         toEmail: admin.email, toName: admin.name,
                         ticketId: ticket.id, ticketSubject: ticket.subject,
                         senderName: ticket.user?.name || 'Employee',
+                        senderEmail: ticket.user?.email,
                         messageBody: ticket.description,
                         category: ticket.category, priority: ticket.priority,
                         status: ticket.status, assetName,
@@ -1586,7 +1591,8 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                         await sendTicketEmail({
                             toEmail: fullTicket.user.email, toName: fullTicket.user.name,
                             ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
-                            senderName: commenter.name, messageBody: message.trim(),
+                            senderName: commenter.name, senderEmail: commenter.email,
+                            messageBody: message.trim(),
                             status: fullTicket.status, priority: fullTicket.priority,
                             isReply: true,
                         });
@@ -1598,7 +1604,8 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                         await sendTicketEmail({
                             toEmail: admin.email, toName: admin.name,
                             ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
-                            senderName: commenter.name, messageBody: message.trim(),
+                            senderName: commenter.name, senderEmail: commenter.email,
+                            messageBody: message.trim(),
                             status: fullTicket.status, priority: fullTicket.priority,
                             isReply: true,
                         }).catch(e => console.warn('[Email] Failed to notify admin on reply:', e));
