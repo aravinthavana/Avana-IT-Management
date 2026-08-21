@@ -3,8 +3,11 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { KnowledgeBaseArticle } from '../../types';
+import { sanitizeHtml } from '../../utils/sanitize';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const KnowledgeBase: React.FC = () => {
     const { kbArticles, setKbArticles, getHeaders, setNotification } = useAppContext();
@@ -47,7 +50,7 @@ const KnowledgeBase: React.FC = () => {
                 const headers = getHeaders() as any;
                 delete headers['Content-Type']; // Let browser set boundary for FormData
 
-                const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/upload`, {
+                const res = await fetch(`${API_URL}/api/upload`, {
                     method: 'POST',
                     headers,
                     body: uploadData,
@@ -88,8 +91,8 @@ const KnowledgeBase: React.FC = () => {
         try {
             const method = selectedArticle && isModalOpen ? 'PUT' : 'POST';
             const url = selectedArticle && isModalOpen 
-                ? `${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/kb/${selectedArticle.id}`
-                : `${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/kb`;
+                ? `${API_URL}/api/kb/${selectedArticle.id}`
+                : `${API_URL}/api/kb`;
 
             const res = await fetch(url, {
                 method,
@@ -118,10 +121,10 @@ const KnowledgeBase: React.FC = () => {
     const handleDelete = async (id: number) => {
         if (!window.confirm('Are you sure you want to delete this article?')) return;
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/kb/${id}`, {
+            const res = await fetch(`${API_URL}/api/kb/${id}`, {
                 method: 'DELETE',
                 headers: getHeaders(),
-                                credentials: 'include',
+                credentials: 'include',
             });
             if (!res.ok) throw new Error('Failed to delete article');
             setKbArticles(kbArticles.filter(a => a.id !== id));
@@ -191,7 +194,7 @@ const KnowledgeBase: React.FC = () => {
                             <div className="p-8">
                                 <div 
                                     className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedArticle.content) }}
                                 />
                                 <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold text-brand-600 dark:text-red-400 flex items-center gap-2 hover:underline">
                                     &larr; Back to list

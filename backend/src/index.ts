@@ -132,10 +132,19 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', authenticateToken, express.static(uploadsDir));
 
-// Request Logger
+// Request Logger (Sanitized & secure)
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
-    if (req.method !== 'GET') console.log('Body:', JSON.stringify(req.body, null, 2));
+    if (process.env.NODE_ENV !== 'production' && req.method !== 'GET' && req.body) {
+        const sanitized = { ...req.body };
+        if (sanitized.password) sanitized.password = '[REDACTED]';
+        if (sanitized.currentPassword) sanitized.currentPassword = '[REDACTED]';
+        if (sanitized.token) sanitized.token = '[REDACTED]';
+        if (sanitized.idToken) sanitized.idToken = '[REDACTED]';
+        if (sanitized.accessToken) sanitized.accessToken = '[REDACTED]';
+        if (sanitized.signature) sanitized.signature = '[REDACTED BASE64]';
+        console.log('Body (Sanitized):', JSON.stringify(sanitized, null, 2));
+    }
     next();
 });
 
@@ -381,34 +390,33 @@ app.post('/api/handovers/:id/sign', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Handover is already signed or rejected' });
         }
 
-        // Update HandoverLog
-        await prisma.handoverLog.update({
-            where: { id: Number(id) },
-            data: {
-                signature,
-                status: 'Signed',
-                handoverDate: new Date()
-            }
-        });
-
-        // Update Asset status to Assigned
-        await prisma.asset.update({
-            where: { id: handover.assetId },
-            data: { status: 'Assigned' }
-        });
-
-        // Add history log
-        await prisma.assetHistory.create({
-            data: {
-                assetId: handover.assetId,
-                userId: userId,
-                event: 'Handover Signed',
-                details: 'User digitally signed the handover form.'
-            }
-        });
+        // Execute updates atomically in a single transaction
+        await prisma.$transaction([
+            prisma.handoverLog.update({
+                where: { id: Number(id) },
+                data: {
+                    signature,
+                    status: 'Signed',
+                    handoverDate: new Date()
+                }
+            }),
+            prisma.asset.update({
+                where: { id: handover.assetId },
+                data: { status: 'Assigned' }
+            }),
+            prisma.assetHistory.create({
+                data: {
+                    assetId: handover.assetId,
+                    userId: userId,
+                    event: 'Handover Signed',
+                    details: 'User digitally signed the handover form.'
+                }
+            })
+        ]);
 
         res.json({ success: true, message: 'Handover signed successfully' });
     } catch (error) {
+        console.error('Failed to sign handover:', error);
         res.status(500).json({ error: 'Failed to sign handover' });
     }
 });
@@ -958,10 +966,47 @@ app.delete('/api/purchases/:id', authenticateToken, requireAdmin, async (req, re
 // --- Asset History ---
 app.get('/api/history', authenticateToken, async (req, res) => {
     try {
-        const history = await prisma.assetHistory.findMany({
-            include: { user: true },
-            orderBy: { timestamp: 'desc' }
-        });
+        // @ts-ignore
+        const { role, id } = req.user;
+        let history;
+
+        const userSelect = { select: { id: true, name: true, email: true, role: true } };
+
+        if (role === 'Admin') {
+            history = await prisma.assetHistory.findMany({
+                include: { user: userSelect, asset: { select: { id: true, assetId: true, name: true, category: true } } },
+                orderBy: { timestamp: 'desc' },
+                take: 200
+            });
+        } else if (role === 'Manager') {
+            const user = await prisma.user.findUnique({ where: { id } });
+            history = await prisma.assetHistory.findMany({
+                where: {
+                    OR: [
+                        { userId: id },
+                        { asset: { userId: id } },
+                        { asset: { user: { managerId: id } } },
+                        { asset: { user: { departmentId: user?.departmentId || -1 } } }
+                    ]
+                },
+                include: { user: userSelect, asset: { select: { id: true, assetId: true, name: true, category: true } } },
+                orderBy: { timestamp: 'desc' },
+                take: 100
+            });
+        } else {
+            history = await prisma.assetHistory.findMany({
+                where: {
+                    OR: [
+                        { userId: id },
+                        { asset: { userId: id } }
+                    ]
+                },
+                include: { user: userSelect, asset: { select: { id: true, assetId: true, name: true, category: true } } },
+                orderBy: { timestamp: 'desc' },
+                take: 50
+            });
+        }
+
         res.json(history);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
@@ -985,8 +1030,29 @@ app.post('/api/history', authenticateToken, requireAdmin, async (req, res) => {
 // --- Licenses Routes ---
 app.get('/api/licenses', authenticateToken, async (req, res) => {
     try {
-        const licenses = await prisma.license.findMany({ include: { assignments: { include: { user: true, asset: true } } } });
-        res.json(licenses);
+        // @ts-ignore
+        const { role } = req.user;
+        const licenses = await prisma.license.findMany({ 
+            include: { 
+                assignments: { 
+                    include: { 
+                        user: { select: { id: true, name: true, email: true } }, 
+                        asset: { select: { id: true, assetId: true, name: true } } 
+                    } 
+                } 
+            } 
+        });
+
+        // Security: Non-admin users cannot see raw product license keys
+        const sanitized = licenses.map(l => {
+            if (role !== 'Admin') {
+                const { key, ...rest } = l;
+                return { ...rest, key: null };
+            }
+            return l;
+        });
+
+        res.json(sanitized);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch licenses' });
     }
@@ -1034,7 +1100,39 @@ app.delete('/api/licenses/:id', authenticateToken, requireAdmin, async (req, res
 app.post('/api/license-assignments', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { licenseId, userId, assetId } = req.body;
-        const assignment = await prisma.licenseAssignment.create({ data: { licenseId, userId, assetId } });
+        if (!licenseId) return res.status(400).json({ error: 'License ID is required' });
+
+        const license = await prisma.license.findUnique({
+            where: { id: Number(licenseId) },
+            include: { assignments: true }
+        });
+
+        if (!license) return res.status(404).json({ error: 'License not found' });
+
+        // Enforce seat limit
+        if (license.assignments.length >= license.seats) {
+            return res.status(400).json({ error: `Seat limit reached. All ${license.seats} seat(s) for "${license.name}" are assigned.` });
+        }
+
+        // Duplicate assignment prevention
+        if (userId && license.assignments.some(a => a.userId === Number(userId))) {
+            return res.status(400).json({ error: 'This user is already assigned to this license.' });
+        }
+        if (assetId && license.assignments.some(a => a.assetId === Number(assetId))) {
+            return res.status(400).json({ error: 'This asset is already assigned to this license.' });
+        }
+
+        const assignment = await prisma.licenseAssignment.create({ 
+            data: { 
+                licenseId: Number(licenseId), 
+                userId: userId ? Number(userId) : null, 
+                assetId: assetId ? Number(assetId) : null 
+            },
+            include: {
+                user: { select: { id: true, name: true, email: true } },
+                asset: { select: { id: true, assetId: true, name: true } }
+            }
+        });
         res.status(201).json(assignment);
     } catch (error) {
         res.status(500).json({ error: 'Failed to assign license' });
@@ -1208,6 +1306,16 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
 app.get('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
+        // @ts-ignore
+        const { id: userId, role } = req.user;
+
+        const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) } });
+        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+        if (role !== 'Admin' && role !== 'Manager' && ticket.userId !== userId) {
+            return res.status(403).json({ error: 'Access denied to this ticket discussion' });
+        }
+
         const comments = await prisma.ticketComment.findMany({
             where: { ticketId: Number(id) },
             include: {
@@ -1225,7 +1333,7 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         // @ts-ignore
-        const userId = req.user.id;
+        const { id: userId, role } = req.user;
         const { message } = req.body;
 
         if (!message || typeof message !== 'string' || !message.trim()) {
@@ -1237,11 +1345,15 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Ticket not found' });
         }
 
+        if (role !== 'Admin' && role !== 'Manager' && ticket.userId !== userId) {
+            return res.status(403).json({ error: 'Access denied to post on this ticket' });
+        }
+
         const comment = await prisma.ticketComment.create({
             data: {
                 ticketId: Number(id),
                 userId,
-                message: message.trim()
+                message: message.trim().slice(0, 3000)
             },
             include: {
                 user: { select: { id: true, name: true, role: true, avatar: true } }

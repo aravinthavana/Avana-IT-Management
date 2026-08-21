@@ -134,18 +134,60 @@ const SupportTickets: React.FC = () => {
         }
     };
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+
+    const filteredTickets = React.useMemo(() => {
+        return tickets.filter(t => {
+            const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (t.user?.name && t.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [tickets, searchTerm, statusFilter]);
+
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Support Tickets</h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">Submit and track your technical support requests.</p>
                 </div>
-                {user?.role === 'User' && (
-                    <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 font-bold">
-                        {ICONS.add} New Ticket
-                    </button>
-                )}
+                <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 font-bold">
+                    {ICONS.add} New Ticket
+                </button>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="relative flex-1 w-full max-w-md">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                        {ICONS.search}
+                    </span>
+                    <input
+                        type="text"
+                        placeholder="Search tickets by subject, category, or user..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
+                    />
+                </div>
+                <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+                    {['All', 'Open', 'In Progress', 'Resolved', 'Closed'].map(status => (
+                        <button
+                            key={status}
+                            onClick={() => setStatusFilter(status)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                statusFilter === status
+                                    ? 'bg-brand-600 text-white shadow-sm'
+                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            {status}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -161,7 +203,7 @@ const SupportTickets: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                            {tickets.map(ticket => (
+                            {filteredTickets.map(ticket => (
                                 <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
                                     <td className="px-6 py-4">
                                         <p className="font-bold text-slate-800 dark:text-white">{ticket.subject}</p>
@@ -185,9 +227,9 @@ const SupportTickets: React.FC = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {tickets.length === 0 && (
+                            {filteredTickets.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">No tickets found.</td>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">No tickets match your filters.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -227,7 +269,7 @@ const SupportTickets: React.FC = () => {
                                 <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Related Asset (Optional)</label>
                                 <select value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none">
                                     <option value="">No specific asset</option>
-                                    {assets.filter(a => a.assigneeId === user?.id).map(a => <option key={a.id} value={a.id}>{a.name} ({a.assetId})</option>)}
+                                    {assets.filter(a => user?.role === 'Admin' || a.assigneeId === user?.id).map(a => <option key={a.id} value={a.id}>{a.name} ({a.assetId})</option>)}
                                 </select>
                             </div>
                             <div>
