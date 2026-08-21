@@ -353,6 +353,47 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 
 // --- Handover Endpoints ---
 
+// List all handovers (Admin sees all, Manager sees direct reports, User sees own)
+app.get('/api/handovers', authenticateToken, async (req, res) => {
+    try {
+        // @ts-ignore
+        const { role, id: userId } = req.user;
+        let handovers;
+        if (role === 'Admin') {
+            handovers = await prisma.handoverLog.findMany({
+                include: {
+                    asset: true,
+                    user: { select: { id: true, name: true, email: true, department: true } }
+                },
+                orderBy: { handoverDate: 'desc' }
+            });
+        } else if (role === 'Manager') {
+            handovers = await prisma.handoverLog.findMany({
+                where: {
+                    OR: [
+                        { userId },
+                        { user: { managerId: userId } }
+                    ]
+                },
+                include: {
+                    asset: true,
+                    user: { select: { id: true, name: true, email: true, department: true } }
+                },
+                orderBy: { handoverDate: 'desc' }
+            });
+        } else {
+            handovers = await prisma.handoverLog.findMany({
+                where: { userId },
+                include: { asset: true },
+                orderBy: { handoverDate: 'desc' }
+            });
+        }
+        res.json(handovers);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch handovers' });
+    }
+});
+
 // Get pending handovers for current user
 app.get('/api/handovers/pending', authenticateToken, async (req, res) => {
     try {
@@ -475,11 +516,11 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) return res.status(409).json({ error: 'A user with this email already exists' });
 
-        if (password && password.trim().length > 0 && password.trim().length < 6) {
-            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        if (password && password.trim().length > 0 && password.trim().length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
         }
 
-        const hashedPassword = (password && password.trim().length >= 6) ? await bcrypt.hash(password.trim(), 10) : null;
+        const hashedPassword = (password && password.trim().length >= 8) ? await bcrypt.hash(password.trim(), 10) : null;
         const user = await prisma.user.create({
             data: {
                 name,
@@ -835,8 +876,17 @@ app.get('/api/departments', authenticateToken, async (req, res) => {
 app.post('/api/departments', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { name } = req.body;
-        if (!name) return res.status(400).json({ error: 'Name is required' });
-        const dept = await prisma.department.create({ data: { name } });
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Department name is required' });
+        }
+        const trimmedName = name.trim();
+        const existing = await prisma.department.findFirst({
+            where: { name: { equals: trimmedName, mode: 'insensitive' } }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'A department with this name already exists' });
+        }
+        const dept = await prisma.department.create({ data: { name: trimmedName } });
         res.status(201).json(dept);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create department' });
@@ -847,7 +897,17 @@ app.put('/api/departments/:id', authenticateToken, requireAdmin, async (req, res
     try {
         const { id } = req.params;
         const { name } = req.body;
-        const dept = await prisma.department.update({ where: { id: Number(id) }, data: { name } });
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Department name is required' });
+        }
+        const trimmedName = name.trim();
+        const existing = await prisma.department.findFirst({
+            where: { name: { equals: trimmedName, mode: 'insensitive' }, NOT: { id: Number(id) } }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'Another department with this name already exists' });
+        }
+        const dept = await prisma.department.update({ where: { id: Number(id) }, data: { name: trimmedName } });
         res.json(dept);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update department' });
@@ -878,8 +938,17 @@ app.get('/api/branches', authenticateToken, async (req, res) => {
 app.post('/api/branches', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { name, location } = req.body;
-        if (!name) return res.status(400).json({ error: 'Name is required' });
-        const branch = await prisma.branch.create({ data: { name, location } });
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Branch name is required' });
+        }
+        const trimmedName = name.trim();
+        const existing = await prisma.branch.findFirst({
+            where: { name: { equals: trimmedName, mode: 'insensitive' } }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'A branch with this name already exists' });
+        }
+        const branch = await prisma.branch.create({ data: { name: trimmedName, location: location ? location.trim() : null } });
         res.status(201).json(branch);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create branch' });
@@ -890,7 +959,17 @@ app.put('/api/branches/:id', authenticateToken, requireAdmin, async (req, res) =
     try {
         const { id } = req.params;
         const { name, location } = req.body;
-        const branch = await prisma.branch.update({ where: { id: Number(id) }, data: { name, location } });
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Branch name is required' });
+        }
+        const trimmedName = name.trim();
+        const existing = await prisma.branch.findFirst({
+            where: { name: { equals: trimmedName, mode: 'insensitive' }, NOT: { id: Number(id) } }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'Another branch with this name already exists' });
+        }
+        const branch = await prisma.branch.update({ where: { id: Number(id) }, data: { name: trimmedName, location: location ? location.trim() : null } });
         res.json(branch);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update branch' });
@@ -915,6 +994,11 @@ app.delete('/api/branches/:id', authenticateToken, requireAdmin, async (req, res
 
 app.get('/api/purchases', authenticateToken, async (req, res) => {
     try {
+        // @ts-ignore
+        const { role } = req.user;
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Access denied. Purchase and financial records are restricted to Admins and Managers.' });
+        }
         const purchases = await prisma.purchaseRecord.findMany({
             include: { assets: true },
             orderBy: { purchaseDate: 'desc' }

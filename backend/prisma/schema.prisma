@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "windows", "debian-openssl-1.1.x"]
+  binaryTargets = ["native", "windows", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -41,17 +41,22 @@ model User {
   handovers    HandoverLog[]
   selfAudits   SelfAudit[]
   ticketComments TicketComment[]
+
+  @@index([departmentId])
+  @@index([branchId])
+  @@index([managerId])
+  @@index([status])
 }
 
 model Department {
   id     Int     @id @default(autoincrement())
-  name   String
+  name   String  @unique
   users  User[]
 }
 
 model Branch {
   id       Int     @id @default(autoincrement())
-  name     String
+  name     String  @unique
   location String?
   users    User[]
 }
@@ -92,6 +97,13 @@ model Asset {
   licenseAssignments LicenseAssignment[]
   handovers         HandoverLog[]
   selfAudits        SelfAudit[]
+  supportTickets    SupportTicket[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([company])
+  @@index([purchaseId])
 }
 
 model AssetHistory {
@@ -100,11 +112,14 @@ model AssetHistory {
   asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   timestamp DateTime @default(now())
   
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   
   event     String
   details   String?
+
+  @@index([assetId])
+  @@index([userId])
 }
 
 model HandoverLog {
@@ -116,6 +131,10 @@ model HandoverLog {
   handoverDate DateTime @default(now())
   signature    String?  // Base64 signature image string
   status       String   @default("Pending") // Pending, Signed, Rejected
+
+  @@index([assetId])
+  @@index([userId])
+  @@index([status])
 }
 
 model PurchaseRecord {
@@ -159,6 +178,10 @@ model LicenseAssignment {
   asset        Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
   
   assignedAt   DateTime @default(now())
+
+  @@index([licenseId])
+  @@index([userId])
+  @@index([assetId])
 }
 
 model AssetRequest {
@@ -176,6 +199,10 @@ model AssetRequest {
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([managerId])
 }
 
 model SupportTicket {
@@ -189,13 +216,18 @@ model SupportTicket {
   status      String   @default("Open")   // Open, In Progress, Resolved, Closed
   description String
   
-  assetId     Int?     
+  assetId     Int?
+  asset       Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   resolvedAt  DateTime?
 
   comments    TicketComment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([assetId])
 }
 
 model TicketComment {
@@ -206,6 +238,9 @@ model TicketComment {
   user      User          @relation(fields: [userId], references: [id])
   message   String
   createdAt DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
 }
 
 model KnowledgeBase {
@@ -218,6 +253,9 @@ model KnowledgeBase {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([authorId])
 }
 
 model SelfAudit {
@@ -231,4 +269,8 @@ model SelfAudit {
   remarks          String?
   status           String   @default("Pending Review") // Pending Review, Approved, Rejected
   auditDate        DateTime @default(now())
+
+  @@index([assetId])
+  @@index([userId])
+  @@index([status])
 }
