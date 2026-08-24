@@ -184,7 +184,7 @@ async function sendTicketEmail(options: {
 }): Promise<{ success: boolean; method?: string; error?: string }> {
     const fromMail = process.env.SMTP_FROM || process.env.SMTP_USER || 'itsupport@avanamedical.com';
     const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
-    const cleanSubject = options.ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
+    const cleanSubject = (options.ticketSubject || 'Support Ticket').replace(/\[AVANA-TICKET\s*#\d+\]/gi, '').replace(/^(RE:\s*)+/i, '').trim();
     const subject = options.isReply ? `RE: ${trackingTag} ${cleanSubject}` : `${trackingTag} ${cleanSubject}`;
 
     const htmlContent = `<!DOCTYPE html>
@@ -1894,46 +1894,88 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                     where: { id: Number(id) },
                     include: { user: { select: { id: true, name: true, email: true } } }
                 });
-                if (!fullTicket) return;
+                if (!fullTicket) {
+                    console.warn(`[Comment Email] Could not find ticket #${id} for email notification.`);
+                    return;
+                }
 
-                const commenter = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, role: true } });
-                if (!commenter) return;
+                const commenter = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { id: true, name: true, email: true, role: true }
+                });
 
-                if (commenter.role === 'Admin' || commenter.role === 'Manager') {
+                const commenterRole = (commenter?.role || role || '').toLowerCase();
+                const isAdminOrManager = commenterRole === 'admin' || commenterRole === 'manager';
+                const senderName = commenter?.name || 'Avana Support';
+                const senderEmail = commenter?.email;
+
+                console.log(`[Comment Email] User ${userId} (${commenterRole}) commented on ticket #${id}`);
+
+                if (isAdminOrManager) {
                     // Admin replied → notify ticket owner
-                    if (fullTicket.user?.email) {
+                    const recipientEmail = fullTicket.user?.email;
+                    const recipientName = fullTicket.user?.name || 'Ticket Requester';
+
+                    if (recipientEmail) {
+                        console.log(`[Comment Email] Admin replied. Notifying ticket owner: ${recipientEmail}`);
                         await sendTicketEmail({
-                            toEmail: fullTicket.user.email,
-                            toName: fullTicket.user.name,
+                            toEmail: recipientEmail,
+                            toName: recipientName,
                             ticketId: fullTicket.id,
-                            ticketSubject: fullTicket.subject,
-                            senderName: commenter.name,
-                            senderEmail: commenter.email,
+                            ticketSubject: fullTicket.subject || 'Support Ticket',
+                            senderName,
+                            senderEmail,
                             messageBody: message.trim(),
                             status: fullTicket.status,
                             priority: fullTicket.priority,
                             isReply: true,
-                        }).catch(e => console.warn('[Email] Failed to notify ticket owner on admin reply:', e));
+                        });
+                    } else {
+                        console.warn(`[Comment Email] Ticket #${id} has no ticket owner email. Notifying all active admins instead.`);
+                        const admins = await prisma.user.findMany({
+                            where: { role: { equals: 'Admin', mode: 'insensitive' }, status: 'Active' },
+                            select: { name: true, email: true }
+                        });
+                        for (const admin of admins) {
+                            await sendTicketEmail({
+                                toEmail: admin.email,
+                                toName: admin.name,
+                                ticketId: fullTicket.id,
+                                ticketSubject: fullTicket.subject || 'Support Ticket',
+                                senderName,
+                                senderEmail,
+                                messageBody: message.trim(),
+                                status: fullTicket.status,
+                                priority: fullTicket.priority,
+                                isReply: true,
+                            });
+                        }
                     }
                 } else {
-                    // User replied → notify all admins
-                    const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
+                    // Normal user replied → notify all admins
+                    const admins = await prisma.user.findMany({
+                        where: { role: { equals: 'Admin', mode: 'insensitive' }, status: 'Active' },
+                        select: { name: true, email: true }
+                    });
+                    console.log(`[Comment Email] User replied. Notifying ${admins.length} admins.`);
                     for (const admin of admins) {
                         await sendTicketEmail({
                             toEmail: admin.email,
                             toName: admin.name,
                             ticketId: fullTicket.id,
-                            ticketSubject: fullTicket.subject,
-                            senderName: commenter.name,
-                            senderEmail: commenter.email,
+                            ticketSubject: fullTicket.subject || 'Support Ticket',
+                            senderName,
+                            senderEmail,
                             messageBody: message.trim(),
                             status: fullTicket.status,
                             priority: fullTicket.priority,
                             isReply: true,
-                        }).catch(e => console.warn('[Email] Failed to notify admin on reply:', e));
+                        });
                     }
                 }
-            } catch (e) { console.warn('[Email] Error sending comment notification:', e); }
+            } catch (e: any) {
+                console.error('[Comment Email] Unexpected error sending comment notification:', e.message || e);
+            }
         });
     } catch (error) {
         console.error('Failed to post ticket comment:', error);
