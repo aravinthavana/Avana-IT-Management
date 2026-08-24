@@ -1653,6 +1653,17 @@ app.get('/api/test-email', async (req, res) => {
             SMTP_FROM: process.env.SMTP_FROM || 'itsupport@avanamedical.com',
         };
 
+        const authResult = await getGraphAppToken();
+        let tokenClaims: any = null;
+        if (authResult.token) {
+            try {
+                const parts = authResult.token.split('.');
+                if (parts.length === 3) {
+                    tokenClaims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+                }
+            } catch (e) {}
+        }
+
         const result = await sendTicketEmail({
             toEmail: targetEmail,
             toName: 'Admin',
@@ -1670,6 +1681,12 @@ app.get('/api/test-email', async (req, res) => {
             status: result.success ? 'SUCCESS' : 'FAILED',
             methodUsed: result.method,
             errorDetails: result.error || null,
+            tokenPermissions: {
+                roles: tokenClaims?.roles || [],
+                appId: tokenClaims?.appid || null,
+                tenantId: tokenClaims?.tid || null,
+                hasMailSendPermission: Array.isArray(tokenClaims?.roles) && tokenClaims.roles.includes('Mail.Send')
+            },
             environmentStatus: envStatus,
             targetEmail
         });
