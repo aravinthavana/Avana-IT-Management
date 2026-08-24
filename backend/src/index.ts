@@ -54,6 +54,13 @@ async function getGraphAppToken(): Promise<string | null> {
         }
     }
 
+    if (privateKeyPem && privateKeyPem.includes('\\n')) {
+        privateKeyPem = privateKeyPem.replace(/\\n/g, '\n');
+    }
+    if (certPem && certPem.includes('\\n')) {
+        certPem = certPem.replace(/\\n/g, '\n');
+    }
+
     if (tenantId && clientId && privateKeyPem && certPem) {
         try {
             // Compute base64url SHA-1 thumbprint (x5t)
