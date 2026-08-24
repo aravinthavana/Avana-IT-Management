@@ -228,44 +228,58 @@ async function sendTicketEmail(options: {
     const authResult = await getGraphAppToken();
     if (authResult.token) {
         try {
-            const graphPayload = {
-                message: {
-                    subject,
-                    body: {
-                        contentType: 'HTML',
-                        content: htmlContent
+            const sendViaGraph = async (sendAsMailbox: string) => {
+                const graphPayload = {
+                    message: {
+                        subject,
+                        body: {
+                            contentType: 'HTML',
+                            content: htmlContent
+                        },
+                        toRecipients: [
+                            {
+                                emailAddress: {
+                                    address: options.toEmail,
+                                    name: options.toName
+                                }
+                            }
+                        ],
+                        replyTo: options.senderEmail ? [
+                            {
+                                emailAddress: {
+                                    address: options.senderEmail,
+                                    name: options.senderName
+                                }
+                            }
+                        ] : undefined
                     },
-                    toRecipients: [
-                        {
-                            emailAddress: {
-                                address: options.toEmail,
-                                name: options.toName
-                            }
-                        }
-                    ],
-                    replyTo: options.senderEmail ? [
-                        {
-                            emailAddress: {
-                                address: options.senderEmail,
-                                name: options.senderName
-                            }
-                        }
-                    ] : undefined
-                },
-                saveToSentItems: "true"
+                    saveToSentItems: "false"
+                };
+
+                return await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sendAsMailbox)}/sendMail`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authResult.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(graphPayload)
+                });
             };
 
-            const graphRes = await fetch(`https://graph.microsoft.com/v1.0/users/${fromMail}/sendMail`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authResult.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(graphPayload)
-            });
+            let graphRes = await sendViaGraph(fromMail);
+
+            // If shared mailbox failed with 403 / 404, try sending via the admin mailbox
+            const adminFallback = process.env.SMTP_USER || 'aravinth@avanamedical.com';
+            if (!graphRes.ok && fromMail !== adminFallback) {
+                console.warn(`[Email] Sending as ${fromMail} returned ${graphRes.status}. Retrying as ${adminFallback}...`);
+                const retryRes = await sendViaGraph(adminFallback);
+                if (retryRes.ok || retryRes.status === 202) {
+                    graphRes = retryRes;
+                }
+            }
 
             if (graphRes.ok || graphRes.status === 202) {
-                console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via Microsoft Graph API (${fromMail} -> ${options.toEmail})`);
+                console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via Microsoft Graph API -> ${options.toEmail}`);
                 return { success: true, method: `Microsoft Graph API (${authResult.method})` };
             } else {
                 const errText = await graphRes.text();
