@@ -31,86 +31,106 @@ if (!JWT_SECRET || JWT_SECRET.length < 32 || JWT_SECRET.includes('avana-it-manag
 dotenv.config();
 
 // --- Backend Email Helper (Microsoft Graph API Certificate/Secret OAuth2 & Nodemailer SMTP Fallback) ---
-async function getGraphAppToken(): Promise<string | null> {
+function cleanPem(raw?: string): string | undefined {
+    if (!raw) return undefined;
+    let cleaned = raw.trim();
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        cleaned = cleaned.slice(1, -1);
+    }
+    cleaned = cleaned.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\r\n/g, '\n');
+    return cleaned.trim();
+}
+
+async function getGraphAppToken(): Promise<{ token: string | null; error?: string; method?: string }> {
     const tenantId = process.env.AZURE_TENANT_ID;
     const clientId = process.env.AZURE_CLIENT_ID;
     const clientSecret = process.env.AZURE_CLIENT_SECRET;
 
     // 1. Check for Certificate-Based Authentication (Enterprise Standard)
-    let privateKeyPem = process.env.AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY;
-    let certPem = process.env.AZURE_CLIENT_CERTIFICATE;
+    let privateKeyPem = cleanPem(process.env.AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY);
+    let certPem = cleanPem(process.env.AZURE_CLIENT_CERTIFICATE);
 
-    // Check for repository/local cert files if not set via env var
+    // Fallback to local files if present
     if (!privateKeyPem) {
         const keyPath = path.join(process.cwd(), 'avana-private-key.pem');
         if (fs.existsSync(keyPath)) {
-            try { privateKeyPem = fs.readFileSync(keyPath, 'utf8'); } catch (e) {}
+            try { privateKeyPem = cleanPem(fs.readFileSync(keyPath, 'utf8')); } catch (e) {}
         }
     }
     if (!certPem) {
         const certPath = path.join(process.cwd(), 'avana-certificate.crt');
         if (fs.existsSync(certPath)) {
-            try { certPem = fs.readFileSync(certPath, 'utf8'); } catch (e) {}
+            try { certPem = cleanPem(fs.readFileSync(certPath, 'utf8')); } catch (e) {}
         }
     }
 
-    if (privateKeyPem && privateKeyPem.includes('\\n')) {
-        privateKeyPem = privateKeyPem.replace(/\\n/g, '\n');
-    }
-    if (certPem && certPem.includes('\\n')) {
-        certPem = certPem.replace(/\\n/g, '\n');
-    }
-
-    if (tenantId && clientId && privateKeyPem && certPem) {
+    if (tenantId && clientId && privateKeyPem) {
         try {
             // Compute base64url SHA-1 thumbprint (x5t)
-            const certBase64 = certPem.replace(/-----[^\n]+-----/g, '').replace(/\s+/g, '');
-            const certDer = Buffer.from(certBase64, 'base64');
-            const x5t = crypto.createHash('sha1').update(certDer).digest('base64url');
-
-            const now = Math.floor(Date.now() / 1000);
-            const clientAssertion = jwt.sign(
-                {
-                    aud: `https://login.microsoftonline.com/${tenantId}/v2.0`,
-                    exp: now + 300,
-                    iss: clientId,
-                    jti: crypto.randomUUID(),
-                    nbf: now - 10,
-                    sub: clientId
-                },
-                privateKeyPem,
-                {
-                    algorithm: 'RS256',
-                    header: {
-                        alg: 'RS256',
-                        typ: 'JWT',
-                        x5t: x5t
-                    }
+            let x5t: string | undefined;
+            if (process.env.AZURE_CLIENT_CERTIFICATE_THUMBPRINT) {
+                const rawThumb = process.env.AZURE_CLIENT_CERTIFICATE_THUMBPRINT.trim();
+                if (/^[0-9a-fA-F]{40}$/.test(rawThumb)) {
+                    x5t = Buffer.from(rawThumb, 'hex').toString('base64url');
+                } else {
+                    x5t = rawThumb;
                 }
-            );
-
-            const params = new URLSearchParams();
-            params.append('client_id', clientId);
-            params.append('scope', 'https://graph.microsoft.com/.default');
-            params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
-            params.append('client_assertion', clientAssertion);
-            params.append('grant_type', 'client_credentials');
-
-            const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                console.log('[Graph Email] Successfully acquired Microsoft Graph token using Certificate Authentication!');
-                return data.access_token || null;
-            } else {
-                console.error('[Graph Email] Certificate Token acquisition failed:', await res.text());
+            } else if (certPem) {
+                const certBase64 = certPem.replace(/-----[^\n]+-----/g, '').replace(/\s+/g, '');
+                const certDer = Buffer.from(certBase64, 'base64');
+                x5t = crypto.createHash('sha1').update(certDer).digest('base64url');
             }
-        } catch (certErr) {
-            console.error('[Graph Email] Error during Certificate auth:', certErr);
+
+            if (!x5t) {
+                console.warn('[Graph Email] Could not determine x5t thumbprint from certificate.');
+            } else {
+                const now = Math.floor(Date.now() / 1000);
+                const clientAssertion = jwt.sign(
+                    {
+                        aud: `https://login.microsoftonline.com/${tenantId}/v2.0`,
+                        exp: now + 300,
+                        iss: clientId,
+                        jti: crypto.randomUUID(),
+                        nbf: now - 10,
+                        sub: clientId
+                    },
+                    privateKeyPem,
+                    {
+                        algorithm: 'RS256',
+                        header: {
+                            alg: 'RS256',
+                            typ: 'JWT',
+                            x5t: x5t
+                        }
+                    }
+                );
+
+                const params = new URLSearchParams();
+                params.append('client_id', clientId);
+                params.append('scope', 'https://graph.microsoft.com/.default');
+                params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+                params.append('client_assertion', clientAssertion);
+                params.append('grant_type', 'client_credentials');
+
+                const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log('[Graph Email] Successfully acquired Microsoft Graph token via Certificate Authentication!');
+                    return { token: data.access_token, method: 'Certificate' };
+                } else {
+                    const errText = await res.text();
+                    console.error('[Graph Email] Certificate Token acquisition failed:', errText);
+                    return { token: null, error: `Certificate token error: ${errText}`, method: 'Certificate' };
+                }
+            }
+        } catch (certErr: any) {
+            console.error('[Graph Email] Error during Certificate auth:', certErr.message || certErr);
+            return { token: null, error: `Certificate exception: ${certErr.message || certErr}`, method: 'Certificate' };
         }
     }
 
@@ -131,18 +151,19 @@ async function getGraphAppToken(): Promise<string | null> {
 
             if (res.ok) {
                 const data = await res.json();
-                return data.access_token || null;
+                return { token: data.access_token, method: 'ClientSecret' };
             } else {
-                console.error('[Graph Email] Secret Token acquisition failed:', await res.text());
-                return null;
+                const errText = await res.text();
+                console.error('[Graph Email] Secret Token acquisition failed:', errText);
+                return { token: null, error: `Secret token error: ${errText}`, method: 'ClientSecret' };
             }
-        } catch (err) {
-            console.error('[Graph Email] Error requesting app token via secret:', err);
-            return null;
+        } catch (err: any) {
+            console.error('[Graph Email] Error requesting app token via secret:', err.message || err);
+            return { token: null, error: `Secret exception: ${err.message || err}`, method: 'ClientSecret' };
         }
     }
 
-    return null;
+    return { token: null, error: 'No certificate private key or client secret configured' };
 }
 
 async function sendTicketEmail(options: {
@@ -158,7 +179,7 @@ async function sendTicketEmail(options: {
     status?: string;
     assetName?: string;
     isReply: boolean;
-}): Promise<void> {
+}): Promise<{ success: boolean; method?: string; error?: string }> {
     const fromMail = process.env.SMTP_FROM || process.env.SMTP_USER || 'itsupport@avanamedical.com';
     const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
     const cleanSubject = options.ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
@@ -203,9 +224,9 @@ async function sendTicketEmail(options: {
 </body>
 </html>`;
 
-    // 1. Try Microsoft Graph API with Client Secret (Enterprise Standard)
-    const graphToken = await getGraphAppToken();
-    if (graphToken) {
+    // 1. Try Microsoft Graph API
+    const authResult = await getGraphAppToken();
+    if (authResult.token) {
         try {
             const graphPayload = {
                 message: {
@@ -229,13 +250,7 @@ async function sendTicketEmail(options: {
                                 name: options.senderName
                             }
                         }
-                    ] : undefined,
-                    from: {
-                        emailAddress: {
-                            address: fromMail,
-                            name: `${options.senderName} via IT Support`
-                        }
-                    }
+                    ] : undefined
                 },
                 saveToSentItems: "true"
             };
@@ -243,7 +258,7 @@ async function sendTicketEmail(options: {
             const graphRes = await fetch(`https://graph.microsoft.com/v1.0/users/${fromMail}/sendMail`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${graphToken}`,
+                    'Authorization': `Bearer ${authResult.token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(graphPayload)
@@ -251,17 +266,19 @@ async function sendTicketEmail(options: {
 
             if (graphRes.ok || graphRes.status === 202) {
                 console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via Microsoft Graph API (${fromMail} -> ${options.toEmail})`);
-                return;
+                return { success: true, method: `Microsoft Graph API (${authResult.method})` };
             } else {
                 const errText = await graphRes.text();
                 console.warn(`[Email] Graph API sendMail failed (${graphRes.status}):`, errText);
+                authResult.error = `sendMail failed (${graphRes.status}): ${errText}`;
             }
-        } catch (graphErr) {
-            console.warn('[Email] Graph API exception:', graphErr);
+        } catch (graphErr: any) {
+            console.warn('[Email] Graph API exception:', graphErr.message || graphErr);
+            authResult.error = `Graph API exception: ${graphErr.message || graphErr}`;
         }
     }
 
-    // 2. Nodemailer SMTP (Office 365 Authenticated SMTP)
+    // 2. Nodemailer SMTP Fallback
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     if (smtpUser && smtpPass) {
@@ -272,10 +289,7 @@ async function sendTicketEmail(options: {
                 secure: false, // STARTTLS on port 587
                 requireTLS: true,
                 auth: { user: smtpUser, pass: smtpPass },
-                tls: {
-                    minVersion: 'TLSv1.2',
-                    rejectUnauthorized: false
-                }
+                tls: { minVersion: 'TLSv1.2', rejectUnauthorized: false }
             });
 
             try {
@@ -287,11 +301,10 @@ async function sendTicketEmail(options: {
                     html: htmlContent,
                 });
                 console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
-                return;
+                return { success: true, method: 'SMTP (Direct)' };
             } catch (sendAsErr: any) {
-                // If Send As permission is denied for the shared mailbox, send directly from authenticated smtpUser with Reply-To preserved
                 if (fromMail !== smtpUser) {
-                    console.warn(`[Email] Failed to send as ${fromMail} (${sendAsErr.message || sendAsErr}). Retrying from ${smtpUser}...`);
+                    console.warn(`[Email] Failed to send as ${fromMail} (${sendAsErr.message}). Retrying from ${smtpUser}...`);
                     await transporter.sendMail({
                         from: `"${options.senderName} via IT Support" <${smtpUser}>`,
                         to: `"${options.toName}" <${options.toEmail}>`,
@@ -300,16 +313,19 @@ async function sendTicketEmail(options: {
                         html: htmlContent,
                     });
                     console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP fallback (${smtpUser} -> ${options.toEmail})`);
-                    return;
+                    return { success: true, method: 'SMTP (User Fallback)' };
                 }
                 throw sendAsErr;
             }
         } catch (smtpErr: any) {
             console.error('[Email] Nodemailer SMTP send error:', smtpErr.message || smtpErr);
+            return { success: false, error: `SMTP Error: ${smtpErr.message}`, method: 'SMTP' };
         }
     }
 
-    console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Ensure SMTP_USER & SMTP_PASS are configured on Render.`);
+    const lastError = authResult.error || 'No valid email configuration (Certificate or SMTP) found.';
+    console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Reason: ${lastError}`);
+    return { success: false, error: lastError };
 }
 
 // --- Zod Schemas for Validation ---
@@ -1599,6 +1615,48 @@ app.put('/api/requests/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
+
+// --- Email Diagnostics Endpoint ---
+app.get('/api/test-email', async (req, res) => {
+    try {
+        const targetEmail = (req.query.to as string) || 'aravinth@avanamedical.com';
+        
+        const envStatus = {
+            AZURE_TENANT_ID: !!process.env.AZURE_TENANT_ID,
+            AZURE_CLIENT_ID: !!process.env.AZURE_CLIENT_ID,
+            AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY: !!process.env.AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY,
+            AZURE_CLIENT_CERTIFICATE: !!process.env.AZURE_CLIENT_CERTIFICATE,
+            AZURE_CLIENT_CERTIFICATE_THUMBPRINT: !!process.env.AZURE_CLIENT_CERTIFICATE_THUMBPRINT,
+            AZURE_CLIENT_SECRET: !!process.env.AZURE_CLIENT_SECRET,
+            SMTP_USER: !!process.env.SMTP_USER,
+            SMTP_PASS: !!process.env.SMTP_PASS,
+            SMTP_FROM: process.env.SMTP_FROM || 'itsupport@avanamedical.com',
+        };
+
+        const result = await sendTicketEmail({
+            toEmail: targetEmail,
+            toName: 'Admin',
+            ticketId: 9999,
+            ticketSubject: 'Test Email from Avana IT Management',
+            senderName: 'Avana IT System',
+            messageBody: 'This is a diagnostic test email to verify your email dispatcher configuration.',
+            category: 'Diagnostic',
+            priority: 'Medium',
+            status: 'Test',
+            isReply: false
+        });
+
+        res.json({
+            status: result.success ? 'SUCCESS' : 'FAILED',
+            methodUsed: result.method,
+            errorDetails: result.error || null,
+            environmentStatus: envStatus,
+            targetEmail
+        });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message || err });
+    }
+});
 
 // --- Support Tickets ---
 
