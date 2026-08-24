@@ -168,6 +168,23 @@ async function getGraphAppToken(): Promise<{ token: string | null; error?: strin
     return { token: null, error: 'No certificate private key or client secret configured' };
 }
 
+interface EmailLogEntry {
+    id: string;
+    timestamp: string;
+    ticketId: number;
+    subject: string;
+    from: string;
+    to: string;
+    replyTo?: string;
+    senderName: string;
+    isReply: boolean;
+    status: 'SUCCESS' | 'FAILED';
+    method?: string;
+    error?: string;
+}
+
+const emailHistory: EmailLogEntry[] = [];
+
 async function sendTicketEmail(options: {
     toEmail: string;
     toName: string;
@@ -186,6 +203,19 @@ async function sendTicketEmail(options: {
     const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
     const cleanSubject = (options.ticketSubject || 'Support Ticket').replace(/\[AVANA-TICKET\s*#\d+\]/gi, '').replace(/^(RE:\s*)+/i, '').trim();
     const subject = options.isReply ? `RE: ${trackingTag} ${cleanSubject}` : `${trackingTag} ${cleanSubject}`;
+
+    const logEntry: EmailLogEntry = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        ticketId: options.ticketId,
+        subject,
+        from: fromMail,
+        to: options.toEmail,
+        replyTo: options.senderEmail,
+        senderName: options.senderName,
+        isReply: options.isReply,
+        status: 'FAILED'
+    };
 
     const htmlContent = `<!DOCTYPE html>
 <html>
@@ -225,6 +255,14 @@ async function sendTicketEmail(options: {
 </div>
 </body>
 </html>`;
+
+    function recordLog(status: 'SUCCESS' | 'FAILED', method?: string, error?: string) {
+        logEntry.status = status;
+        logEntry.method = method;
+        logEntry.error = error;
+        emailHistory.unshift({ ...logEntry });
+        if (emailHistory.length > 100) emailHistory.pop();
+    }
 
     // 1. Try Microsoft Graph API
     const authResult = await getGraphAppToken();
@@ -283,14 +321,17 @@ async function sendTicketEmail(options: {
 
             if (graphRes.ok || graphRes.status === 202) {
                 console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via Microsoft Graph API -> ${options.toEmail}`);
+                recordLog('SUCCESS', `Microsoft Graph API (${authResult.method})`);
                 return { success: true, method: `Microsoft Graph API (${authResult.method})` };
             } else {
                 const errText = await graphRes.text();
                 console.warn(`[Email] Graph API sendMail failed (${graphRes.status}):`, errText);
+                recordLog('FAILED', `Microsoft Graph API (${authResult.method})`, `Graph API (${graphRes.status}): ${errText}`);
                 return { success: false, error: `Graph API (${graphRes.status}): ${errText}`, method: `Microsoft Graph API (${authResult.method})` };
             }
         } catch (graphErr: any) {
             console.warn('[Email] Graph API exception:', graphErr.message || graphErr);
+            recordLog('FAILED', 'Microsoft Graph API', `Graph API exception: ${graphErr.message || graphErr}`);
             return { success: false, error: `Graph API exception: ${graphErr.message || graphErr}`, method: 'Microsoft Graph API' };
         }
     }
@@ -321,6 +362,7 @@ async function sendTicketEmail(options: {
                     html: htmlContent,
                 });
                 console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
+                recordLog('SUCCESS', 'SMTP (Direct)');
                 return { success: true, method: 'SMTP (Direct)' };
             } catch (sendAsErr: any) {
                 if (fromMail !== smtpUser) {
@@ -333,18 +375,21 @@ async function sendTicketEmail(options: {
                         html: htmlContent,
                     });
                     console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP fallback (${smtpUser} -> ${options.toEmail})`);
+                    recordLog('SUCCESS', 'SMTP (User Fallback)');
                     return { success: true, method: 'SMTP (User Fallback)' };
                 }
                 throw sendAsErr;
             }
         } catch (smtpErr: any) {
             console.error('[Email] Nodemailer SMTP send error:', smtpErr.message || smtpErr);
+            recordLog('FAILED', 'SMTP', `SMTP Error: ${smtpErr.message}`);
             return { success: false, error: `SMTP Error: ${smtpErr.message}`, method: 'SMTP' };
         }
     }
 
     const lastError = authResult.error || 'No valid email configuration (Certificate or SMTP) found.';
     console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Reason: ${lastError}`);
+    recordLog('FAILED', undefined, lastError);
     return { success: false, error: lastError };
 }
 
@@ -1693,6 +1738,13 @@ app.get('/api/test-email', async (req, res) => {
     } catch (err: any) {
         res.status(500).json({ error: err.message || err });
     }
+});
+
+app.get('/api/email-logs', async (req, res) => {
+    res.json({
+        totalDispatched: emailHistory.length,
+        logs: emailHistory
+    });
 });
 
 // --- Support Tickets ---
