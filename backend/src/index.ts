@@ -1901,26 +1901,34 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
 
                 if (commenter.role === 'Admin' || commenter.role === 'Manager') {
                     // Admin replied → notify ticket owner
-                    if (fullTicket.user?.email && fullTicket.user.id !== userId) {
+                    if (fullTicket.user?.email) {
                         await sendTicketEmail({
-                            toEmail: fullTicket.user.email, toName: fullTicket.user.name,
-                            ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
-                            senderName: commenter.name, senderEmail: commenter.email,
+                            toEmail: fullTicket.user.email,
+                            toName: fullTicket.user.name,
+                            ticketId: fullTicket.id,
+                            ticketSubject: fullTicket.subject,
+                            senderName: commenter.name,
+                            senderEmail: commenter.email,
                             messageBody: message.trim(),
-                            status: fullTicket.status, priority: fullTicket.priority,
+                            status: fullTicket.status,
+                            priority: fullTicket.priority,
                             isReply: true,
-                        });
+                        }).catch(e => console.warn('[Email] Failed to notify ticket owner on admin reply:', e));
                     }
                 } else {
                     // User replied → notify all admins
                     const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
                     for (const admin of admins) {
                         await sendTicketEmail({
-                            toEmail: admin.email, toName: admin.name,
-                            ticketId: fullTicket.id, ticketSubject: fullTicket.subject,
-                            senderName: commenter.name, senderEmail: commenter.email,
+                            toEmail: admin.email,
+                            toName: admin.name,
+                            ticketId: fullTicket.id,
+                            ticketSubject: fullTicket.subject,
+                            senderName: commenter.name,
+                            senderEmail: commenter.email,
                             messageBody: message.trim(),
-                            status: fullTicket.status, priority: fullTicket.priority,
+                            status: fullTicket.status,
+                            priority: fullTicket.priority,
                             isReply: true,
                         }).catch(e => console.warn('[Email] Failed to notify admin on reply:', e));
                     }
