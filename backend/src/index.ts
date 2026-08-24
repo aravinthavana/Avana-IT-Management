@@ -95,6 +95,8 @@ async function sendTicketEmail(options: {
 </body>
 </html>`;
 
+    const smtpFrom = process.env.SMTP_FROM || smtpUser; // e.g. itsupport@avanamedical.com
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.office365.com',
         port: 587,
@@ -103,16 +105,16 @@ async function sendTicketEmail(options: {
         tls: { ciphers: 'SSLv3' }
     });
 
-    // From shows sender's name via the shared mailbox
-    // Reply-To directs replies to the actual sender's personal mailbox
+    // From: shared mailbox with sender's display name so recipient knows who sent it
+    // Reply-To: actual sender's personal mailbox so replies go directly to them
     await transporter.sendMail({
-        from: `"${options.senderName} via Avana IT Support" <${smtpUser}>`,
+        from: `"${options.senderName} via IT Support" <${smtpFrom}>`,
         to: `"${options.toName}" <${options.toEmail}>`,
-        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : smtpUser,
+        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : smtpFrom,
         subject,
         html: htmlContent,
     });
-    console.log(`[Email] Sent ticket #${options.ticketId} email from ${options.senderName} (${options.senderEmail}) to ${options.toEmail}`);
+    console.log(`[Email] Sent ticket #${options.ticketId} from ${smtpFrom} on behalf of ${options.senderName} to ${options.toEmail}`);
 }
 
 // --- Zod Schemas for Validation ---
