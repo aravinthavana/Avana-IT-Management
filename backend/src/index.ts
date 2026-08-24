@@ -180,7 +180,7 @@ async function sendTicketEmail(options: {
         }
     }
 
-    // 2. Fallback to Nodemailer SMTP
+    // 2. Nodemailer SMTP (Office 365 Authenticated SMTP)
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     if (smtpUser && smtpPass) {
@@ -188,26 +188,47 @@ async function sendTicketEmail(options: {
             const transporter = nodemailer.createTransport({
                 host: 'smtp.office365.com',
                 port: 587,
-                secure: false,
+                secure: false, // STARTTLS on port 587
+                requireTLS: true,
                 auth: { user: smtpUser, pass: smtpPass },
-                tls: { ciphers: 'SSLv3', rejectUnauthorized: false }
+                tls: {
+                    minVersion: 'TLSv1.2',
+                    rejectUnauthorized: false
+                }
             });
 
-            await transporter.sendMail({
-                from: `"${options.senderName} via IT Support" <${fromMail}>`,
-                to: `"${options.toName}" <${options.toEmail}>`,
-                replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
-                subject,
-                html: htmlContent,
-            });
-            console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
-            return;
+            try {
+                await transporter.sendMail({
+                    from: `"${options.senderName} via IT Support" <${fromMail}>`,
+                    to: `"${options.toName}" <${options.toEmail}>`,
+                    replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
+                    subject,
+                    html: htmlContent,
+                });
+                console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
+                return;
+            } catch (sendAsErr: any) {
+                // If Send As permission is denied for the shared mailbox, send directly from authenticated smtpUser with Reply-To preserved
+                if (fromMail !== smtpUser) {
+                    console.warn(`[Email] Failed to send as ${fromMail} (${sendAsErr.message || sendAsErr}). Retrying from ${smtpUser}...`);
+                    await transporter.sendMail({
+                        from: `"${options.senderName} via IT Support" <${smtpUser}>`,
+                        to: `"${options.toName}" <${options.toEmail}>`,
+                        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
+                        subject,
+                        html: htmlContent,
+                    });
+                    console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP fallback (${smtpUser} -> ${options.toEmail})`);
+                    return;
+                }
+                throw sendAsErr;
+            }
         } catch (smtpErr: any) {
             console.error('[Email] Nodemailer SMTP send error:', smtpErr.message || smtpErr);
         }
     }
 
-    console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Ensure AZURE_CLIENT_SECRET or (SMTP_USER + SMTP_PASS) is configured.`);
+    console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Ensure SMTP_USER & SMTP_PASS are configured on Render.`);
 }
 
 // --- Zod Schemas for Validation ---
