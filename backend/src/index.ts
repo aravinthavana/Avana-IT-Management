@@ -1747,25 +1747,25 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
         });
         res.status(201).json(ticket);
 
-        // Send notification email to all Admins (fire-and-forget)
-        setImmediate(async () => {
-            try {
-                const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
-                const assetName = ticket.asset ? `${(ticket.asset as any).name} (${(ticket.asset as any).assetId})` : undefined;
-                for (const admin of admins) {
-                    await sendTicketEmail({
-                        toEmail: admin.email, toName: admin.name,
-                        ticketId: ticket.id, ticketSubject: ticket.subject,
-                        senderName: ticket.user?.name || 'Employee',
-                        senderEmail: ticket.user?.email,
-                        messageBody: ticket.description,
-                        category: ticket.category, priority: ticket.priority,
-                        status: ticket.status, assetName,
-                        isReply: false,
-                    }).catch(e => console.warn('[Email] Failed to notify admin:', e));
-                }
-            } catch (e) { console.warn('[Email] Error fetching admins for ticket notification:', e); }
-        });
+        // Send notification email to all Admins
+        try {
+            const admins = await prisma.user.findMany({ where: { role: 'Admin', status: 'Active' }, select: { name: true, email: true } });
+            const assetName = ticket.asset ? `${(ticket.asset as any).name} (${(ticket.asset as any).assetId})` : undefined;
+            for (const admin of admins) {
+                await sendTicketEmail({
+                    toEmail: admin.email, toName: admin.name,
+                    ticketId: ticket.id, ticketSubject: ticket.subject,
+                    senderName: ticket.user?.name || 'Employee',
+                    senderEmail: ticket.user?.email,
+                    messageBody: ticket.description,
+                    category: ticket.category, priority: ticket.priority,
+                    status: ticket.status, assetName,
+                    isReply: false,
+                }).catch(e => console.warn('[Email] Failed to notify admin:', e));
+            }
+        } catch (e) { console.warn('[Email] Error fetching admins for ticket notification:', e); }
+
+        res.status(201).json(ticket);
     } catch (error) {
         console.error('Failed to create ticket:', error);
         res.status(500).json({ error: 'Failed to create ticket' });
@@ -1790,29 +1790,28 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
             },
             include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
-        res.json(ticket);
 
         // Send notification email to ticket owner if status was updated
-        setImmediate(async () => {
-            try {
-                if (status && ticket.user?.email) {
-                    await sendTicketEmail({
-                        toEmail: ticket.user.email,
-                        toName: ticket.user.name,
-                        ticketId: ticket.id,
-                        ticketSubject: ticket.subject,
-                        senderName: 'Avana IT Support',
-                        senderEmail: process.env.SMTP_FROM || process.env.SMTP_USER,
-                        messageBody: `The status of your support ticket #${ticket.id} has been updated to "${status}".`,
-                        status: ticket.status,
-                        priority: ticket.priority,
-                        isReply: true,
-                    }).catch(e => console.warn('[Email] Failed to notify user on status change:', e));
-                }
-            } catch (e) {
-                console.warn('[Email] Error sending status update notification:', e);
+        try {
+            if (status && ticket.user?.email) {
+                await sendTicketEmail({
+                    toEmail: ticket.user.email,
+                    toName: ticket.user.name,
+                    ticketId: ticket.id,
+                    ticketSubject: ticket.subject,
+                    senderName: 'Avana IT Support',
+                    senderEmail: process.env.SMTP_FROM || process.env.SMTP_USER,
+                    messageBody: `The status of your support ticket #${ticket.id} has been updated to "${status}".`,
+                    status: ticket.status,
+                    priority: ticket.priority,
+                    isReply: true,
+                }).catch(e => console.warn('[Email] Failed to notify user on status change:', e));
             }
-        });
+        } catch (e) {
+            console.warn('[Email] Error sending status update notification:', e);
+        }
+
+        res.json(ticket);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update ticket' });
     }
@@ -1885,20 +1884,14 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
             data: { updatedAt: new Date() }
         });
 
-        res.json(comment);
+        // Dispatch notification email immediately
+        try {
+            const fullTicket = await prisma.supportTicket.findUnique({
+                where: { id: Number(id) },
+                include: { user: { select: { id: true, name: true, email: true } } }
+            });
 
-        // Send notification email (fire-and-forget)
-        setImmediate(async () => {
-            try {
-                const fullTicket = await prisma.supportTicket.findUnique({
-                    where: { id: Number(id) },
-                    include: { user: { select: { id: true, name: true, email: true } } }
-                });
-                if (!fullTicket) {
-                    console.warn(`[Comment Email] Could not find ticket #${id} for email notification.`);
-                    return;
-                }
-
+            if (fullTicket) {
                 const commenter = await prisma.user.findUnique({
                     where: { id: userId },
                     select: { id: true, name: true, email: true, role: true }
@@ -1931,7 +1924,7 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                             isReply: true,
                         });
                     } else {
-                        console.warn(`[Comment Email] Ticket #${id} has no ticket owner email. Notifying all active admins instead.`);
+                        console.warn(`[Comment Email] Ticket #${id} has no ticket owner email. Notifying all active admins.`);
                         const admins = await prisma.user.findMany({
                             where: { role: { equals: 'Admin', mode: 'insensitive' }, status: 'Active' },
                             select: { name: true, email: true }
@@ -1973,10 +1966,12 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                         });
                     }
                 }
-            } catch (e: any) {
-                console.error('[Comment Email] Unexpected error sending comment notification:', e.message || e);
             }
-        });
+        } catch (e: any) {
+            console.error('[Comment Email] Error dispatching email notification:', e.message || e);
+        }
+
+        res.json(comment);
     } catch (error) {
         console.error('Failed to post ticket comment:', error);
         res.status(500).json({ error: 'Failed to post comment' });
