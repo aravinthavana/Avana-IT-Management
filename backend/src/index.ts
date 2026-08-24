@@ -30,38 +30,112 @@ if (!JWT_SECRET || JWT_SECRET.length < 32 || JWT_SECRET.includes('avana-it-manag
 
 dotenv.config();
 
-// --- Backend Email Helper (Microsoft Graph API OAuth2 & Nodemailer SMTP Fallback) ---
+// --- Backend Email Helper (Microsoft Graph API Certificate/Secret OAuth2 & Nodemailer SMTP Fallback) ---
 async function getGraphAppToken(): Promise<string | null> {
     const tenantId = process.env.AZURE_TENANT_ID;
     const clientId = process.env.AZURE_CLIENT_ID;
     const clientSecret = process.env.AZURE_CLIENT_SECRET;
 
-    if (!tenantId || !clientId || !clientSecret) return null;
+    // 1. Check for Certificate-Based Authentication (Enterprise Standard)
+    let privateKeyPem = process.env.AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY;
+    let certPem = process.env.AZURE_CLIENT_CERTIFICATE;
 
-    try {
-        const params = new URLSearchParams();
-        params.append('client_id', clientId);
-        params.append('scope', 'https://graph.microsoft.com/.default');
-        params.append('client_secret', clientSecret);
-        params.append('grant_type', 'client_credentials');
+    // Check for repository/local cert files if not set via env var
+    if (!privateKeyPem) {
+        const keyPath = path.join(process.cwd(), 'avana-private-key.pem');
+        if (fs.existsSync(keyPath)) {
+            try { privateKeyPem = fs.readFileSync(keyPath, 'utf8'); } catch (e) {}
+        }
+    }
+    if (!certPem) {
+        const certPath = path.join(process.cwd(), 'avana-certificate.crt');
+        if (fs.existsSync(certPath)) {
+            try { certPem = fs.readFileSync(certPath, 'utf8'); } catch (e) {}
+        }
+    }
 
-        const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString()
-        });
+    if (tenantId && clientId && privateKeyPem && certPem) {
+        try {
+            // Compute base64url SHA-1 thumbprint (x5t)
+            const certBase64 = certPem.replace(/-----[^\n]+-----/g, '').replace(/\s+/g, '');
+            const certDer = Buffer.from(certBase64, 'base64');
+            const x5t = crypto.createHash('sha1').update(certDer).digest('base64url');
 
-        if (!res.ok) {
-            console.error('[Graph Email] Token acquisition failed:', await res.text());
+            const now = Math.floor(Date.now() / 1000);
+            const clientAssertion = jwt.sign(
+                {
+                    aud: `https://login.microsoftonline.com/${tenantId}/v2.0`,
+                    exp: now + 300,
+                    iss: clientId,
+                    jti: crypto.randomUUID(),
+                    nbf: now - 10,
+                    sub: clientId
+                },
+                privateKeyPem,
+                {
+                    algorithm: 'RS256',
+                    header: {
+                        alg: 'RS256',
+                        typ: 'JWT',
+                        x5t: x5t
+                    }
+                }
+            );
+
+            const params = new URLSearchParams();
+            params.append('client_id', clientId);
+            params.append('scope', 'https://graph.microsoft.com/.default');
+            params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+            params.append('client_assertion', clientAssertion);
+            params.append('grant_type', 'client_credentials');
+
+            const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                console.log('[Graph Email] Successfully acquired Microsoft Graph token using Certificate Authentication!');
+                return data.access_token || null;
+            } else {
+                console.error('[Graph Email] Certificate Token acquisition failed:', await res.text());
+            }
+        } catch (certErr) {
+            console.error('[Graph Email] Error during Certificate auth:', certErr);
+        }
+    }
+
+    // 2. Fallback to Client Secret if available
+    if (tenantId && clientId && clientSecret) {
+        try {
+            const params = new URLSearchParams();
+            params.append('client_id', clientId);
+            params.append('scope', 'https://graph.microsoft.com/.default');
+            params.append('client_secret', clientSecret);
+            params.append('grant_type', 'client_credentials');
+
+            const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                return data.access_token || null;
+            } else {
+                console.error('[Graph Email] Secret Token acquisition failed:', await res.text());
+                return null;
+            }
+        } catch (err) {
+            console.error('[Graph Email] Error requesting app token via secret:', err);
             return null;
         }
-
-        const data = await res.json();
-        return data.access_token || null;
-    } catch (err) {
-        console.error('[Graph Email] Error requesting app token:', err);
-        return null;
     }
+
+    return null;
 }
 
 async function sendTicketEmail(options: {
