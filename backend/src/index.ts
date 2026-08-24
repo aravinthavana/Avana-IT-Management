@@ -1501,6 +1501,28 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
             include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
         res.json(ticket);
+
+        // Send notification email to ticket owner if status was updated
+        setImmediate(async () => {
+            try {
+                if (status && ticket.user?.email) {
+                    await sendTicketEmail({
+                        toEmail: ticket.user.email,
+                        toName: ticket.user.name,
+                        ticketId: ticket.id,
+                        ticketSubject: ticket.subject,
+                        senderName: 'Avana IT Support',
+                        senderEmail: process.env.SMTP_FROM || process.env.SMTP_USER,
+                        messageBody: `The status of your support ticket #${ticket.id} has been updated to "${status}".`,
+                        status: ticket.status,
+                        priority: ticket.priority,
+                        isReply: true,
+                    }).catch(e => console.warn('[Email] Failed to notify user on status change:', e));
+                }
+            } catch (e) {
+                console.warn('[Email] Error sending status update notification:', e);
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Failed to update ticket' });
     }

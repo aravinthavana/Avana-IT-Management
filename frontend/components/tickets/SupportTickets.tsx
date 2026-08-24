@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { SupportTicket, TicketComment, TicketAttachment } from '../../types';
 import { useMsal } from "@azure/msal-react";
-import { sendTicketEmailViaGraph, syncIncomingEmailReplies } from '../../utils/graphMail';
+import { syncIncomingEmailReplies } from '../../utils/graphMail';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
 
@@ -214,42 +214,7 @@ const SupportTickets: React.FC = () => {
             const addedComment = await res.json();
             setComments(prev => [...prev, addedComment]);
             setNewComment('');
-            const sentAttachments = [...commentAttachments];
             setCommentAttachments([]);
-
-            // Dispatch Microsoft Graph Email in Background
-            const isUserAdmin = user?.role === 'Admin';
-            
-            // Recipient: if admin replies, send to ticket owner; if user replies, send to Admin
-            let recipientEmail = '';
-            let recipientName = '';
-
-            if (isUserAdmin) {
-                recipientEmail = selectedTicket.user?.email || '';
-                recipientName = selectedTicket.user?.name || 'User';
-            } else {
-                recipientEmail = supportAdmins[0]?.email || 'aravinth@avanamedical.com';
-                recipientName = supportAdmins[0]?.name || 'IT Admin';
-            }
-
-            if (recipientEmail) {
-                sendTicketEmailViaGraph({
-                    msalInstance: instance,
-                    toEmail: recipientEmail,
-                    toName: recipientName,
-                    subject: selectedTicket.subject,
-                    ticketId: selectedTicket.id,
-                    ticketSubject: selectedTicket.subject,
-                    senderName: user?.name || 'Avana Team Member',
-                    senderEmail: user?.email,
-                    messageBody: payload.message,
-                    status: selectedTicket.status,
-                    priority: selectedTicket.priority,
-                    attachments: sentAttachments,
-                    isReply: true
-                }).catch(console.warn);
-            }
-
         } catch (err: any) {
             setNotification({ message: err.message || 'Failed to post comment', type: 'error' });
         } finally {
@@ -281,35 +246,9 @@ const SupportTickets: React.FC = () => {
             const newTicket = await res.json();
             setTickets(prev => [newTicket, ...prev]);
             setIsModalOpen(false);
-            const sentAttachments = [...ticketAttachments];
             setFormData({ subject: '', category: 'Hardware', priority: 'Medium', description: '', assetId: '' });
             setTicketAttachments([]);
             setNotification({ message: 'Ticket submitted successfully!', type: 'success' });
-
-            // Dispatch Microsoft Graph Email from Requester to IT Admin
-            // If logged-in user is NOT the admin, send to the admin
-            // If logged-in user IS the admin, send confirmation to themselves or another admin
-            const adminEmail = supportAdmins.find(a => a.email !== user?.email)?.email || supportAdmins[0]?.email || 'aravinth@avanamedical.com';
-            const assetObj = assets.find(a => a.id === Number(formData.assetId));
-
-            sendTicketEmailViaGraph({
-                msalInstance: instance,
-                toEmail: adminEmail,
-                toName: 'IT Support Team',
-                subject: newTicket.subject,
-                ticketId: newTicket.id,
-                ticketSubject: newTicket.subject,
-                senderName: user?.name || 'Employee',
-                senderEmail: user?.email,
-                messageBody: newTicket.description,
-                category: newTicket.category,
-                priority: newTicket.priority,
-                status: newTicket.status,
-                assetName: assetObj ? `${assetObj.name} (${assetObj.assetId})` : undefined,
-                attachments: sentAttachments,
-                isReply: false
-            }).catch(console.warn);
-
         } catch (err: any) {
             setNotification({ message: err.message || 'Failed to submit ticket', type: 'error' });
         } finally {
@@ -332,24 +271,6 @@ const SupportTickets: React.FC = () => {
                 setSelectedTicket({ ...selectedTicket, status: newStatus as any });
             }
             setNotification({ message: `Ticket status updated to ${newStatus}`, type: 'success' });
-
-            // Send notification to user about status change
-            if (updated.user?.email) {
-                sendTicketEmailViaGraph({
-                    msalInstance: instance,
-                    toEmail: updated.user.email,
-                    toName: updated.user.name,
-                    subject: updated.subject,
-                    ticketId: updated.id,
-                    ticketSubject: updated.subject,
-                    senderName: user?.name || 'IT Admin',
-                    senderEmail: user?.email,
-                    messageBody: `The status of this ticket has been updated to "${newStatus}".`,
-                    status: newStatus,
-                    priority: updated.priority,
-                    isReply: true
-                }).catch(console.warn);
-            }
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
         }
