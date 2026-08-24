@@ -115,7 +115,8 @@ async function getGraphAppToken(): Promise<{ token: string | null; error?: strin
                 const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
+                    body: params.toString(),
+                    signal: AbortSignal.timeout(8000)
                 });
 
                 if (res.ok) {
@@ -146,7 +147,8 @@ async function getGraphAppToken(): Promise<{ token: string | null; error?: strin
             const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
+                body: params.toString(),
+                signal: AbortSignal.timeout(8000)
             });
 
             if (res.ok) {
@@ -262,7 +264,8 @@ async function sendTicketEmail(options: {
                         'Authorization': `Bearer ${authResult.token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(graphPayload)
+                    body: JSON.stringify(graphPayload),
+                    signal: AbortSignal.timeout(10000)
                 });
             };
 
@@ -284,15 +287,15 @@ async function sendTicketEmail(options: {
             } else {
                 const errText = await graphRes.text();
                 console.warn(`[Email] Graph API sendMail failed (${graphRes.status}):`, errText);
-                authResult.error = `sendMail failed (${graphRes.status}): ${errText}`;
+                return { success: false, error: `Graph API (${graphRes.status}): ${errText}`, method: `Microsoft Graph API (${authResult.method})` };
             }
         } catch (graphErr: any) {
             console.warn('[Email] Graph API exception:', graphErr.message || graphErr);
-            authResult.error = `Graph API exception: ${graphErr.message || graphErr}`;
+            return { success: false, error: `Graph API exception: ${graphErr.message || graphErr}`, method: 'Microsoft Graph API' };
         }
     }
 
-    // 2. Nodemailer SMTP Fallback
+    // 2. Nodemailer SMTP Fallback (Only if no Graph Token was available)
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     if (smtpUser && smtpPass) {
@@ -302,6 +305,9 @@ async function sendTicketEmail(options: {
                 port: 587,
                 secure: false, // STARTTLS on port 587
                 requireTLS: true,
+                connectionTimeout: 4000,
+                greetingTimeout: 4000,
+                socketTimeout: 4000,
                 auth: { user: smtpUser, pass: smtpPass },
                 tls: { minVersion: 'TLSv1.2', rejectUnauthorized: false }
             });
