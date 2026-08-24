@@ -30,7 +30,40 @@ if (!JWT_SECRET || JWT_SECRET.length < 32 || JWT_SECRET.includes('avana-it-manag
 
 dotenv.config();
 
-// --- Backend Email Helper (Nodemailer via Microsoft 365 SMTP) ---
+// --- Backend Email Helper (Microsoft Graph API OAuth2 & Nodemailer SMTP Fallback) ---
+async function getGraphAppToken(): Promise<string | null> {
+    const tenantId = process.env.AZURE_TENANT_ID;
+    const clientId = process.env.AZURE_CLIENT_ID;
+    const clientSecret = process.env.AZURE_CLIENT_SECRET;
+
+    if (!tenantId || !clientId || !clientSecret) return null;
+
+    try {
+        const params = new URLSearchParams();
+        params.append('client_id', clientId);
+        params.append('scope', 'https://graph.microsoft.com/.default');
+        params.append('client_secret', clientSecret);
+        params.append('grant_type', 'client_credentials');
+
+        const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+
+        if (!res.ok) {
+            console.error('[Graph Email] Token acquisition failed:', await res.text());
+            return null;
+        }
+
+        const data = await res.json();
+        return data.access_token || null;
+    } catch (err) {
+        console.error('[Graph Email] Error requesting app token:', err);
+        return null;
+    }
+}
+
 async function sendTicketEmail(options: {
     toEmail: string;
     toName: string;
@@ -45,13 +78,7 @@ async function sendTicketEmail(options: {
     assetName?: string;
     isReply: boolean;
 }): Promise<void> {
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    if (!smtpUser || !smtpPass) {
-        console.warn('[Email] SMTP_USER or SMTP_PASS not set. Skipping email.');
-        return;
-    }
-
+    const fromMail = process.env.SMTP_FROM || process.env.SMTP_USER || 'itsupport@avanamedical.com';
     const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
     const cleanSubject = options.ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
     const subject = options.isReply ? `RE: ${trackingTag} ${cleanSubject}` : `${trackingTag} ${cleanSubject}`;
@@ -95,26 +122,92 @@ async function sendTicketEmail(options: {
 </body>
 </html>`;
 
-    const smtpFrom = process.env.SMTP_FROM || smtpUser; // e.g. itsupport@avanamedical.com
+    // 1. Try Microsoft Graph API with Client Secret (Enterprise Standard)
+    const graphToken = await getGraphAppToken();
+    if (graphToken) {
+        try {
+            const graphPayload = {
+                message: {
+                    subject,
+                    body: {
+                        contentType: 'HTML',
+                        content: htmlContent
+                    },
+                    toRecipients: [
+                        {
+                            emailAddress: {
+                                address: options.toEmail,
+                                name: options.toName
+                            }
+                        }
+                    ],
+                    replyTo: options.senderEmail ? [
+                        {
+                            emailAddress: {
+                                address: options.senderEmail,
+                                name: options.senderName
+                            }
+                        }
+                    ] : undefined,
+                    from: {
+                        emailAddress: {
+                            address: fromMail,
+                            name: `${options.senderName} via IT Support`
+                        }
+                    }
+                },
+                saveToSentItems: "true"
+            };
 
-    const transporter = nodemailer.createTransport({
-        host: 'smtp.office365.com',
-        port: 587,
-        secure: false,
-        auth: { user: smtpUser, pass: smtpPass },
-        tls: { ciphers: 'SSLv3' }
-    });
+            const graphRes = await fetch(`https://graph.microsoft.com/v1.0/users/${fromMail}/sendMail`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${graphToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(graphPayload)
+            });
 
-    // From: shared mailbox with sender's display name so recipient knows who sent it
-    // Reply-To: actual sender's personal mailbox so replies go directly to them
-    await transporter.sendMail({
-        from: `"${options.senderName} via IT Support" <${smtpFrom}>`,
-        to: `"${options.toName}" <${options.toEmail}>`,
-        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : smtpFrom,
-        subject,
-        html: htmlContent,
-    });
-    console.log(`[Email] Sent ticket #${options.ticketId} from ${smtpFrom} on behalf of ${options.senderName} to ${options.toEmail}`);
+            if (graphRes.ok || graphRes.status === 202) {
+                console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via Microsoft Graph API (${fromMail} -> ${options.toEmail})`);
+                return;
+            } else {
+                const errText = await graphRes.text();
+                console.warn(`[Email] Graph API sendMail failed (${graphRes.status}):`, errText);
+            }
+        } catch (graphErr) {
+            console.warn('[Email] Graph API exception:', graphErr);
+        }
+    }
+
+    // 2. Fallback to Nodemailer SMTP
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    if (smtpUser && smtpPass) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.office365.com',
+                port: 587,
+                secure: false,
+                auth: { user: smtpUser, pass: smtpPass },
+                tls: { ciphers: 'SSLv3', rejectUnauthorized: false }
+            });
+
+            await transporter.sendMail({
+                from: `"${options.senderName} via IT Support" <${fromMail}>`,
+                to: `"${options.toName}" <${options.toEmail}>`,
+                replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
+                subject,
+                html: htmlContent,
+            });
+            console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
+            return;
+        } catch (smtpErr: any) {
+            console.error('[Email] Nodemailer SMTP send error:', smtpErr.message || smtpErr);
+        }
+    }
+
+    console.warn(`[Email] No email dispatched for ticket #${options.ticketId}. Ensure AZURE_CLIENT_SECRET or (SMTP_USER + SMTP_PASS) is configured.`);
 }
 
 // --- Zod Schemas for Validation ---
