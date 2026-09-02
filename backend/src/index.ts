@@ -200,9 +200,21 @@ async function sendTicketEmail(options: {
     isReply: boolean;
 }): Promise<{ success: boolean; method?: string; error?: string }> {
     const fromMail = process.env.SMTP_FROM || process.env.SMTP_USER || 'itsupport@avanamedical.com';
+    const portalUrl = process.env.FRONTEND_URL || 'https://avana-it-management.vercel.app';
+    const ticketUrl = `${portalUrl}/tickets/${options.ticketId}`;
     const trackingTag = `[AVANA-TICKET #${options.ticketId}]`;
     const cleanSubject = (options.ticketSubject || 'Support Ticket').replace(/\[AVANA-TICKET\s*#\d+\]/gi, '').replace(/^(RE:\s*)+/i, '').trim();
     const subject = options.isReply ? `RE: ${trackingTag} ${cleanSubject}` : `${trackingTag} ${cleanSubject}`;
+
+    // Outlook/Exchange threads by Thread-Index — a base64 value where replies append 5 bytes
+    // Base: sha1-like 27-byte header derived from ticketId; replies append 5 null bytes
+    const baseThreadIndex = Buffer.alloc(27);
+    baseThreadIndex.writeUInt32BE(Math.floor(Date.UTC(2024, 0, 1) / 10000000), 0); // FILETIME hi
+    baseThreadIndex.writeUInt32BE(options.ticketId * 1000, 4); // FILETIME lo (stable per ticket)
+    // GUID bytes seeded from ticketId
+    for (let i = 8; i < 27; i++) baseThreadIndex[i] = (options.ticketId * (i + 1)) & 0xff;
+    const replyBytes = options.isReply ? Buffer.alloc(5) : Buffer.alloc(0);
+    const threadIndex = Buffer.concat([baseThreadIndex, replyBytes]).toString('base64');
 
     const logEntry: EmailLogEntry = {
         id: crypto.randomUUID(),
@@ -229,28 +241,31 @@ async function sendTicketEmail(options: {
   .meta{font-size:12px;color:#94a3b8}
   .content{padding:24px;line-height:1.6;font-size:14px;color:#334155}
   .message-box{background:#f1f5f9;border-left:4px solid #dc2626;padding:16px;border-radius:8px;margin:16px 0;font-size:14px;white-space:pre-wrap}
-  .footer{padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
-  .hint{font-weight:600;color:#0284c7}
+  .cta{text-align:center;padding:8px 0 20px}
+  .btn{display:inline-block;background:#0f172a;color:#fff !important;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px}
+  .footer{padding:12px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <span class="badge">${options.category || 'IT Support'}</span>
-    <div class="title">${options.isReply ? 'New Response Added' : 'New Support Ticket'}</div>
+    <div class="title">${options.isReply ? 'New Response on Your Ticket' : 'New Support Ticket Received'}</div>
     <div class="meta">Ticket #${options.ticketId} &bull; From: ${options.senderName}${options.senderEmail ? ` &lt;${options.senderEmail}&gt;` : ''}</div>
   </div>
   <div class="content">
     <p>Hello <strong>${options.toName}</strong>,</p>
-    <p>${options.isReply ? `<strong>${options.senderName}</strong> posted an update:` : 'A new IT support ticket has been submitted:'}</p>
+    <p>${options.isReply ? `<strong>${options.senderName}</strong> has posted a reply:` : 'A new support ticket has been submitted:'}</p>
     <div class="message-box">${options.messageBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
     ${options.priority ? `<p><strong>Priority:</strong> ${options.priority}</p>` : ''}
     ${options.status ? `<p><strong>Status:</strong> ${options.status}</p>` : ''}
     ${options.assetName ? `<p><strong>Related Asset:</strong> ${options.assetName}</p>` : ''}
   </div>
+  <div class="cta">
+    <a href="${ticketUrl}" class="btn">&#128172; View &amp; Reply in Portal</a>
+  </div>
   <div class="footer">
-    <span class="hint">&#9993; Reply to this email directly from Outlook to respond to this ticket.</span><br>
-    Avana IT Management &bull; Do not modify the subject line tag ${trackingTag}
+    Avana IT Management &bull; Ticket ${trackingTag}
   </div>
 </div>
 </body>
@@ -270,10 +285,11 @@ async function sendTicketEmail(options: {
     const internetMessageHeaders = options.isReply ? [
         { name: 'In-Reply-To', value: threadMsgId },
         { name: 'References', value: threadMsgId },
-        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` }
+        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` },
+        { name: 'Thread-Index', value: threadIndex }
     ] : [
-        { name: 'Message-ID', value: threadMsgId },
-        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` }
+        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` },
+        { name: 'Thread-Index', value: threadIndex }
     ];
 
     if (authResult.token) {
@@ -2277,18 +2293,7 @@ app.put('/api/self-audits/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
-// --- Upload Route for Rich Text Editor & Ticket Attachments ---
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        const cleanName = path.basename(file.originalname).replace(/[^a-zA-Z0-9.-]/g, '_');
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + '-' + cleanName);
-    }
-});
-
+// --- Upload Route for Ticket Attachments (memory-based, no disk dependency) ---
 const allowedMimes = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     'application/pdf', 'text/plain', 'text/csv', 'application/zip',
@@ -2296,52 +2301,39 @@ const allowedMimes = [
     'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ];
 
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/') || allowedMimes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('File type not supported. Allowed formats: Images, PDF, TXT, CSV, DOC, DOCX, XLS, XLSX, ZIP.'));
+            cb(new Error('File type not supported. Allowed: Images, PDF, TXT, CSV, DOC, DOCX, XLS, XLSX, ZIP.'));
         }
     }
 });
 
 app.post('/api/upload', authenticateToken, (req, res) => {
-    // Ensure uploads directory still exists (can get wiped in serverless envs)
-    if (!fs.existsSync(uploadsDir)) {
-        try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (mkdirErr) {
-            console.error('Upload dir creation failed:', mkdirErr);
-            return res.status(500).json({ error: 'Upload directory unavailable' });
-        }
-    }
-
-    upload.any()(req, res, (err: any) => {
+    upload.single('file')(req, res, (err: any) => {
         if (err) {
-            console.error('Multer upload error:', err.message, err.code);
+            console.error('Upload error:', err.message);
             return res.status(400).json({ error: err.message || 'File upload failed' });
         }
 
-        // @ts-ignore
-        const files = req.files as Express.Multer.File[];
-        // @ts-ignore
-        const file = (files && files.length > 0 ? files[0] : req.file);
-
+        const file = req.file;
         if (!file) {
-            return res.status(400).json({ error: 'No file provided for upload' });
+            return res.status(400).json({ error: 'No file provided' });
         }
-        
-        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-        const host = req.headers.host;
-        const url = `${protocol}://${host}/uploads/${file.filename}`;
-        
-        res.json({ 
-            url, 
+
+        // Store as base64 data URL — survives server restarts, no disk required
+        const base64 = file.buffer.toString('base64');
+        const dataUrl = `data:${file.mimetype};base64,${base64}`;
+
+        res.json({
+            url: dataUrl,
             name: file.originalname,
             size: file.size,
-            type: file.mimetype,
-            filename: file.filename
+            type: file.mimetype
         });
     });
 });
