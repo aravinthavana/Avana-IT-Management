@@ -266,6 +266,16 @@ async function sendTicketEmail(options: {
 
     // 1. Try Microsoft Graph API
     const authResult = await getGraphAppToken();
+    const threadMsgId = `<ticket-${options.ticketId}@avanamedical.com>`;
+    const internetMessageHeaders = options.isReply ? [
+        { name: 'In-Reply-To', value: threadMsgId },
+        { name: 'References', value: threadMsgId },
+        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` }
+    ] : [
+        { name: 'Message-ID', value: threadMsgId },
+        { name: 'Thread-Topic', value: `${trackingTag} ${cleanSubject}` }
+    ];
+
     if (authResult.token) {
         try {
             const sendViaGraph = async (sendAsMailbox: string) => {
@@ -291,7 +301,8 @@ async function sendTicketEmail(options: {
                                     name: options.senderName
                                 }
                             }
-                        ] : undefined
+                        ] : undefined,
+                        internetMessageHeaders
                     },
                     saveToSentItems: "false"
                 };
@@ -360,6 +371,15 @@ async function sendTicketEmail(options: {
                     replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
                     subject,
                     html: htmlContent,
+                    headers: {
+                        'Thread-Topic': `${trackingTag} ${cleanSubject}`,
+                        ...(options.isReply ? {
+                            'In-Reply-To': threadMsgId,
+                            'References': threadMsgId
+                        } : {
+                            'Message-ID': threadMsgId
+                        })
+                    }
                 });
                 console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP (${fromMail} -> ${options.toEmail})`);
                 recordLog('SUCCESS', 'SMTP (Direct)');
@@ -373,6 +393,15 @@ async function sendTicketEmail(options: {
                         replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
                         subject,
                         html: htmlContent,
+                        headers: {
+                            'Thread-Topic': `${trackingTag} ${cleanSubject}`,
+                            ...(options.isReply ? {
+                                'In-Reply-To': threadMsgId,
+                                'References': threadMsgId
+                            } : {
+                                'Message-ID': threadMsgId
+                            })
+                        }
                     });
                     console.log(`[Email] Successfully dispatched ticket #${options.ticketId} email via SMTP fallback (${smtpUser} -> ${options.toEmail})`);
                     recordLog('SUCCESS', 'SMTP (User Fallback)');
@@ -492,12 +521,12 @@ const authLimiter = rateLimit({
 app.use('/api/login', authLimiter);
 app.use('/api/auth/m365', authLimiter);
 
-// Protected Static File Serving for Uploads (Requires Authentication)
+// Static File Serving for Uploads (Images and Ticket Attachments)
 const uploadsDir = path.join(os.tmpdir(), 'avana-uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', authenticateToken, express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir));
 
 // Request Logger (Sanitized & secure)
 app.use((req, res, next) => {
@@ -1797,7 +1826,6 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
             },
             include: { user: { select: { id: true, name: true, email: true } }, asset: true }
         });
-        res.status(201).json(ticket);
 
         // Send notification email to all Admins
         try {
