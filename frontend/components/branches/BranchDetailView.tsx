@@ -37,7 +37,7 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
         setIsAssignModalOpen(false);
     };
 
-    const handleConfirmUnassign = (updatedAssetData: { status: 'In Stock' | 'In Repair' | 'Retired', remarks: string }) => {
+    const handleConfirmUnassign = (updatedAssetData: { status: string, remarks: string }) => {
         if (!assetToUnassign) return;
         
         setAssets(prevAssets => prevAssets.map(asset => 

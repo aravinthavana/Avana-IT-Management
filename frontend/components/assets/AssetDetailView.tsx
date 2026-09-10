@@ -22,18 +22,37 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode, className?: 
 
 // Status badge colors
 const STATUS_STYLES: Record<string, string> = {
-    'Assigned':        'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-    'In Stock':        'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-    'In Repair':       'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
-    'Retired':         'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
-    'Pending Handover':'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+    'Assigned':                   'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+    'In Stock':                   'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    'Reserved':                   'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300',
+    'In Repair':                  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+    'Under Inspection':           'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+    'Available for Reallocation': 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
+    'Retired':                    'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
+    'Disposed':                   'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400',
+    'Pending Handover':           'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
 };
 
-// Which statuses a non-assigned asset can transition to
+// Status dot colours for the change-status dropdown
+const STATUS_DOT: Record<string, string> = {
+    'In Stock':                   'bg-blue-500',
+    'Reserved':                   'bg-violet-500',
+    'In Repair':                  'bg-amber-500',
+    'Under Inspection':           'bg-orange-500',
+    'Available for Reallocation': 'bg-teal-500',
+    'Retired':                    'bg-slate-400',
+    'Disposed':                   'bg-red-500',
+};
+
+// Which statuses a non-assigned asset can transition to (lifecycle flow)
 const STATUS_TRANSITIONS: Record<string, string[]> = {
-    'In Stock':  ['In Repair', 'Retired'],
-    'In Repair': ['In Stock', 'Retired'],
-    'Retired':   ['In Stock'],
+    'In Stock':                   ['Reserved', 'In Repair', 'Retired'],
+    'Reserved':                   ['In Stock', 'In Repair'],
+    'In Repair':                  ['In Stock', 'Retired'],
+    'Under Inspection':           ['Available for Reallocation', 'In Repair', 'Retired', 'Disposed'],
+    'Available for Reallocation': ['In Repair', 'Retired'],
+    'Retired':                    ['Disposed', 'In Stock'],
+    'Disposed':                   [],
 };
 
 const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
@@ -141,8 +160,8 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                     </button>
                                 )}
 
-                                {/* In Stock: show Assign + Change Status */}
-                                {asset.status === 'In Stock' && (
+                                {/* In Stock / Available for Reallocation: show Assign button */}
+                                {(asset.status === 'In Stock' || asset.status === 'Available for Reallocation') && (
                                     <button onClick={handleAssign} className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm">
                                         {ICONS.users} <span className="hidden sm:inline">Assign Asset</span>
                                     </button>
@@ -165,22 +184,18 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                             <>
                                                 {/* Backdrop to close menu */}
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsStatusMenuOpen(false)} />
-                                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-20 overflow-hidden">
+                                                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-20 overflow-hidden">
                                                     <p className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700">
                                                         Change to...
                                                     </p>
-                                                    {availableTransitions.map(status => (
+                                                    {availableTransitions.map(s => (
                                                         <button
-                                                            key={status}
-                                                            onClick={() => handleChangeStatus(status)}
+                                                            key={s}
+                                                            onClick={() => handleChangeStatus(s)}
                                                             className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3"
                                                         >
-                                                            <span className={`inline-block w-2 h-2 rounded-full ${
-                                                                status === 'In Stock' ? 'bg-blue-500' :
-                                                                status === 'In Repair' ? 'bg-amber-500' :
-                                                                'bg-slate-400'
-                                                            }`} />
-                                                            <span className="font-medium text-slate-700 dark:text-slate-200">{status}</span>
+                                                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[s] || 'bg-slate-400'}`} />
+                                                            <span className="font-medium text-slate-700 dark:text-slate-200">{s}</span>
                                                         </button>
                                                     ))}
                                                 </div>

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { Asset } from '../../types';
 
+type ReturnStatus = 'Under Inspection' | 'In Stock' | 'In Repair' | 'Retired' | 'Disposed';
+
 interface UnassignAssetModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { status: 'In Stock' | 'In Repair' | 'Retired', remarks: string }) => void;
+    onConfirm: (data: { status: ReturnStatus, remarks: string }) => void;
     asset: Asset | null;
 }
 
@@ -26,13 +28,12 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 );
 
 const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose, onConfirm, asset }) => {
-    const [status, setStatus] = useState<'In Stock' | 'In Repair' | 'Retired'>('In Stock');
+    const [status, setStatus] = useState<ReturnStatus>('Under Inspection');
     const [remarks, setRemarks] = useState('');
 
     useEffect(() => {
         if (isOpen) {
-            // Reset state when modal opens
-            setStatus('In Stock');
+            setStatus('Under Inspection');
             setRemarks(asset?.remarks || '');
         }
     }, [isOpen, asset]);
@@ -44,33 +45,38 @@ const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose
     if (!asset) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Unassign Asset & Update Status">
+        <Modal isOpen={isOpen} onClose={onClose} title="Return Asset & Update Status">
             <div className="space-y-4">
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                    You are unassigning the asset <strong className="text-slate-800 dark:text-slate-100">{asset.name}</strong> ({asset.assetId}). Please update its status below.
+                    You are returning the asset <strong className="text-slate-800 dark:text-slate-100">{asset.name}</strong> ({asset.assetId}). Select its status after return.
                 </p>
-                <FormSelect 
-                    label="New Asset Status"
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg px-4 py-3 text-xs text-orange-800 dark:text-orange-300">
+                    💡 <strong>Recommended:</strong> Set to <em>Under Inspection</em> first. IT will inspect the device, then move it to <em>Available for Reallocation</em> or <em>In Repair</em>.
+                </div>
+                <FormSelect
+                    label="Status After Return"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as 'In Stock' | 'In Repair' | 'Retired')}
+                    onChange={(e) => setStatus(e.target.value as ReturnStatus)}
                 >
-                    <option value="In Stock">In Stock</option>
-                    <option value="In Repair">In Repair</option>
-                    <option value="Retired">Retired</option>
+                    <option value="Under Inspection">Under Inspection — IT to inspect before reallocation</option>
+                    <option value="In Stock">In Stock — Ready to assign immediately</option>
+                    <option value="In Repair">In Repair — Needs servicing</option>
+                    <option value="Retired">Retired — End of life</option>
+                    <option value="Disposed">Disposed — Written off / physically discarded</option>
                 </FormSelect>
-                <FormTextarea 
+                <FormTextarea
                     label="Remarks (Optional)"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="Add a reason for repair or retirement..."
+                    placeholder="e.g. Minor scratches on lid, charger missing..."
                 />
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
                     <button type="button" onClick={onClose} className="w-full sm:w-auto flex justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95">Cancel</button>
-                    <button type="button" onClick={handleConfirm} className="w-full sm:w-auto flex justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95">Confirm Unassign</button>
+                    <button type="button" onClick={handleConfirm} className="w-full sm:w-auto flex justify-center bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 font-medium transition-all duration-200 active:scale-95">Confirm Return</button>
                 </div>
             </div>
         </Modal>
     );
 };
 
-export default UnassignAssetModal;
+export default UnassignAssetModal;

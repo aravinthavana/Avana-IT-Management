@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { Asset } from '../../types';
+
+type BulkStatus = 'In Stock' | 'Reserved' | 'Under Inspection' | 'Available for Reallocation' | 'In Repair' | 'Retired' | 'Disposed';
 
 interface BulkChangeStatusModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (newStatus: 'In Stock' | 'In Repair' | 'Retired', remarks: string) => void;
+    onConfirm: (newStatus: BulkStatus, remarks: string) => void;
     assetIds: number[];
 }
 
@@ -26,7 +27,7 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 );
 
 const BulkChangeStatusModal: React.FC<BulkChangeStatusModalProps> = ({ isOpen, onClose, onConfirm, assetIds }) => {
-    const [status, setStatus] = useState<'In Stock' | 'In Repair' | 'Retired'>('In Stock');
+    const [status, setStatus] = useState<BulkStatus>('In Stock');
     const [remarks, setRemarks] = useState('');
 
     useEffect(() => {
@@ -50,16 +51,20 @@ const BulkChangeStatusModal: React.FC<BulkChangeStatusModalProps> = ({ isOpen, o
                     You are updating the status for <strong className="text-slate-800 dark:text-slate-100">{assetIds.length}</strong> selected assets.
                     Any assigned assets will be unassigned.
                 </p>
-                <FormSelect 
+                <FormSelect
                     label="New Asset Status"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as 'In Stock' | 'In Repair' | 'Retired')}
+                    onChange={(e) => setStatus(e.target.value as BulkStatus)}
                 >
                     <option value="In Stock">In Stock</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="Under Inspection">Under Inspection</option>
+                    <option value="Available for Reallocation">Available for Reallocation</option>
                     <option value="In Repair">In Repair</option>
                     <option value="Retired">Retired</option>
+                    <option value="Disposed">Disposed</option>
                 </FormSelect>
-                <FormTextarea 
+                <FormTextarea
                     label="Remarks (Optional)"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}

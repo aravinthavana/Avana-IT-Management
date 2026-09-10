@@ -24,8 +24,8 @@ const AssignAssetModal: React.FC<AssignAssetModalProps> = ({ isOpen, onClose, on
 
     const availableAssets = useMemo(() => {
         return assets
-            .filter(asset => 
-                asset.status === 'In Stock' && 
+            .filter(asset =>
+                (asset.status === 'In Stock' || asset.status === 'Available for Reallocation') &&
                 (target.type !== 'user' || asset.company === target.company)
             )
             .filter(asset =>

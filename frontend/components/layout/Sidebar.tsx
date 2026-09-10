@@ -28,9 +28,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
             roles: ['Admin', 'Manager', 'User'],
             subItems: user?.role === 'User' ? undefined : [
                 { name: 'In Stock', status: 'In Stock'},
+                { name: 'Reserved', status: 'Reserved'},
                 { name: 'Assigned', status: 'Assigned'},
+                { name: 'Under Inspection', status: 'Under Inspection'},
+                { name: 'Avail. for Realloc.', status: 'Available for Reallocation'},
                 { name: 'In Repair', status: 'In Repair'},
                 { name: 'Retired', status: 'Retired'},
+                { name: 'Disposed', status: 'Disposed'},
             ]
         },
         { name: 'Requests', icon: ICONS.assets, view: 'requests', roles: ['Admin', 'Manager', 'User'] },
