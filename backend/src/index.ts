@@ -2863,7 +2863,42 @@ app.post('/api/webhooks/graph', async (req, res) => {
 
 
 
-app.listen(port, () => {
+app.listen(port, async () => {
     console.log(`Server running on port ${port} with security measures enabled.`);
+    try {
+        // Automatically ensure all legacy/existing users have onboardingStatus set to 'Completed'
+        const legacyCount = await prisma.user.count({
+            where: { onboardingStatus: null }
+        });
+        if (legacyCount > 0) {
+            await prisma.user.updateMany({
+                where: { onboardingStatus: null, status: 'Active' },
+                data: {
+                    onboardingStatus: 'Completed',
+                    onboardingStep: 8,
+                    m365AccountCreated: true,
+                    softwareInstalled: true,
+                    hardwareTested: true,
+                    credentialsHandedOver: true,
+                    onboardingCompletedDate: new Date()
+                }
+            });
+            await prisma.user.updateMany({
+                where: { onboardingStatus: null, status: 'Inactive' },
+                data: {
+                    onboardingStatus: 'Completed',
+                    onboardingStep: 8,
+                    offboardingStatus: 'Completed',
+                    offboardingCompletedDate: new Date(),
+                    m365AccountDisabled: true,
+                    assetReturned: true,
+                    m365LicenseRevoked: true
+                }
+            });
+            console.log(`Auto-initialized ${legacyCount} legacy user(s) to onboardingStatus: 'Completed'`);
+        }
+    } catch (e) {
+        console.error('Legacy user onboarding initialization notice:', e);
+    }
 });
  

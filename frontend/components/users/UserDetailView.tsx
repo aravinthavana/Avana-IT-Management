@@ -118,24 +118,6 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         setAssetToUnassign(null);
     };
 
-    const handleToggleChecklistFlag = async (flag: keyof User) => {
-        try {
-            const newValue = !user[flag];
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${user.id}`, {
-                method: 'PUT',
-                headers: getHeaders(),
-                credentials: 'include',
-                body: JSON.stringify({ [flag]: newValue })
-            });
-            if (!res.ok) throw new Error('Failed to update checklist');
-            const updatedUser = await res.json();
-            setUsers(users.map(u => u.id === user.id ? { ...u, ...updatedUser } : u));
-            setNotification({ message: 'Checklist updated successfully.', type: 'success' });
-        } catch (err: any) {
-            setNotification({ message: err.message, type: 'error' });
-        }
-    };
-
     return (
         <>
             {user && <AssignAssetModal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} onAssign={handleAssignAsset} target={{ id: user.id, name: user.name, type: 'user', company: user.company }} />}
@@ -244,55 +226,89 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.m365AccountCreated)} onChange={() => handleToggleChecklistFlag('m365AccountCreated')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.m365AccountCreated ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.m365AccountCreated ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Created</p>
-                                <p className="text-xs text-slate-500">Email & Entra ID user provisioning</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.m365AccountCreated ? 'Provisioned in Microsoft 365 / Entra ID' : 'Account not created'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.m365LicenseAssigned)} onChange={() => handleToggleChecklistFlag('m365LicenseAssigned')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.m365LicenseAssigned ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.m365LicenseAssigned ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 License Allocated</p>
-                                <p className="text-xs text-slate-500">Active seat linked in Licenses & Subs</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.m365LicenseAssigned ? 'Active subscription seat linked' : 'No license allocated / not required'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={userAssets.length > 0 || user.laptopStatus === 'Using own laptop'} onChange={() => {}} disabled className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                userAssets.length > 0 || user.laptopStatus === 'Using own laptop' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {userAssets.length > 0 || user.laptopStatus === 'Using own laptop' ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware Allocation</p>
                                 <p className="text-xs text-slate-500">
                                     {userAssets.length > 0 ? `${userAssets[0].name} (${userAssets[0].assetId}) Assigned` : user.laptopStatus || 'No Device Assigned'}
                                 </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.softwareInstalled)} onChange={() => handleToggleChecklistFlag('softwareInstalled')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.softwareInstalled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.softwareInstalled ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Software & Antivirus Installed</p>
-                                <p className="text-xs text-slate-500">Defender, Office 365, Teams, VPN configured</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.softwareInstalled ? 'Defender, Office 365, Teams, VPN configured' : 'Pending installation'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.hardwareTested)} onChange={() => handleToggleChecklistFlag('hardwareTested')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.hardwareTested ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.hardwareTested ? '✓' : '—'}
+                            </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware QA Diagnostics Passed</p>
-                                <p className="text-xs text-slate-500">Display, keyboard, battery, camera/mic verified</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware QA Diagnostics</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.hardwareTested ? 'Display, keyboard, battery, camera/mic verified' : 'Diagnostic check pending'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.credentialsHandedOver)} onChange={() => handleToggleChecklistFlag('credentialsHandedOver')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.credentialsHandedOver ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.credentialsHandedOver ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
-                                <p className="text-xs text-slate-500">Temporary passwords & login guidance shared</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.credentialsHandedOver ? 'Temporary passwords & login guidance shared' : 'Pending handover'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
                     </div>
 
                     {/* Dispatch & Docket Info (if available) */}
@@ -347,56 +363,112 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.assetReturned)} onChange={() => handleToggleChecklistFlag('assetReturned')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.assetReturned ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.assetReturned ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Company Hardware Returned</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Return condition check'}
+                                    {user.assetReturned ? (user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Hardware received') : 'Hardware not returned'}
                                 </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.deviceWiped)} onChange={() => handleToggleChecklistFlag('deviceWiped')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.deviceWiped ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.deviceWiped ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Device Wiped & Sanitized</p>
-                                <p className="text-xs text-slate-500">Factory reset completed, BitLocker erased</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.deviceWiped ? 'Factory reset completed, BitLocker erased' : 'Device not wiped'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.dataBackedUp)} onChange={() => handleToggleChecklistFlag('dataBackedUp')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.dataBackedUp ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.dataBackedUp ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">User Data Backed Up</p>
-                                <p className="text-xs text-slate-500">Synced to OneDrive / handed over to manager</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.dataBackedUp ? 'Synced to OneDrive / handed over to manager' : 'Data not backed up'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.m365LicenseRevoked)} onChange={() => handleToggleChecklistFlag('m365LicenseRevoked')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.m365LicenseRevoked ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.m365LicenseRevoked ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Subscriptions Revoked</p>
-                                <p className="text-xs text-slate-500">M365 & software seats returned to pool</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.m365LicenseRevoked ? 'Seats released back to available pool' : 'Subscriptions active'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={Boolean(user.m365AccountDisabled)} onChange={() => handleToggleChecklistFlag('m365AccountDisabled')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.m365AccountDisabled ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.m365AccountDisabled ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Disabled</p>
-                                <p className="text-xs text-slate-500">Sign-in blocked & cloud sessions revoked</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.m365AccountDisabled ? 'Sign-in blocked & cloud sessions revoked' : 'Active M365 account'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
 
-                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={user.status === 'Inactive'} onChange={() => {}} disabled className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-brand-500" />
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                                user.status === 'Inactive' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            }`}>
+                                {user.status === 'Inactive' ? '✓' : '—'}
+                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Portal Account Deactivated</p>
-                                <p className="text-xs text-slate-500">{user.status === 'Inactive' ? 'Status set to Inactive' : 'Active user status'}</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.status === 'Inactive' ? 'Account status set to Inactive' : 'Active user status'}
+                                </p>
                             </div>
-                        </label>
+                        </div>
                     </div>
+
+                    {/* Return Docket Info (if available) */}
+                    {user.assetReturnDocket && (() => {
+                        try {
+                            const rd = typeof user.assetReturnDocket === 'string' ? JSON.parse(user.assetReturnDocket) : user.assetReturnDocket;
+                            return (
+                                <div className="p-3.5 bg-red-50/40 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/40 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="space-y-0.5">
+                                        <span className="font-semibold text-red-700 dark:text-red-400 flex items-center gap-1">
+                                            {ICONS.truck} {rd.mode === 'Courier' ? `Returned via ${rd.courier || 'Courier'}` : 'In-Person Return'}
+                                        </span>
+                                        {rd.docketNo && <p className="font-mono text-slate-700 dark:text-slate-300">Return Docket: <strong>{rd.docketNo}</strong></p>}
+                                        {user.assetReturnRemarks && <p className="text-slate-500 truncate max-w-md">Remarks: {user.assetReturnRemarks}</p>}
+                                    </div>
+                                    <div className="text-right text-slate-400">
+                                        {rd.returnDate && <p>Date: {new Date(rd.returnDate).toLocaleDateString()}</p>}
+                                        {user.offboardingCompletedDate && <p>Completed: {new Date(user.offboardingCompletedDate).toLocaleDateString()}</p>}
+                                    </div>
+                                </div>
+                            );
+                        } catch { return null; }
+                    })()}
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
