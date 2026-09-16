@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Asset } from '../../types';
 import { ICONS } from '../../constants';
@@ -16,6 +16,32 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const userAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
+    const [userAssetHistory, setUserAssetHistory] = useState<any[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+    const fetchUserAssetHistory = async () => {
+        setIsLoadingHistory(true);
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/asset-history`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUserAssetHistory(data.history || []);
+            }
+        } catch (err) {
+            console.error('Failed to load user asset history', err);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    useEffect(() => {
+        if (userId) {
+            fetchUserAssetHistory();
+        }
+    }, [userId]);
 
     if (!user) {
         return (
@@ -39,7 +65,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     status: 'Assigned',
                     location: user.location,
                     condition,
-                    specs: assetToAssign.specs ? JSON.stringify(assetToAssign.specs) : null
+                    specs: assetToAssign.specs ? (typeof assetToAssign.specs === 'string' ? assetToAssign.specs : JSON.stringify(assetToAssign.specs)) : null
                 })
             });
             if (!res.ok) throw new Error('Failed to assign asset');
@@ -48,6 +74,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                 asset.id === assetToAssign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
             ));
             fetchAssetHistory();
+            fetchUserAssetHistory();
             setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${user.name}.`, type: 'success' });
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
@@ -79,6 +106,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                 asset.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
             ));
             fetchAssetHistory();
+            fetchUserAssetHistory();
             setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
@@ -255,6 +283,85 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <p className="text-gray-500 dark:text-gray-400 text-center py-4">No assets are currently assigned to this user.</p>
                         )}
                     </div>
+                </div>
+
+                {/* Asset History & Activity Log */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                        <div>
+                            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Asset History & Activity Log</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Chronological history of assets assigned to and returned from this user</p>
+                        </div>
+                        <button
+                            onClick={fetchUserAssetHistory}
+                            disabled={isLoadingHistory}
+                            className="p-1.5 text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            title="Refresh history"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {isLoadingHistory ? (
+                        <div className="text-center py-6 text-slate-400 text-sm">Loading activity log...</div>
+                    ) : userAssetHistory.length > 0 ? (
+                        <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
+                            {userAssetHistory.map((entry: any) => {
+                                const isAssigned = entry.event === 'Assigned';
+                                const isUnassigned = entry.event === 'Unassigned';
+                                const dotColor = isAssigned ? 'bg-emerald-500' : isUnassigned ? 'bg-amber-500' : 'bg-blue-500';
+
+                                return (
+                                    <div key={entry.id} className="relative group">
+                                        {/* Timeline dot */}
+                                        <div className={`absolute -left-[21px] top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800 ${dotColor}`} />
+                                        
+                                        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                                        isAssigned ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                                        isUnassigned ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                                                        'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                                    }`}>
+                                                        {entry.event}
+                                                    </span>
+                                                    {entry.asset && (
+                                                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                                                            {entry.asset.name} <span className="font-mono text-xs text-slate-500 dark:text-slate-400">({entry.asset.assetId})</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-xs text-slate-400">
+                                                    {new Date(entry.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+
+                                            {entry.details && (
+                                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{entry.details}</p>
+                                            )}
+
+                                            <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                                {entry.condition && (
+                                                    <span><strong>Condition:</strong> {entry.condition}</span>
+                                                )}
+                                                {entry.user?.name && (
+                                                    <span><strong>Logged by:</strong> {entry.user.name}</span>
+                                                )}
+                                                {entry.asset?.serialNumber && (
+                                                    <span><strong>S/N:</strong> <span className="font-mono">{entry.asset.serialNumber}</span></span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">No asset history recorded for this user yet.</p>
+                    )}
                 </div>
             </div>
         </>

@@ -1088,6 +1088,102 @@ app.delete('/api/users/:id', authenticateToken, requireAdmin, async (req, res) =
     }
 });
 
+// GET /api/users/:id/asset-history - Historical log of assets assigned to and returned from this user
+app.get('/api/users/:id/asset-history', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const targetUserId = Number(id);
+        if (isNaN(targetUserId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // @ts-ignore
+        const { role, id: requestingUserId } = req.user;
+
+        // Authorization check
+        if (role !== 'Admin') {
+            if (role === 'Manager') {
+                const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+                const manager = await prisma.user.findUnique({ where: { id: requestingUserId } });
+                const isAuthorized = targetUserId === requestingUserId ||
+                    targetUser?.managerId === requestingUserId ||
+                    (manager?.departmentId && targetUser?.departmentId === manager.departmentId);
+                if (!isAuthorized) {
+                    return res.status(403).json({ error: 'Unauthorized to view this user asset history' });
+                }
+            } else {
+                if (targetUserId !== requestingUserId) {
+                    return res.status(403).json({ error: 'Unauthorized to view this user asset history' });
+                }
+            }
+        }
+
+        const targetUser = await prisma.user.findUnique({
+            where: { id: targetUserId },
+            select: { id: true, name: true, employeeId: true }
+        });
+        if (!targetUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Find all assets currently or previously associated with this user
+        const userHandovers = await prisma.handoverLog.findMany({
+            where: { userId: targetUserId },
+            select: { assetId: true }
+        });
+
+        const currentAssets = await prisma.asset.findMany({
+            where: {
+                OR: [
+                    { userId: targetUserId },
+                    { assigneeId: targetUserId, assigneeType: 'User' }
+                ]
+            },
+            select: { id: true }
+        });
+
+        const associatedAssetIds = Array.from(new Set([
+            ...userHandovers.map(h => h.assetId),
+            ...currentAssets.map(a => a.id)
+        ]));
+
+        const userSelect = { select: { id: true, name: true, email: true, role: true } };
+        const assetSelect = { select: { id: true, assetId: true, name: true, category: true, serialNumber: true } };
+
+        const histories = await prisma.assetHistory.findMany({
+            where: {
+                OR: [
+                    { details: { contains: targetUser.name, mode: 'insensitive' } },
+                    ...(associatedAssetIds.length > 0 ? [{ assetId: { in: associatedAssetIds } }] : [])
+                ]
+            },
+            include: {
+                user: userSelect,
+                asset: assetSelect
+            },
+            orderBy: { timestamp: 'desc' },
+            take: 100
+        });
+
+        const handovers = await prisma.handoverLog.findMany({
+            where: { userId: targetUserId },
+            include: {
+                asset: assetSelect
+            },
+            orderBy: { handoverDate: 'desc' }
+        });
+
+        res.json({
+            user: targetUser,
+            history: histories,
+            handovers: handovers
+        });
+    } catch (error) {
+        console.error('Failed to fetch user asset history:', error);
+        res.status(500).json({ error: 'Failed to fetch user asset history' });
+    }
+});
+
 // --- Assets Routes ---
 
 app.get('/api/assets', authenticateToken, async (req, res) => {
@@ -1130,15 +1226,34 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
         if (!validation.success) return res.status(400).json({ error: validation.error.format() });
 
         const { condition, wipeDetails, ...data } = validation.data;
+
+        // Auto-populate serialNumber from specs.serviceTag if serialNumber is missing/blank
+        if (!data.serialNumber || data.serialNumber.trim() === '') {
+            let serviceTagVal: string | null = null;
+            if (data.specs) {
+                if (typeof data.specs === 'object' && data.specs.serviceTag) {
+                    serviceTagVal = String(data.specs.serviceTag).trim();
+                } else if (typeof data.specs === 'string') {
+                    try {
+                        const parsed = JSON.parse(data.specs);
+                        if (parsed.serviceTag) serviceTagVal = String(parsed.serviceTag).trim();
+                    } catch (_) {}
+                }
+            }
+            if (serviceTagVal) {
+                data.serialNumber = serviceTagVal;
+            }
+        }
+
         const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
-        
         const assetCompany = data.company || (data.assetId ? data.assetId.split('-')[0] : null);
+        const finalStatus = newUserId ? (data.status === 'Assigned' ? 'Assigned' : 'Pending Handover') : (data.status || 'In Stock');
 
         const asset = await prisma.asset.create({
             data: { 
                 ...data, 
                 company: assetCompany,
-                status: newUserId ? 'Pending Handover' : (data.status || 'In Stock'),
+                status: finalStatus,
                 specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
                 userId: newUserId // Ensure relation is set
             }
@@ -1161,7 +1276,9 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
                 data: {
                     assetId: asset.id,
                     userId: newUserId,
-                    status: 'Pending'
+                    status: finalStatus === 'Assigned' ? 'Signed' : 'Pending',
+                    signature: finalStatus === 'Assigned' ? 'Admin Confirmed Handover' : null,
+                    condition: condition || null
                 }
             });
         }
@@ -1183,7 +1300,7 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
                     assetId: asset.id,
                     userId: actionUserId,
                     event: 'Assigned',
-                    details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`
+                    details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.${condition ? ` Condition: ${condition}.` : ''}`
                 }
             });
         }
@@ -1206,20 +1323,77 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
         if (!existingAsset) return res.status(404).json({ error: 'Asset not found' });
         
         const { condition, wipeDetails, ...assetUpdateData } = data;
+
+        // Auto-populate serialNumber from specs.serviceTag if serialNumber is missing/blank
+        if (!assetUpdateData.serialNumber || assetUpdateData.serialNumber.trim() === '') {
+            let serviceTagVal: string | null = null;
+            const specsToCheck = assetUpdateData.specs || existingAsset.specs;
+            if (specsToCheck) {
+                if (typeof specsToCheck === 'object' && specsToCheck.serviceTag) {
+                    serviceTagVal = String(specsToCheck.serviceTag).trim();
+                } else if (typeof specsToCheck === 'string') {
+                    try {
+                        const parsed = JSON.parse(specsToCheck);
+                        if (parsed.serviceTag) serviceTagVal = String(parsed.serviceTag).trim();
+                    } catch (_) {}
+                }
+            }
+            if (serviceTagVal) {
+                assetUpdateData.serialNumber = serviceTagVal;
+            }
+        }
+
         const newUserId = assetUpdateData.assigneeType === 'User' ? assetUpdateData.assigneeId : null;
 
         let finalStatus = assetUpdateData.status;
         if (newUserId && existingAsset && existingAsset.userId !== newUserId) {
-            // New assignment! Create handover log
-            await prisma.handoverLog.create({
-                data: {
+            // New assignment!
+            if (assetUpdateData.status === 'Assigned') {
+                await prisma.handoverLog.create({
+                    data: {
+                        assetId: Number(id),
+                        userId: newUserId,
+                        status: 'Signed',
+                        signature: 'Admin Confirmed Handover',
+                        condition: condition || null
+                    }
+                });
+                finalStatus = 'Assigned';
+            } else {
+                await prisma.handoverLog.create({
+                    data: {
+                        assetId: Number(id),
+                        userId: newUserId,
+                        status: 'Pending',
+                        condition: condition || null
+                    }
+                });
+                finalStatus = 'Pending Handover';
+            }
+        } else if (assetUpdateData.status === 'Assigned' && existingAsset.status === 'Pending Handover') {
+            // Admin explicitly confirms handover / changes status to Assigned
+            await prisma.handoverLog.updateMany({
+                where: {
                     assetId: Number(id),
-                    userId: newUserId,
-                    status: 'Pending',
-                    condition: condition || null
+                    status: 'Pending'
+                },
+                data: {
+                    status: 'Signed',
+                    signature: 'Admin Confirmed Handover'
                 }
             });
-            finalStatus = 'Pending Handover';
+            finalStatus = 'Assigned';
+        } else if (finalStatus !== 'Pending Handover' && existingAsset.status === 'Pending Handover') {
+            // Cancelled or returned while pending handover
+            await prisma.handoverLog.updateMany({
+                where: {
+                    assetId: Number(id),
+                    status: 'Pending'
+                },
+                data: {
+                    status: 'Rejected'
+                }
+            });
         }
 
         const updatedCompany = assetUpdateData.company || existingAsset.company || (assetUpdateData.assetId ? assetUpdateData.assetId.split('-')[0] : (existingAsset.assetId ? existingAsset.assetId.split('-')[0] : null));
@@ -1278,18 +1452,39 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
                         assetId: asset.id,
                         userId: actionUserId,
                         event: 'Assigned',
-                        details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`,
+                        details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.${condition ? ` Condition: ${condition}.` : ''}`,
                         condition: condition || null
                     }
                 });
                 loggedAny = true;
             } else if (!data.assigneeType && !data.assigneeId && (existingAsset.assigneeType || existingAsset.assigneeId || existingAsset.userId)) {
+                let prevAssigneeName = '';
+                if (existingAsset.assigneeType === 'User' || existingAsset.userId) {
+                    const prevUserId = existingAsset.assigneeId || existingAsset.userId;
+                    if (prevUserId) {
+                        const u = await prisma.user.findUnique({ where: { id: prevUserId } });
+                        prevAssigneeName = u ? u.name : `User #${prevUserId}`;
+                    }
+                } else if (existingAsset.assigneeType === 'Department' && existingAsset.assigneeId) {
+                    const d = await prisma.department.findUnique({ where: { id: existingAsset.assigneeId } });
+                    prevAssigneeName = d ? `Department: ${d.name}` : `Department #${existingAsset.assigneeId}`;
+                } else if (existingAsset.assigneeType === 'Branch' && existingAsset.assigneeId) {
+                    const b = await prisma.branch.findUnique({ where: { id: existingAsset.assigneeId } });
+                    prevAssigneeName = b ? `Branch: ${b.name}` : `Branch #${existingAsset.assigneeId}`;
+                }
+
+                const detailParts = [
+                    prevAssigneeName ? `Asset returned/unassigned from ${prevAssigneeName}.` : 'Asset was unassigned manually.',
+                    condition ? `Condition: ${condition}.` : null,
+                    assetUpdateData.remarks ? `Remarks: ${assetUpdateData.remarks}` : null
+                ].filter(Boolean);
+
                 await prisma.assetHistory.create({
                     data: {
                         assetId: asset.id,
                         userId: actionUserId,
                         event: 'Unassigned',
-                        details: 'Asset was unassigned manually.',
+                        details: detailParts.join(' '),
                         condition: condition || null
                     }
                 });
@@ -1304,7 +1499,7 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
                     assetId: asset.id,
                     userId: actionUserId,
                     event: 'Status Changed',
-                    details: `Status changed from '${existingAsset.status}' to '${asset.status}'.`,
+                    details: `Status changed from '${existingAsset.status}' to '${asset.status}'.${condition ? ` Condition: ${condition}.` : ''}`,
                     condition: condition || null
                 }
             });

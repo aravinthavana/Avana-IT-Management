@@ -47,6 +47,8 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
     );
 };
 
+const STANDARD_DEVICE_TYPES = ['Laptop', 'Desktop', 'Server', 'Mobile', 'Tablet'];
+
 const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, assetType, purchaseDate }) => {
     const { assets, users, departments, branches } = useAppContext();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,10 +56,12 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
         id: 0, assetId: '', assetCode: '', name: '', category: 'Laptop', brand: '', model: '', serialNumber: '', location: '', company: 'AMD',
         status: 'Available', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
         warrantyType: 'Years', warrantyYears: '', warrantyStartDate: '', warrantyEndDate: '',
-        specs: { os: '', storage: '', ram: '', processor: '', color: '', serviceTag: '', chargerAdapter: '', graphics: '', memoryTechnology: '', battery: '', dimensions: '', audio: '', displaySize: '', itemWeight: '', software: '' }
+        specs: { os: '', storage: '', ram: '', processor: '', color: '', chargerAdapter: '', graphics: '', memoryTechnology: '', battery: '', dimensions: '', audio: '', displaySize: '', itemWeight: '', software: '' }
     };
 
     const [formData, setFormData] = useState<any>(initialFormState);
+    const [isOtherDeviceType, setIsOtherDeviceType] = useState(false);
+    const [customDeviceType, setCustomDeviceType] = useState('');
     const [customFields, setCustomFields] = useState<{ id: number; fieldName: string; fieldValue: string; }[]>([]);
     const [quantity, setQuantity] = useState(1);
     const [serialNumbers, setSerialNumbers] = useState<{ value: string; error?: string }[]>([{ value: '' }]);
@@ -65,7 +69,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     useEffect(() => {
         if (isOpen) {
             if (asset) { // Covers both editing an existing asset and pre-filling a new one
-                const fullSpecs = { ...initialFormState.specs, ...(asset.specs || {}) };
+                const rawSpecs = { ...(asset.specs || {}) };
+                delete rawSpecs.serviceTag; // Clean up legacy serviceTag
+                const fullSpecs = { ...initialFormState.specs, ...rawSpecs };
                 const standardSpecKeys = Object.keys(initialFormState.specs);
                 const customSpecEntries = Object.entries(fullSpecs).filter(([key]) => !standardSpecKeys.includes(key));
     
@@ -74,6 +80,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     fieldName,
                     fieldValue: fieldValue as string,
                 })));
+
+                const isCustom = assetType === 'Device' && !STANDARD_DEVICE_TYPES.includes(asset.category);
+                setIsOtherDeviceType(isCustom);
+                setCustomDeviceType(isCustom ? asset.category : '');
     
                 setFormData({
                     ...initialFormState,
@@ -84,9 +94,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 });
     
                 setQuantity(1);
-                setSerialNumbers([{ value: asset.serialNumber, error: undefined }]);
+                setSerialNumbers([{ value: asset.serialNumber || (asset.specs as any)?.serviceTag || '', error: undefined }]);
             } else { // Creating a brand new, empty asset
                 setFormData({ ...initialFormState, category: assetType === 'Device' ? 'Laptop' : '' });
+                setIsOtherDeviceType(false);
+                setCustomDeviceType('');
                 setCustomFields([]);
                 setQuantity(1);
                 setSerialNumbers([{ value: '', error: undefined }]);
@@ -97,6 +109,23 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     useEffect(() => {
         setFormData(prev => ({ ...prev, status: prev.assigneeId ? 'Assigned' : 'In Stock' }));
     }, [formData.assigneeId]);
+
+    const handleDeviceTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        if (val === 'Other') {
+            setIsOtherDeviceType(true);
+            setFormData(prev => ({ ...prev, category: customDeviceType || 'Other' }));
+        } else {
+            setIsOtherDeviceType(false);
+            setFormData(prev => ({ ...prev, category: val }));
+        }
+    };
+
+    const handleCustomDeviceTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setCustomDeviceType(val);
+        setFormData(prev => ({ ...prev, category: val }));
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -181,8 +210,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
         }
 
         for (let i = 0; i < quantity; i++) {
+            const effectiveCategory = (assetType === 'Device' && isOtherDeviceType)
+                ? (customDeviceType.trim() || 'Other')
+                : formData.category;
+
             const finalData = { 
                 ...formData, 
+                category: effectiveCategory,
                 purchaseId: formData.purchaseId ? Number(formData.purchaseId) : null,
                 assigneeId: formData.assigneeId ? Number(formData.assigneeId) : null,
                 assigneeType: formData.assigneeType || null,
@@ -191,9 +225,10 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
             };
             let finalSpecs: AssetSpecs = { ...finalData.specs };
 
-            const isDevice = assetType === 'Device' || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category);
+            const isDevice = assetType === 'Device' || isOtherDeviceType || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(effectiveCategory);
             if (isDevice) {
                 customFields.forEach(field => { if (field.fieldName.trim()) { finalSpecs[field.fieldName.trim()] = field.fieldValue; } });
+                delete finalSpecs.serviceTag;
                 Object.keys(finalSpecs).forEach(key => { if (finalSpecs[key] === '') { delete finalSpecs[key]; } });
             } else {
                 finalSpecs = {};
@@ -241,13 +276,27 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                             <option value="ATS">ATS — Avana Technology Services</option>
                         </FormSelect>
                         {assetType === 'Device' ? (
-                            <FormSelect label="Device Type" name="category" value={formData.category} onChange={handleChange}>
-                                <option value="Laptop">Laptop</option>
-                                <option value="Desktop">Desktop</option>
-                                <option value="Server">Server</option>
-                                <option value="Mobile">Mobile / Smartphone</option>
-                                <option value="Tablet">Tablet</option>
-                            </FormSelect>
+                            <>
+                                <FormSelect label="Device Type" name="category" value={isOtherDeviceType ? 'Other' : formData.category} onChange={handleDeviceTypeChange}>
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="Desktop">Desktop</option>
+                                    <option value="Server">Server</option>
+                                    <option value="Mobile">Mobile / Smartphone</option>
+                                    <option value="Tablet">Tablet</option>
+                                    <option value="Other">Other (Custom Device)</option>
+                                </FormSelect>
+                                {isOtherDeviceType && (
+                                    <FormInput
+                                        label="Custom Device Type Name *"
+                                        type="text"
+                                        name="customDeviceType"
+                                        value={customDeviceType}
+                                        onChange={handleCustomDeviceTypeChange}
+                                        placeholder="e.g. Projector, Barcode Scanner, Network Switch"
+                                        required
+                                    />
+                                )}
+                            </>
                         ) : (
                             <FormInput label="Category" type="text" name="category" value={formData.category} onChange={handleChange} placeholder="e.g., Monitor, Keyboard, Printer, Switch" required />
                         )}
@@ -328,7 +377,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     )}
                 </fieldset>
 
-                {(assetType === 'Device' || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category)) && (
+                {(assetType === 'Device' || isOtherDeviceType || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category)) && (
                     <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                         <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Device Specifications</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

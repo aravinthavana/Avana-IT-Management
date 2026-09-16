@@ -6,7 +6,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 interface UserFormProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (user: any) => void;
+    onSave: (user: any, assetAssignment?: { assetId: number, condition: string }) => void;
     user: User | null;
     isLoading?: boolean;
 }
@@ -40,12 +40,21 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
 );
 
 const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLoading }) => {
-    const { departments, branches, users } = useAppContext();
+    const { departments, branches, users, assets } = useAppContext();
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'User', status: 'Active',
         departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
         employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
     });
+    const [onboardingOption, setOnboardingOption] = useState<'assign_asset' | 'laptop_status'>('laptop_status');
+    const [selectedAssetId, setSelectedAssetId] = useState<string>('');
+    const [handoverCondition, setHandoverCondition] = useState<string>('Good');
+
+    const availableAssets = React.useMemo(() => {
+        return assets.filter(a =>
+            a.status === 'In Stock' || a.status === 'Available for Reallocation'
+        );
+    }, [assets]);
 
     useEffect(() => {
         if (user) {
@@ -66,14 +75,19 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                 laptopStatus: user.laptopStatus || '',
                 location: user.location || '',
             });
+            setOnboardingOption('laptop_status');
+            setSelectedAssetId('');
         } else {
             setFormData({
                 name: '', email: '', password: '', role: 'User', status: 'Active',
                 departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
                 employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
             });
+            setOnboardingOption(availableAssets.length > 0 ? 'assign_asset' : 'laptop_status');
+            setSelectedAssetId('');
+            setHandoverCondition('Good');
         }
-    }, [user, isOpen]);
+    }, [user, isOpen, availableAssets.length]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -101,7 +115,12 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
         if (formData.password && formData.password.trim() !== '') {
             payload.password = formData.password;
         }
-        onSave(payload);
+
+        if (!user && onboardingOption === 'assign_asset' && selectedAssetId) {
+            onSave(payload, { assetId: Number(selectedAssetId), condition: handoverCondition });
+        } else {
+            onSave(payload);
+        }
     };
 
     return (
@@ -174,15 +193,98 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                         ))}
                     </FormSelect>
 
-                    {/* Laptop / Asset Status */}
-                    <SectionHeader title="Laptop / Asset Status" />
-                    <div className="md:col-span-2">
-                        <FormSelect label="Laptop Status" name="laptopStatus" value={formData.laptopStatus} onChange={handleChange}>
-                            <option value="">-- Not Set --</option>
-                            <option value="Uses Own Laptop">Uses Own Laptop</option>
-                            <option value="No Laptop Assigned">No Laptop Assigned</option>
-                            <option value="Details Not Collected">Details Not Collected</option>
-                        </FormSelect>
+                    {/* Laptop / Asset Onboarding */}
+                    <SectionHeader title="Laptop / Device Onboarding" />
+                    <div className="md:col-span-2 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
+                                onboardingOption === 'assign_asset'
+                                    ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 ring-1 ring-brand-500'
+                                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                            }`}>
+                                <input
+                                    type="radio"
+                                    name="onboardingOption"
+                                    checked={onboardingOption === 'assign_asset'}
+                                    onChange={() => setOnboardingOption('assign_asset')}
+                                    className="mt-1 text-brand-600 focus:ring-brand-500"
+                                />
+                                <div className="ml-3">
+                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Assign Company Device Now</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Select an in-stock asset from inventory</p>
+                                </div>
+                            </label>
+
+                            <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
+                                onboardingOption === 'laptop_status'
+                                    ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 ring-1 ring-brand-500'
+                                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                            }`}>
+                                <input
+                                    type="radio"
+                                    name="onboardingOption"
+                                    checked={onboardingOption === 'laptop_status'}
+                                    onChange={() => setOnboardingOption('laptop_status')}
+                                    className="mt-1 text-brand-600 focus:ring-brand-500"
+                                />
+                                <div className="ml-3">
+                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Other Laptop Status</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Own laptop, not assigned, or pending</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {onboardingOption === 'assign_asset' && (
+                            <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Select Available Asset to Assign *
+                                    </label>
+                                    <select
+                                        value={selectedAssetId}
+                                        onChange={(e) => setSelectedAssetId(e.target.value)}
+                                        required={onboardingOption === 'assign_asset' && !user}
+                                        className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                    >
+                                        <option value="">-- Choose an Available Asset --</option>
+                                        {availableAssets.map(a => (
+                                            <option key={a.id} value={a.id}>
+                                                [{a.assetId}] {a.name} ({a.category}) - {a.brand || ''} {a.model || ''} - Status: {a.status}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {availableAssets.length === 0 && (
+                                        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                            No assets are currently 'In Stock' or 'Available for Reallocation'. You can choose 'Other Laptop Status' instead.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Condition at Handover
+                                    </label>
+                                    <select
+                                        value={handoverCondition}
+                                        onChange={(e) => setHandoverCondition(e.target.value)}
+                                        className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                    >
+                                        <option value="Good">Good</option>
+                                        <option value="Brand New">Brand New</option>
+                                        <option value="Minor Damage">Minor Damage</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        {onboardingOption === 'laptop_status' && (
+                            <FormSelect label="Laptop Status" name="laptopStatus" value={formData.laptopStatus} onChange={handleChange}>
+                                <option value="">-- Not Set --</option>
+                                <option value="Uses Own Laptop">Uses Own Laptop</option>
+                                <option value="No Laptop Assigned">No Laptop Assigned</option>
+                                <option value="Details Not Collected">Details Not Collected</option>
+                            </FormSelect>
+                        )}
                     </div>
 
                 </div>

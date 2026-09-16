@@ -50,7 +50,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
 
     const technicalDetails = [
         { label: 'Laptop Brand', value: laptop.brand }, { label: 'Model Number', value: laptop.model },
-        { label: 'Laptop Color', value: specs.color }, { label: 'Laptop Service Tag', value: specs.serviceTag },
+        { label: 'Laptop Color', value: specs.color }, { label: 'Serial Number / Service Tag', value: laptop.serialNumber || specs.serviceTag },
         { label: 'Charger Adapter', value: specs.chargerAdapter }, { label: 'Processor', value: specs.processor },
         { label: 'Graphics', value: specs.graphics }, { label: 'Storage', value: specs.storage },
         { label: 'Memory Technology', value: specs.memoryTechnology }, { label: 'Battery', value: specs.battery },

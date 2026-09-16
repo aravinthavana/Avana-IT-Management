@@ -8,6 +8,7 @@ import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import SelfAuditModal from './SelfAuditModal';
 import WipeAssetModal from './WipeAssetModal';
+import UnassignAssetModal from '../users/UnassignAssetModal';
 
 interface AssetDetailViewProps {
     asset: Asset;
@@ -23,20 +24,22 @@ const DetailItem: React.FC<{ label: string, value: React.ReactNode, className?: 
 
 // Status badge colors
 const STATUS_STYLES: Record<string, string> = {
-    'Assigned':                   'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
-    'In Stock':                   'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-    'Reserved':                   'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300',
-    'In Repair':                  'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
-    'Under Inspection':           'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
-    'Available for Reallocation': 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300',
-    'Retired':                    'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
-    'Disposed':                   'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400',
-    'Pending Handover':           'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+    'In Stock':                   'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    'Pending Handover':           'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Assigned':                   'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    'Reserved':                   'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+    'In Repair':                  'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Under Inspection':           'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    'Available for Reallocation': 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+    'Retired':                    'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    'Disposed':                   'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
 };
 
 // Status dot colours for the change-status dropdown
 const STATUS_DOT: Record<string, string> = {
-    'In Stock':                   'bg-blue-500',
+    'In Stock':                   'bg-emerald-500',
+    'Pending Handover':           'bg-amber-500',
+    'Assigned':                   'bg-blue-500',
     'Reserved':                   'bg-violet-500',
     'In Repair':                  'bg-amber-500',
     'Under Inspection':           'bg-orange-500',
@@ -48,6 +51,7 @@ const STATUS_DOT: Record<string, string> = {
 // Which statuses a non-assigned asset can transition to (lifecycle flow)
 const STATUS_TRANSITIONS: Record<string, string[]> = {
     'In Stock':                   ['Reserved', 'In Repair', 'Retired'],
+    'Pending Handover':           ['Assigned', 'In Stock'],
     'Reserved':                   ['In Stock', 'In Repair'],
     'In Repair':                  ['In Stock', 'Retired'],
     'Under Inspection':           ['Available for Reallocation', 'In Repair', 'Retired', 'Disposed'],
@@ -72,9 +76,12 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
     const [isAuditModalOpen, setIsAuditModalOpen] = React.useState(false);
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
     const [isChangingStatus, setIsChangingStatus] = React.useState(false);
+    const [isUnassignModalOpen, setIsUnassignModalOpen] = React.useState(false);
     const [historyRefreshKey, setHistoryRefreshKey] = React.useState(0);
 
-    const handleUnassign = async () => {
+    const handleConfirmUnassign = async (updatedAssetData: { status: string, remarks: string, condition: string }) => {
+        setIsUnassignModalOpen(false);
+        setIsChangingStatus(true);
         try {
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
                 method: 'PUT',
@@ -82,13 +89,15 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                 credentials: 'include',
                 body: JSON.stringify({
                     ...asset,
-                    status: 'In Stock',
+                    status: updatedAssetData.status,
                     assigneeId: null,
                     assigneeType: null,
+                    remarks: updatedAssetData.remarks,
+                    condition: updatedAssetData.condition,
                     specs: asset.specs ? JSON.stringify(asset.specs) : null
                 })
             });
-            if (!res.ok) throw new Error('Failed to unassign');
+            if (!res.ok) throw new Error('Failed to unassign asset');
             const updated = await res.json();
             setAssets(assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
             setHistoryRefreshKey(prev => prev + 1);
@@ -96,6 +105,8 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
             setNotification({ message: 'Asset unassigned successfully', type: 'success' });
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
+        } finally {
+            setIsChangingStatus(false);
         }
     };
 
@@ -167,10 +178,20 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                     <div className="flex items-center gap-2 flex-shrink-0">
                         {user?.role !== 'User' && (
                             <>
-                                {/* Assigned: show Unassign */}
-                                {asset.status === 'Assigned' && (
-                                    <button onClick={handleUnassign} className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400 flex items-center gap-2 text-sm transition-all active:scale-95">
-                                        {ICONS.remove} <span className="hidden sm:inline">Unassign</span>
+                                {/* Assigned or Pending Handover: show Unassign / Cancel */}
+                                {(asset.status === 'Assigned' || asset.status === 'Pending Handover') && (
+                                    <button onClick={() => setIsUnassignModalOpen(true)} className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400 flex items-center gap-2 text-sm transition-all active:scale-95">
+                                        {ICONS.remove} <span className="hidden sm:inline">{asset.status === 'Pending Handover' ? 'Cancel Handover' : 'Unassign'}</span>
+                                    </button>
+                                )}
+
+                                {/* Pending Handover: show Mark as Handed Over / Assigned */}
+                                {asset.status === 'Pending Handover' && (
+                                    <button onClick={() => handleChangeStatus('Assigned')} disabled={isChangingStatus} className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm disabled:opacity-60">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span className="hidden sm:inline">Mark as Handed Over / Assigned</span>
                                     </button>
                                 )}
 
@@ -297,6 +318,12 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                     if (pendingWipeStatus) handleChangeStatus(pendingWipeStatus, details);
                     setPendingWipeStatus(null);
                 }}
+            />
+            <UnassignAssetModal
+                isOpen={isUnassignModalOpen}
+                onClose={() => setIsUnassignModalOpen(false)}
+                onConfirm={handleConfirmUnassign}
+                asset={asset}
             />
         </>
     );

@@ -10,6 +10,7 @@ import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 import BulkChangeStatusModal from './BulkChangeStatusModal';
 import { getWarrantyStatus } from '../../utils/assetUtils';
 import AssetCreationMethodModal from './AssetCreationMethodModal';
+import UnassignAssetModal from '../users/UnassignAssetModal';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
@@ -24,6 +25,7 @@ const AssetManagement: React.FC = () => {
     const [isAssetChoiceModalOpen, setIsAssetChoiceModalOpen] = useState(false);
     const [isAssetFormOpen, setIsAssetFormOpen] = useState(false);
     const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
+    const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
     
     // Data states
     const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -349,6 +351,34 @@ const AssetManagement: React.FC = () => {
         }
     };
 
+    const handleConfirmUnassign = async (updatedAssetData: { status: string, remarks: string, condition: string }) => {
+        if (!assetToUnassign) return;
+        try {
+            const res = await fetch(`${API_URL}/api/assets/${assetToUnassign.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...assetToUnassign,
+                    status: updatedAssetData.status,
+                    assigneeId: null,
+                    assigneeType: null,
+                    remarks: updatedAssetData.remarks,
+                    condition: updatedAssetData.condition,
+                    specs: assetToUnassign.specs ? (typeof assetToUnassign.specs === 'string' ? assetToUnassign.specs : JSON.stringify(assetToUnassign.specs)) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to unassign asset');
+            const updated = await res.json();
+            setAssets(prev => prev.map(a => a.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            fetchAssetHistory();
+            setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        }
+        setAssetToUnassign(null);
+    };
+
     const handleRowClick = (assetId: number) => {
         if (isSelectMode) {
             handleToggleSelect(assetId);
@@ -528,6 +558,18 @@ const AssetManagement: React.FC = () => {
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isAdminOrManager && (
                                         <>
+                                            {(asset.status === 'Assigned' || asset.status === 'Pending Handover') && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAssetToUnassign(asset);
+                                                    }}
+                                                    title={asset.status === 'Pending Handover' ? "Cancel Handover / Unassign" : "Unassign Asset"}
+                                                    className="p-2.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
+                                                >
+                                                    {ICONS.unassign}
+                                                </button>
+                                            )}
                                             <button onClick={(e) => { e.stopPropagation(); handleEditAsset(asset); }} className="p-2.5 text-slate-400 hover:text-brand-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.edit}</button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(asset.id); }} className="p-2.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.delete}</button>
                                         </>
@@ -595,6 +637,7 @@ const AssetManagement: React.FC = () => {
                 <AssetCreationMethodModal isOpen={isCreationMethodModalOpen} onClose={handleCloseForms} onSelectMethod={handleSelectCreationMethod} />
                 <AssetTypeChoiceModal isOpen={isAssetChoiceModalOpen} onClose={handleCloseForms} onSelect={handleSelectAssetType} />
                 <AssetForm isOpen={isAssetFormOpen} onClose={handleCloseForms} onSave={handleSaveAsset} asset={editingAsset} assetType={newAssetType} />
+                <UnassignAssetModal isOpen={!!assetToUnassign} onClose={() => setAssetToUnassign(null)} onConfirm={handleConfirmUnassign} asset={assetToUnassign} />
             </div>
 
              {selectedAssetIds.size > 0 && (

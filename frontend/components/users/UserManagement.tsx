@@ -16,7 +16,7 @@ interface UserManagementProps {
 }
 
 const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFiltersApplied }) => {
-    const { users, setUsers, assets, setNotification, selectedUserId, setSelectedUserId, selectedDepartmentId, navigate, getHeaders, fetchAllData } = useAppContext();
+    const { users, setUsers, assets, setAssets, setNotification, selectedUserId, setSelectedUserId, selectedDepartmentId, navigate, getHeaders, fetchAllData, fetchAssetHistory } = useAppContext();
     const { user: loggedInUser } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -33,14 +33,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
 
-    const handleSaveUser = async (userData: any) => {
+    const handleSaveUser = async (userData: any, assetAssignment?: { assetId: number, condition: string }) => {
         setIsLoading(true);
         try {
             if (editingUser) {
                 const res = await fetch(`${API_URL}/api/users/${editingUser.id}`, {
                     method: 'PUT',
                     headers: getHeaders(),
-                                credentials: 'include',
+                    credentials: 'include',
                     body: JSON.stringify(userData),
                 });
                 if (!res.ok) {
@@ -55,7 +55,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 const res = await fetch(`${API_URL}/api/users`, {
                     method: 'POST',
                     headers: getHeaders(),
-                                credentials: 'include',
+                    credentials: 'include',
                     body: JSON.stringify(userData),
                 });
                 if (!res.ok) {
@@ -65,7 +65,43 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 }
                 const created = await res.json();
                 setUsers([...users, created]);
-                setNotification({ message: `User "${created.name}" created. They can now log in.`, type: 'success' });
+
+                // If an asset was selected during onboarding, assign it immediately
+                if (assetAssignment && assetAssignment.assetId) {
+                    const assetToAssign = assets.find(a => a.id === assetAssignment.assetId);
+                    if (assetToAssign) {
+                        try {
+                            const assignRes = await fetch(`${API_URL}/api/assets/${assetToAssign.id}`, {
+                                method: 'PUT',
+                                headers: getHeaders(),
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    ...assetToAssign,
+                                    assigneeId: created.id,
+                                    assigneeType: 'User',
+                                    status: 'Assigned',
+                                    location: created.location,
+                                    condition: assetAssignment.condition || 'Good',
+                                    specs: assetToAssign.specs ? (typeof assetToAssign.specs === 'string' ? assetToAssign.specs : JSON.stringify(assetToAssign.specs)) : null
+                                })
+                            });
+                            if (assignRes.ok) {
+                                const updatedAsset = await assignRes.json();
+                                setAssets(prev => prev.map(a => a.id === updatedAsset.id ? { ...updatedAsset, specs: typeof updatedAsset.specs === 'string' ? JSON.parse(updatedAsset.specs) : updatedAsset.specs } : a));
+                                fetchAssetHistory();
+                            }
+                        } catch (assignErr) {
+                            console.error('Failed to auto-assign asset on onboarding:', assignErr);
+                        }
+                    }
+                }
+
+                setNotification({
+                    message: assetAssignment && assetAssignment.assetId 
+                        ? `User "${created.name}" created and asset assigned successfully.` 
+                        : `User "${created.name}" created. They can now log in.`, 
+                    type: 'success'
+                });
             }
             handleCloseModal();
         } catch (err: any) {
