@@ -7,7 +7,7 @@ type ReturnStatus = 'Under Inspection' | 'In Stock' | 'In Repair' | 'Retired' | 
 interface UnassignAssetModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (data: { status: ReturnStatus, remarks: string }) => void;
+    onConfirm: (data: { status: ReturnStatus, remarks: string, condition: string }) => void;
     asset: Asset | null;
 }
 
@@ -30,16 +30,18 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose, onConfirm, asset }) => {
     const [status, setStatus] = useState<ReturnStatus>('Under Inspection');
     const [remarks, setRemarks] = useState('');
+    const [condition, setCondition] = useState('Good');
 
     useEffect(() => {
         if (isOpen) {
             setStatus('Under Inspection');
             setRemarks(asset?.remarks || '');
+            setCondition('Good');
         }
     }, [isOpen, asset]);
 
     const handleConfirm = () => {
-        onConfirm({ status, remarks });
+        onConfirm({ status, remarks, condition });
     };
 
     if (!asset) return null;
@@ -63,6 +65,15 @@ const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose
                     <option value="In Repair">In Repair — Needs servicing</option>
                     <option value="Retired">Retired — End of life</option>
                     <option value="Disposed">Disposed — Written off / physically discarded</option>
+                </FormSelect>
+                <FormSelect
+                    label="Condition at Return"
+                    value={condition}
+                    onChange={(e) => setCondition(e.target.value)}
+                >
+                    <option value="Good">Good</option>
+                    <option value="Minor Damage">Minor Damage</option>
+                    <option value="Major Damage">Major Damage</option>
                 </FormSelect>
                 <FormTextarea
                     label="Remarks (Optional)"

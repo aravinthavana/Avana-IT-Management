@@ -16,7 +16,7 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080
 
 
 const AssetManagement: React.FC = () => {
-    const { assets, setAssets, users, departments, branches, purchaseRecords, setNotification, setSelectedAssetId, assetFilters, setAssetFilters, navigate, pageState, clearPageState, getHeaders } = useAppContext();
+    const { assets, setAssets, users, departments, branches, purchaseRecords, setNotification, setSelectedAssetId, assetFilters, setAssetFilters, navigate, pageState, clearPageState, getHeaders, fetchAssetHistory } = useAppContext();
     const { user } = useAuth();
     const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager';
     // Modal states
@@ -109,6 +109,7 @@ const AssetManagement: React.FC = () => {
                 const updated = await res.json();
                 
                 setAssets(assets.map(a => a.id === editingAsset.id ? { ...updated, specs: typeof updated.specs === 'string' ? (() => { try { const p = JSON.parse(updated.specs); return typeof p === 'string' ? JSON.parse(p) : p; } catch { return {}; } })() : updated.specs } : a));
+                fetchAssetHistory();
                 setNotification({ message: `Asset "${updatedAssetData.name}" updated successfully.`, type: 'success' });
             } else {
                 // Creating new assets
@@ -133,6 +134,7 @@ const AssetManagement: React.FC = () => {
                 }
 
                 setAssets(prev => [...prev, ...savedAssets]);
+                fetchAssetHistory();
                 setNotification({ message: `${savedAssets.length} asset(s) added successfully.`, type: 'success' });
             }
             handleCloseForms();
@@ -338,6 +340,7 @@ const AssetManagement: React.FC = () => {
                 }
                 return asset;
             }));
+            fetchAssetHistory();
             setNotification({ message: `Updated status for ${updatedCount} assets.`, type: 'success' });
             setSelectedAssetIds(new Set());
             setIsBulkStatusModalOpen(false);

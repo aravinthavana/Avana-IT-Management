@@ -26,6 +26,12 @@ model User {
   accountType  String       @default("Employee")
   laptopStatus String?      // e.g. "Using own laptop", "No laptop assigned", "Details not collected"
   location     String?      // Work Location e.g. "Hyderabad", "Pune", "Remote"
+  
+  // IT Operations Checklist
+  m365AccountCreated    Boolean @default(false)
+  softwareInstalled     Boolean @default(false)
+  credentialsHandedOver Boolean @default(false)
+  m365AccountDisabled   Boolean @default(false)
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
   manager      User?        @relation("UserManager", fields: [managerId], references: [id])
@@ -117,6 +123,7 @@ model AssetHistory {
   
   event     String
   details   String?
+  condition String?  // Condition of the asset at the time of the event
 
   @@index([assetId])
   @@index([userId])
@@ -131,6 +138,7 @@ model HandoverLog {
   handoverDate DateTime @default(now())
   signature    String?  // Base64 signature image string
   status       String   @default("Pending") // Pending, Signed, Rejected
+  condition    String?  // Condition at issue
 
   @@index([assetId])
   @@index([userId])

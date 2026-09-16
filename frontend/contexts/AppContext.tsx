@@ -69,7 +69,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         };
 
         try {
-            const [usersRes, assetsRes, deptRes, branchRes, purchaseRes, licenseRes, requestsRes, ticketsRes, kbRes, selfAuditsRes] = await Promise.all([
+            const [usersRes, assetsRes, deptRes, branchRes, purchaseRes, licenseRes, requestsRes, ticketsRes, kbRes, selfAuditsRes, historyRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/api/users`),
                 fetchWithAuth(`${API_URL}/api/assets`),
                 fetchWithAuth(`${API_URL}/api/departments`),
@@ -80,9 +80,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 fetchWithAuth(`${API_URL}/api/tickets`),
                 fetchWithAuth(`${API_URL}/api/kb`),
                 fetchWithAuth(`${API_URL}/api/self-audits`),
+                fetchWithAuth(`${API_URL}/api/history`),
             ]);
 
             if (usersRes.ok) setUsers(await usersRes.json());
+            if (historyRes.ok) setAssetHistory(await historyRes.json());
             if (assetsRes.ok) {
                 const rawAssets = await assetsRes.json();
                 setAssets(rawAssets.map((a: any) => ({
@@ -93,8 +95,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                             return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
                         } catch { return {}; } 
                     })() : (a.specs || {}),
-                    assigneeType: a.userId ? 'User' : undefined,
-                    assigneeId: a.userId || undefined,
+                    assigneeType: a.assigneeType || (a.userId ? 'User' : undefined),
+                    assigneeId: a.assigneeId || a.userId || undefined,
                 })));
             }
             if (deptRes.ok) setDepartments(await deptRes.json());
@@ -195,6 +197,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     };
 
+    const fetchAssetHistory = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/history`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAssetHistory(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch asset history:', err);
+        }
+    }, [getHeaders]);
+
     const navigate = (targetView: string, state?: { [key: string]: any }) => {
         if (targetView !== 'assets' && view === 'assets') {
             setAssetFilters(defaultAssetFilter);
@@ -218,6 +235,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setBranches,
         assetHistory,
         logAssetHistory,
+        fetchAssetHistory,
         notification,
         setNotification,
         view,

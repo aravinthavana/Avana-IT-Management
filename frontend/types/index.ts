@@ -20,6 +20,10 @@ export interface User {
     licenseAssignments?: LicenseAssignment[];
     accountType?: string;
     laptopStatus?: string;
+    m365AccountCreated?: boolean;
+    softwareInstalled?: boolean;
+    credentialsHandedOver?: boolean;
+    m365AccountDisabled?: boolean;
 }
 
 export interface AssetRequest {
@@ -92,9 +96,10 @@ export interface AssetHistory {
     id: number;
     assetId: number;
     timestamp: string;
-    user: { id: number; name: string };
+    user?: { id: number; name: string } | null;
     event: string;
     details?: string;
+    condition?: string;
 }
 
 export interface PurchaseRecord {
@@ -140,6 +145,7 @@ export interface AppContextType {
     setBranches: (b: Branch[]) => void;
     assetHistory: AssetHistory[];
     logAssetHistory: (assetId: number, event: string, details?: string) => void;
+    fetchAssetHistory: () => Promise<void>;
     notification: NotificationType | null;
     setNotification: (n: NotificationType | null) => void;
     view: string;

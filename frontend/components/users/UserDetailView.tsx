@@ -11,7 +11,7 @@ interface UserDetailViewProps {
 }
 
 const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
-    const { users, assets, setAssets, setNotification, setSelectedAssetId, setPreviewTarget } = useAppContext();
+    const { users, setUsers, assets, setAssets, setNotification, setSelectedAssetId, setPreviewTarget, getHeaders, fetchAssetHistory } = useAppContext();
     const user = users.find(u => u.id === userId);
     const userAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -26,38 +26,82 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         );
     }
     
-    const handleAssignAsset = (assetToAssign: Asset) => {
-        setAssets(prevAssets => prevAssets.map(asset => 
-            asset.id === assetToAssign.id 
-            ? { ...asset, assigneeId: user!.id, assigneeType: 'user', status: 'Assigned', location: user!.location } 
-            : asset
-        ));
-        setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${user!.name}.`, type: 'success' });
+    const handleAssignAsset = async (assetToAssign: Asset, condition: string) => {
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToAssign.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...assetToAssign,
+                    assigneeId: user.id,
+                    assigneeType: 'User',
+                    status: 'Assigned',
+                    location: user.location,
+                    condition,
+                    specs: assetToAssign.specs ? JSON.stringify(assetToAssign.specs) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to assign asset');
+            const updated = await res.json();
+            setAssets(prevAssets => prevAssets.map(asset => 
+                asset.id === assetToAssign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
+            ));
+            fetchAssetHistory();
+            setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${user.name}.`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        }
         setIsAssignModalOpen(false);
     };
 
-    const handleConfirmUnassign = (updatedAssetData: { status: string, remarks: string }) => {
+    const handleConfirmUnassign = async (updatedAssetData: { status: string, remarks: string, condition: string }) => {
         if (!assetToUnassign) return;
         
-        setAssets(prevAssets => prevAssets.map(asset => 
-            asset.id === assetToUnassign.id 
-            ? { 
-                ...asset, 
-                assigneeId: '',
-                assigneeType: null,
-                status: updatedAssetData.status,
-                remarks: updatedAssetData.remarks 
-              } 
-            : asset
-        ));
-        
-        let details = `Status changed to '${updatedAssetData.status}'.`;
-        if (updatedAssetData.remarks) {
-            details += ` Remarks: "${updatedAssetData.remarks}"`;
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToUnassign.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...assetToUnassign,
+                    assigneeId: null,
+                    assigneeType: null,
+                    status: updatedAssetData.status,
+                    remarks: updatedAssetData.remarks,
+                    condition: updatedAssetData.condition,
+                    specs: assetToUnassign.specs ? JSON.stringify(assetToUnassign.specs) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to unassign asset');
+            const updated = await res.json();
+            setAssets(prevAssets => prevAssets.map(asset => 
+                asset.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
+            ));
+            fetchAssetHistory();
+            setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
         }
-
-        setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         setAssetToUnassign(null);
+    };
+
+    const handleToggleChecklistFlag = async (flag: 'm365AccountCreated' | 'softwareInstalled' | 'credentialsHandedOver' | 'm365AccountDisabled') => {
+        try {
+            const newValue = !user[flag];
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${user.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ ...user, [flag]: newValue })
+            });
+            if (!res.ok) throw new Error('Failed to update checklist');
+            const updatedUser = await res.json();
+            setUsers(users.map(u => u.id === user.id ? { ...u, ...updatedUser } : u));
+            setNotification({ message: 'Checklist updated successfully.', type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        }
     };
 
     return (
@@ -137,6 +181,40 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                         </div>
                     </div>
                 </div>
+                
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">IT Operations Checklist</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={user.m365AccountCreated} onChange={() => handleToggleChecklistFlag('m365AccountCreated')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="font-medium text-slate-800 dark:text-slate-200">M365 Account Created</p>
+                                <p className="text-xs text-slate-500">Email & Office 365 provisioning</p>
+                            </div>
+                        </label>
+                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={user.softwareInstalled} onChange={() => handleToggleChecklistFlag('softwareInstalled')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="font-medium text-slate-800 dark:text-slate-200">Required Software Installed</p>
+                                <p className="text-xs text-slate-500">Antivirus, VPN, role-specific tools</p>
+                            </div>
+                        </label>
+                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={user.credentialsHandedOver} onChange={() => handleToggleChecklistFlag('credentialsHandedOver')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="font-medium text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
+                                <p className="text-xs text-slate-500">Provided to user on joining day</p>
+                            </div>
+                        </label>
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border ${user.status === 'Inactive' ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-700'} hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors`}>
+                            <input type="checkbox" checked={user.m365AccountDisabled} onChange={() => handleToggleChecklistFlag('m365AccountDisabled')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="font-medium text-slate-800 dark:text-slate-200">M365 Account Disabled</p>
+                                <p className="text-xs text-slate-500">Offboarding action completed</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Assigned Assets ({userAssets.length})</h3>
@@ -152,6 +230,14 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                             <span className="font-mono">{asset.assetId}</span>
                                             <span className="hidden sm:inline">&bull;</span>
                                             <span className="font-mono">S/N: {asset.serialNumber}</span>
+                                            {asset.status === 'Pending Handover' && (
+                                                <>
+                                                    <span className="hidden sm:inline">&bull;</span>
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                                        ⚠️ Pending Acknowledgment
+                                                    </span>
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                     <div className="flex items-center justify-end gap-2 flex-shrink-0 self-start sm:self-center">

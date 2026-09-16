@@ -10,9 +10,9 @@ export async function apiClient<T = any>(
         defaultHeaders['Content-Type'] = 'application/json';
     }
 
-    const csrfMatch = document.cookie.match(/csrfToken=([^;]+)/);
+    const csrfMatch = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
     if (csrfMatch) {
-        defaultHeaders['X-CSRF-Token'] = csrfMatch[1];
+        defaultHeaders['x-xsrf-token'] = decodeURIComponent(csrfMatch[1]);
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {

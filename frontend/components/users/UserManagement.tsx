@@ -28,6 +28,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [sortKey, setSortKey] = useState('name-asc');
     const [isLoading, setIsLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+    const [reclaimAll, setReclaimAll] = useState(true);
 
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
@@ -74,7 +75,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
         }
     };
 
-    const handleStatusChange = async (userId: number, newStatus: 'Active' | 'Inactive') => {
+    const handleStatusChange = async (userId: number, newStatus: 'Active' | 'Inactive', reclaimAll?: boolean) => {
         // Guard: cannot change own status
         if (userId === loggedInUser?.id) {
             setNotification({ message: 'You cannot change the status of your own account.', type: 'error' });
@@ -85,8 +86,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             const res = await fetch(`${API_URL}/api/users/${userId}/status`, {
                 method: 'PUT',
                 headers: getHeaders(),
-                                credentials: 'include',
-                body: JSON.stringify({ status: newStatus }),
+                credentials: 'include',
+                body: JSON.stringify({ status: newStatus, reclaimAll }),
             });
             if (!res.ok) {
                 const err = await res.json();
@@ -131,7 +132,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
 
     const handleConfirm = () => {
         if (!confirmAction) return;
-        if (confirmAction.type === 'deactivate') handleStatusChange(confirmAction.userId, 'Inactive');
+        if (confirmAction.type === 'deactivate') handleStatusChange(confirmAction.userId, 'Inactive', reclaimAll);
         else if (confirmAction.type === 'reactivate') handleStatusChange(confirmAction.userId, 'Active');
         else if (confirmAction.type === 'delete') handleDeleteUser(confirmAction.userId);
     };
@@ -196,7 +197,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 onConfirm={handleConfirm}
                 title={confirmAction?.type === 'delete' ? 'Permanently Delete User' : confirmAction?.type === 'deactivate' ? 'Confirm Deactivation' : 'Confirm Reactivation'}
             >
-                {confirmAction ? confirmMessages[confirmAction.type] : ''}
+                <div className="flex flex-col gap-4">
+                    <p>{confirmAction ? confirmMessages[confirmAction.type] : ''}</p>
+                    {confirmAction?.type === 'deactivate' && (
+                        <label className="flex items-start gap-2 bg-slate-50 dark:bg-slate-700/50 p-3 rounded border border-slate-200 dark:border-slate-600 text-left">
+                            <input 
+                                type="checkbox" 
+                                checked={reclaimAll} 
+                                onChange={(e) => setReclaimAll(e.target.checked)}
+                                className="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded"
+                            />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Automatically reclaim assets and licenses</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">If checked, all assets currently assigned to this user will be moved to 'Under Inspection' and licenses will be unassigned.</span>
+                            </div>
+                        </label>
+                    )}
+                </div>
             </ConfirmationModal>
 
             <div className="bg-transparent">

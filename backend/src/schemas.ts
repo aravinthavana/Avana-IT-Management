@@ -16,13 +16,18 @@ export const userSchema = z.object({
     employeeId: z.string().nullable().optional(),
     accountType: z.string().default('Employee'),
     laptopStatus: z.string().nullable().optional(),
+    m365AccountCreated: z.boolean().default(false),
+    softwareInstalled: z.boolean().default(false),
+    credentialsHandedOver: z.boolean().default(false),
+    m365AccountDisabled: z.boolean().default(false),
 });
 
 export const assetSchema = z.object({
     assetId: z.string().min(3),
     name: z.string().min(2),
     category: z.string(),
-    status: z.enum(['In Stock', 'Assigned', 'In Repair', 'Retired', 'Pending Handover']).default('In Stock'),
+    status: z.string().default('In Stock'),
+    condition: z.string().nullable().optional(),
     assigneeId: z.number().nullable().optional(),
     assigneeType: z.enum(['User', 'Department', 'Branch']).nullable().optional(),
     company: z.string().nullable().optional(),
@@ -33,10 +38,11 @@ export const assetSchema = z.object({
     purchaseId: z.number().nullable().optional(),
     warrantyType: z.string().nullable().optional(),
     warrantyStartDate: z.string().nullable().optional(),
-    warrantyYears: z.string().nullable().optional(),
+    warrantyYears: z.union([z.number(), z.string()]).nullable().optional(),
     warrantyEndDate: z.string().nullable().optional(),
     remarks: z.string().nullable().optional(),
-    specs: z.any().nullable().optional(),
+    specs: z.any().optional(),
+    wipeDetails: z.string().nullable().optional()
 });
 
 export const purchaseSchema = z.object({

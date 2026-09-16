@@ -7,6 +7,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import SelfAuditModal from './SelfAuditModal';
+import WipeAssetModal from './WipeAssetModal';
 
 interface AssetDetailViewProps {
     asset: Asset;
@@ -56,7 +57,7 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
 };
 
 const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
-    const { users, departments, branches, purchaseRecords, setPreviewTarget, setSelectedPurchaseId, setSelectedAssetId, setAssets, assets, setNotification, getHeaders, navigate } = useAppContext();
+    const { users, departments, branches, purchaseRecords, setPreviewTarget, setSelectedPurchaseId, setSelectedAssetId, setAssets, assets, setNotification, getHeaders, navigate, fetchAssetHistory } = useAppContext();
     const { user } = useAuth();
     const assignee = getAssigneeDisplayInfo(asset.assigneeId, asset.assigneeType, users, departments, branches);
     const purchase = purchaseRecords.find(p => p.id === asset.purchaseId);
@@ -71,6 +72,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
     const [isAuditModalOpen, setIsAuditModalOpen] = React.useState(false);
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
     const [isChangingStatus, setIsChangingStatus] = React.useState(false);
+    const [historyRefreshKey, setHistoryRefreshKey] = React.useState(0);
 
     const handleUnassign = async () => {
         try {
@@ -89,14 +91,23 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
             if (!res.ok) throw new Error('Failed to unassign');
             const updated = await res.json();
             setAssets(assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            setHistoryRefreshKey(prev => prev + 1);
+            fetchAssetHistory();
             setNotification({ message: 'Asset unassigned successfully', type: 'success' });
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
         }
     };
 
-    const handleChangeStatus = async (newStatus: string) => {
+    const [pendingWipeStatus, setPendingWipeStatus] = React.useState<string | null>(null);
+
+    const handleChangeStatus = async (newStatus: string, wipeDetails?: string) => {
         setIsStatusMenuOpen(false);
+        if (asset.status === 'Under Inspection' && newStatus === 'Available for Reallocation' && !wipeDetails) {
+            setPendingWipeStatus(newStatus);
+            return;
+        }
+        
         setIsChangingStatus(true);
         try {
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
@@ -106,12 +117,15 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                 body: JSON.stringify({
                     ...asset,
                     status: newStatus,
+                    wipeDetails,
                     specs: asset.specs ? JSON.stringify(asset.specs) : null
                 })
             });
             if (!res.ok) throw new Error('Failed to update status');
             const updated = await res.json();
             setAssets(assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            setHistoryRefreshKey(prev => prev + 1);
+            fetchAssetHistory();
             setNotification({ message: `Status changed to "${newStatus}"`, type: 'success' });
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
@@ -272,9 +286,18 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         </div>
                     </div>
                 )}
-                <AssetHistoryLog assetId={asset.id} />
+                <AssetHistoryLog assetId={asset.id} refreshTrigger={historyRefreshKey} />
             </div>
             <SelfAuditModal isOpen={isAuditModalOpen} onClose={() => setIsAuditModalOpen(false)} asset={asset} />
+            <WipeAssetModal
+                isOpen={!!pendingWipeStatus}
+                onClose={() => setPendingWipeStatus(null)}
+                asset={asset}
+                onConfirm={(details) => {
+                    if (pendingWipeStatus) handleChangeStatus(pendingWipeStatus, details);
+                    setPendingWipeStatus(null);
+                }}
+            />
         </>
     );
 };

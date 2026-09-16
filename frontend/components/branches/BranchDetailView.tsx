@@ -11,9 +11,9 @@ interface BranchDetailViewProps {
 }
 
 const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack }) => {
-    const { branches, assets, setAssets, setNotification, setSelectedAssetId } = useAppContext();
+    const { branches, assets, setAssets, setNotification, setSelectedAssetId, getHeaders, fetchAssetHistory } = useAppContext();
     const branch = branches.find(b => b.id === branchId);
-    const branchAssets = assets.filter(a => a.assigneeType === 'branch' && a.assigneeId === branchId);
+    const branchAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'branch' && a.assigneeId === branchId);
     
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
@@ -27,31 +27,63 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
         );
     }
     
-    const handleAssignAsset = (assetToAssign: Asset) => {
-        setAssets(prevAssets => prevAssets.map(asset => 
-            asset.id === assetToAssign.id 
-            ? { ...asset, assigneeId: branch.id, assigneeType: 'branch', status: 'Assigned', location: branch.location } 
-            : asset
-        ));
-        setNotification({ message: `Successfully assigned ${assetToAssign.name} to ${branch.name}.`, type: 'success' });
+    const handleAssignAsset = async (assetToAssign: Asset, condition: string) => {
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToAssign.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...assetToAssign,
+                    assigneeId: branch.id,
+                    assigneeType: 'Branch',
+                    status: 'Assigned',
+                    location: branch.location,
+                    condition,
+                    specs: assetToAssign.specs ? JSON.stringify(assetToAssign.specs) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to assign asset');
+            const updated = await res.json();
+            setAssets(prevAssets => prevAssets.map(asset => 
+                asset.id === assetToAssign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
+            ));
+            fetchAssetHistory();
+            setNotification({ message: `Successfully assigned ${assetToAssign.name} to branch ${branch.name}.`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        }
         setIsAssignModalOpen(false);
     };
 
-    const handleConfirmUnassign = (updatedAssetData: { status: string, remarks: string }) => {
+    const handleConfirmUnassign = async (updatedAssetData: { status: string, remarks: string, condition: string }) => {
         if (!assetToUnassign) return;
         
-        setAssets(prevAssets => prevAssets.map(asset => 
-            asset.id === assetToUnassign.id 
-            ? { ...asset, assigneeId: '', assigneeType: null, status: updatedAssetData.status, remarks: updatedAssetData.remarks } 
-            : asset
-        ));
-        
-        let details = `Unassigned from Branch: ${branch.name}. Status changed to '${updatedAssetData.status}'.`;
-        if (updatedAssetData.remarks) {
-            details += ` Remarks: "${updatedAssetData.remarks}"`;
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToUnassign.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...assetToUnassign,
+                    assigneeId: null,
+                    assigneeType: null,
+                    status: updatedAssetData.status,
+                    remarks: updatedAssetData.remarks,
+                    condition: updatedAssetData.condition,
+                    specs: assetToUnassign.specs ? JSON.stringify(assetToUnassign.specs) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to unassign asset');
+            const updated = await res.json();
+            setAssets(prevAssets => prevAssets.map(asset => 
+                asset.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
+            ));
+            fetchAssetHistory();
+            setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
         }
-
-        setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         setAssetToUnassign(null);
     };
 

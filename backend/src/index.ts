@@ -168,23 +168,6 @@ async function getGraphAppToken(): Promise<{ token: string | null; error?: strin
     return { token: null, error: 'No certificate private key or client secret configured' };
 }
 
-interface EmailLogEntry {
-    id: string;
-    timestamp: string;
-    ticketId: number;
-    subject: string;
-    from: string;
-    to: string;
-    replyTo?: string;
-    senderName: string;
-    isReply: boolean;
-    status: 'SUCCESS' | 'FAILED';
-    method?: string;
-    error?: string;
-}
-
-const emailHistory: EmailLogEntry[] = [];
-
 async function sendTicketEmail(options: {
     toEmail: string;
     toName: string;
@@ -215,19 +198,6 @@ async function sendTicketEmail(options: {
     for (let i = 8; i < 27; i++) baseThreadIndex[i] = (options.ticketId * (i + 1)) & 0xff;
     const replyBytes = options.isReply ? Buffer.alloc(5) : Buffer.alloc(0);
     const threadIndex = Buffer.concat([baseThreadIndex, replyBytes]).toString('base64');
-
-    const logEntry: EmailLogEntry = {
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        ticketId: options.ticketId,
-        subject,
-        from: fromMail,
-        to: options.toEmail,
-        replyTo: options.senderEmail,
-        senderName: options.senderName,
-        isReply: options.isReply,
-        status: 'FAILED'
-    };
 
     const htmlContent = `<!DOCTYPE html>
 <html>
@@ -272,11 +242,11 @@ async function sendTicketEmail(options: {
 </html>`;
 
     function recordLog(status: 'SUCCESS' | 'FAILED', method?: string, error?: string) {
-        logEntry.status = status;
-        logEntry.method = method;
-        logEntry.error = error;
-        emailHistory.unshift({ ...logEntry });
-        if (emailHistory.length > 100) emailHistory.pop();
+        if (status === 'SUCCESS') {
+            console.log(`[Email] Ticket #${options.ticketId} notification sent via ${method || 'dispatcher'}`);
+        } else {
+            console.warn(`[Email] Ticket #${options.ticketId} notification failed via ${method || 'dispatcher'}: ${error || 'Unknown error'}`);
+        }
     }
 
     // 1. Try Microsoft Graph API
@@ -456,13 +426,17 @@ const userSchema = z.object({
     employeeId: z.string().nullable().optional(),
     accountType: z.string().default('Employee'),
     laptopStatus: z.string().nullable().optional(),
+    m365AccountCreated: z.boolean().default(false),
+    softwareInstalled: z.boolean().default(false),
+    credentialsHandedOver: z.boolean().default(false),
+    m365AccountDisabled: z.boolean().default(false),
 });
 
 const assetSchema = z.object({
     assetId: z.string().min(3),
     name: z.string().min(2),
     category: z.string(),
-    status: z.enum(['In Stock', 'Assigned', 'In Repair', 'Retired', 'Pending Handover']).default('In Stock'),
+    status: z.string().default('In Stock'),
 
     assigneeId: z.number().nullable().optional(),
     assigneeType: z.enum(['User', 'Department', 'Branch']).nullable().optional(),
@@ -478,6 +452,8 @@ const assetSchema = z.object({
     warrantyEndDate: z.string().nullable().optional(),
     remarks: z.string().nullable().optional(),
     specs: z.any().nullable().optional(), // Parsed JSON
+    condition: z.string().nullable().optional(),
+    wipeDetails: z.string().nullable().optional()
 });
 
 const purchaseSchema = z.object({
@@ -1036,7 +1012,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
 app.put('/api/users/:id/status', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, reclaimAll } = req.body;
         // @ts-ignore
         const requestingUserId = req.user.id;
 
@@ -1048,8 +1024,48 @@ app.put('/api/users/:id/status', authenticateToken, requireAdmin, async (req, re
             where: { id: Number(id) },
             data: { status },
         });
+
+        if (status === 'Inactive' && reclaimAll) {
+            // Reclaim Assets
+            const assignedAssets = await prisma.asset.findMany({
+                where: {
+                    OR: [
+                        { assigneeType: { in: ['User', 'user'] }, assigneeId: Number(id) },
+                        { userId: Number(id) }
+                    ]
+                }
+            });
+            for (const asset of assignedAssets) {
+                await prisma.asset.update({
+                    where: { id: asset.id },
+                    data: { assigneeId: null, assigneeType: null, userId: null, status: 'Under Inspection' }
+                });
+                await prisma.assetHistory.create({
+                    data: {
+                        assetId: asset.id,
+                        userId: requestingUserId,
+                        event: 'Unassigned',
+                        details: 'Asset was automatically unassigned due to user deactivation.'
+                    }
+                });
+            }
+
+            // Reclaim Licenses
+            await prisma.licenseAssignment.deleteMany({
+                where: { userId: Number(id) }
+            });
+        }
+
         const { password: _, ...sanitized } = user;
-        res.json(sanitized);
+        const reclaimedCount = status === 'Inactive' && reclaimAll ? await prisma.asset.count({
+            where: {
+                OR: [
+                    { assigneeType: { in: ['User', 'user'] }, assigneeId: Number(id) },
+                    { userId: Number(id) }
+                ]
+            }
+        }) : 0;
+        res.json({ ...sanitized, _reclaimedAssetsCount: reclaimedCount });
     } catch (error) {
         res.status(500).json({ error: 'Failed to update user status' });
     }
@@ -1113,7 +1129,7 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
         const validation = assetSchema.safeParse(req.body);
         if (!validation.success) return res.status(400).json({ error: validation.error.format() });
 
-        const data = validation.data;
+        const { condition, wipeDetails, ...data } = validation.data;
         const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
         
         const assetCompany = data.company || (data.assetId ? data.assetId.split('-')[0] : null);
@@ -1189,30 +1205,32 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
         const existingAsset = await prisma.asset.findUnique({ where: { id: Number(id) } });
         if (!existingAsset) return res.status(404).json({ error: 'Asset not found' });
         
-        const newUserId = data.assigneeType === 'User' ? data.assigneeId : null;
+        const { condition, wipeDetails, ...assetUpdateData } = data;
+        const newUserId = assetUpdateData.assigneeType === 'User' ? assetUpdateData.assigneeId : null;
 
-        let finalStatus = data.status;
+        let finalStatus = assetUpdateData.status;
         if (newUserId && existingAsset && existingAsset.userId !== newUserId) {
             // New assignment! Create handover log
             await prisma.handoverLog.create({
                 data: {
                     assetId: Number(id),
                     userId: newUserId,
-                    status: 'Pending'
+                    status: 'Pending',
+                    condition: condition || null
                 }
             });
             finalStatus = 'Pending Handover';
         }
 
-        const updatedCompany = data.company || existingAsset.company || (data.assetId ? data.assetId.split('-')[0] : (existingAsset.assetId ? existingAsset.assetId.split('-')[0] : null));
+        const updatedCompany = assetUpdateData.company || existingAsset.company || (assetUpdateData.assetId ? assetUpdateData.assetId.split('-')[0] : (existingAsset.assetId ? existingAsset.assetId.split('-')[0] : null));
 
         const asset = await prisma.asset.update({
             where: { id: Number(id) },
             data: { 
-                ...data, 
+                ...assetUpdateData, 
                 company: updatedCompany,
                 status: finalStatus,
-                specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
+                specs: assetUpdateData.specs ? (typeof assetUpdateData.specs === 'string' ? assetUpdateData.specs : JSON.stringify(assetUpdateData.specs)) : null,
                 userId: newUserId 
             }
         });
@@ -1220,8 +1238,29 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
         // @ts-ignore
         const actionUserId = req.user.id;
         
-        // Log history based on changes
-        if (existingAsset.assigneeType !== data.assigneeType || existingAsset.assigneeId !== data.assigneeId) {
+        // Log wipe event if provided
+        let loggedAny = false;
+        if (wipeDetails) {
+            await prisma.assetHistory.create({
+                data: {
+                    assetId: asset.id,
+                    userId: actionUserId,
+                    event: 'Data Wiped',
+                    details: wipeDetails,
+                    condition: condition || null
+                }
+            });
+            loggedAny = true;
+        }
+
+        // Check for assignee change (case-insensitive on assigneeType)
+        const oldType = existingAsset.assigneeType ? existingAsset.assigneeType.toLowerCase() : null;
+        const newType = data.assigneeType ? data.assigneeType.toLowerCase() : null;
+        const oldId = existingAsset.assigneeId ?? null;
+        const newId = data.assigneeId ?? null;
+        const assigneeChanged = oldType !== newType || oldId !== newId;
+
+        if (assigneeChanged) {
             if (data.assigneeType && data.assigneeId) {
                 let assigneeName = '';
                 if (data.assigneeType === 'User') {
@@ -1239,26 +1278,48 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
                         assetId: asset.id,
                         userId: actionUserId,
                         event: 'Assigned',
-                        details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`
+                        details: `Assigned to ${data.assigneeType === 'User' ? assigneeName : `${data.assigneeType}: ${assigneeName}`}.`,
+                        condition: condition || null
                     }
                 });
-            } else if (!data.assigneeType && !data.assigneeId && existingAsset.assigneeType) {
+                loggedAny = true;
+            } else if (!data.assigneeType && !data.assigneeId && (existingAsset.assigneeType || existingAsset.assigneeId || existingAsset.userId)) {
                 await prisma.assetHistory.create({
                     data: {
                         assetId: asset.id,
                         userId: actionUserId,
                         event: 'Unassigned',
-                        details: 'Asset was unassigned manually.'
+                        details: 'Asset was unassigned manually.',
+                        condition: condition || null
                     }
                 });
+                loggedAny = true;
             }
-        } else {
+        }
+
+        // Check for status change independently so both assignee change & status change are logged
+        if (existingAsset.status !== asset.status) {
+            await prisma.assetHistory.create({
+                data: {
+                    assetId: asset.id,
+                    userId: actionUserId,
+                    event: 'Status Changed',
+                    details: `Status changed from '${existingAsset.status}' to '${asset.status}'.`,
+                    condition: condition || null
+                }
+            });
+            loggedAny = true;
+        }
+
+        // If no specific event was triggered, log generic update
+        if (!loggedAny) {
             await prisma.assetHistory.create({
                 data: {
                     assetId: asset.id,
                     userId: actionUserId,
                     event: 'Asset Updated',
-                    details: 'Asset details were updated.'
+                    details: condition ? `Asset details updated. Condition: ${condition}` : 'Asset details were updated.',
+                    condition: condition || null
                 }
             });
         }
@@ -1266,6 +1327,56 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
         res.json(asset);
     } catch (error) {
         res.status(500).json({ error: 'Failed to update asset' });
+    }
+});
+
+// GET /api/assets/:id/history - Full history for a specific asset
+app.get('/api/assets/:id/history', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const assetId = Number(id);
+        if (isNaN(assetId)) {
+            return res.status(400).json({ error: 'Invalid asset ID' });
+        }
+
+        // @ts-ignore
+        const { role, id: requestingUserId } = req.user;
+
+        // Authorization check for non-Admins
+        if (role !== 'Admin') {
+            const asset = await prisma.asset.findUnique({
+                where: { id: assetId },
+                include: { user: true }
+            });
+            if (!asset) return res.status(404).json({ error: 'Asset not found' });
+
+            if (role === 'Manager') {
+                const manager = await prisma.user.findUnique({ where: { id: requestingUserId } });
+                const isAuthorized = asset.userId === requestingUserId ||
+                    asset.user?.managerId === requestingUserId ||
+                    (manager?.departmentId && asset.user?.departmentId === manager.departmentId);
+                if (!isAuthorized) {
+                    return res.status(403).json({ error: 'Unauthorized to view this asset history' });
+                }
+            } else {
+                // Regular User
+                if (asset.userId !== requestingUserId) {
+                    return res.status(403).json({ error: 'Unauthorized to view this asset history' });
+                }
+            }
+        }
+
+        const userSelect = { select: { id: true, name: true, email: true, role: true } };
+        const history = await prisma.assetHistory.findMany({
+            where: { assetId },
+            include: { user: userSelect },
+            orderBy: { timestamp: 'desc' }
+        });
+
+        res.json(history);
+    } catch (error) {
+        console.error('Failed to fetch asset history:', error);
+        res.status(500).json({ error: 'Failed to fetch asset history' });
     }
 });
 
@@ -1513,9 +1624,9 @@ app.post('/api/history', authenticateToken, requireAdmin, async (req, res) => {
     try {
         // @ts-ignore
         const { id: userId } = req.user;
-        const { assetId, event, details } = req.body;
+        const { assetId, event, details, condition } = req.body;
         const entry = await prisma.assetHistory.create({
-            data: { assetId: Number(assetId), userId, event, details }
+            data: { assetId: Number(assetId), userId, event, details, condition: condition || null }
         });
         res.status(201).json(entry);
     } catch (error) {
@@ -1726,71 +1837,6 @@ app.put('/api/requests/:id/status', authenticateToken, async (req, res) => {
 });
 
 
-// --- Email Diagnostics Endpoint ---
-app.get('/api/test-email', async (req, res) => {
-    try {
-        const targetEmail = (req.query.to as string) || 'aravinth@avanamedical.com';
-        
-        const envStatus = {
-            AZURE_TENANT_ID: !!process.env.AZURE_TENANT_ID,
-            AZURE_CLIENT_ID: !!process.env.AZURE_CLIENT_ID,
-            AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY: !!process.env.AZURE_CLIENT_CERTIFICATE_PRIVATE_KEY,
-            AZURE_CLIENT_CERTIFICATE: !!process.env.AZURE_CLIENT_CERTIFICATE,
-            AZURE_CLIENT_CERTIFICATE_THUMBPRINT: !!process.env.AZURE_CLIENT_CERTIFICATE_THUMBPRINT,
-            AZURE_CLIENT_SECRET: !!process.env.AZURE_CLIENT_SECRET,
-            SMTP_USER: !!process.env.SMTP_USER,
-            SMTP_PASS: !!process.env.SMTP_PASS,
-            SMTP_FROM: process.env.SMTP_FROM || 'itsupport@avanamedical.com',
-        };
-
-        const authResult = await getGraphAppToken();
-        let tokenClaims: any = null;
-        if (authResult.token) {
-            try {
-                const parts = authResult.token.split('.');
-                if (parts.length === 3) {
-                    tokenClaims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-                }
-            } catch (e) {}
-        }
-
-        const result = await sendTicketEmail({
-            toEmail: targetEmail,
-            toName: 'Admin',
-            ticketId: 9999,
-            ticketSubject: 'Test Email from Avana IT Management',
-            senderName: 'Avana IT System',
-            messageBody: 'This is a diagnostic test email to verify your email dispatcher configuration.',
-            category: 'Diagnostic',
-            priority: 'Medium',
-            status: 'Test',
-            isReply: false
-        });
-
-        res.json({
-            status: result.success ? 'SUCCESS' : 'FAILED',
-            methodUsed: result.method,
-            errorDetails: result.error || null,
-            tokenPermissions: {
-                roles: tokenClaims?.roles || [],
-                appId: tokenClaims?.appid || null,
-                tenantId: tokenClaims?.tid || null,
-                hasMailSendPermission: Array.isArray(tokenClaims?.roles) && tokenClaims.roles.includes('Mail.Send')
-            },
-            environmentStatus: envStatus,
-            targetEmail
-        });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message || err });
-    }
-});
-
-app.get('/api/email-logs', async (req, res) => {
-    res.json({
-        totalDispatched: emailHistory.length,
-        logs: emailHistory
-    });
-});
 
 // --- Support Tickets ---
 

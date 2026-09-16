@@ -28,13 +28,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: /bin/sh -c "npx prisma db push --accept-data-loss && npm start"
+    command: /bin/sh -c "npx prisma db push && npm start"
 
   frontend:
     build:
       context: ./frontend
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
       - backend
 
