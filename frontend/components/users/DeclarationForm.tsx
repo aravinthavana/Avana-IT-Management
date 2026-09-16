@@ -48,14 +48,20 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
         return laptop.specs as Record<string, any>;
     })();
 
+    const isDesktop = laptop.category?.toLowerCase() === 'desktop' || laptop.assetId?.includes('-DES-');
+    const deviceType = isDesktop ? 'Desktop' : 'Laptop';
+
     const technicalDetails = [
-        { label: 'Laptop Brand', value: laptop.brand }, { label: 'Model Number', value: laptop.model },
-        { label: 'Laptop Color', value: specs.color }, { label: 'Serial Number / Service Tag', value: laptop.serialNumber || specs.serviceTag },
-        { label: 'Charger Adapter', value: specs.chargerAdapter }, { label: 'Processor', value: specs.processor },
+        { label: `${deviceType} Brand`, value: laptop.brand }, { label: 'Model Number', value: laptop.model },
+        { label: `${deviceType} Color`, value: specs.color }, { label: 'Serial Number / Service Tag', value: laptop.serialNumber || specs.serviceTag },
+        { label: isDesktop ? 'Power Supply / Cable' : 'Charger Adapter', value: specs.chargerAdapter || specs.powerSupply || (isDesktop ? 'Standard Power Cord Included' : undefined) }, 
+        { label: 'Processor', value: specs.processor },
         { label: 'Graphics', value: specs.graphics }, { label: 'Storage', value: specs.storage },
-        { label: 'Memory Technology', value: specs.memoryTechnology }, { label: 'Battery', value: specs.battery },
+        { label: 'Memory Technology', value: specs.memoryTechnology }, 
+        ...(!isDesktop && specs.battery ? [{ label: 'Battery', value: specs.battery }] : []),
         { label: 'Dimensions', value: specs.dimensions }, { label: 'Audio', value: specs.audio },
-        { label: 'Display Size', value: specs.displaySize }, { label: 'Operating System', value: specs.os },
+        { label: isDesktop ? 'Monitor / Display Size' : 'Display Size', value: specs.displaySize }, 
+        { label: 'Operating System', value: specs.os },
         { label: 'Item Weight', value: specs.itemWeight }, { label: 'Software', value: specs.software },
     ].filter(item => item.value);
     
@@ -86,7 +92,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                     <tbody>
                         <tr className="border-t border-b border-gray-400">
                             <td className="py-1 pr-4 whitespace-nowrap"><strong className="font-semibold">Date:</strong> {today}</td>
-                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Laptop Asset ID:</strong> {laptop.assetId}</td>
+                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">{deviceType} Asset ID:</strong> {laptop.assetId}</td>
                             <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Company:</strong> {companyCode}</td>
                             <td className="py-1 pl-4 whitespace-nowrap"><strong className="font-semibold">Working Location:</strong> {user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A'}</td>
                         </tr>
@@ -115,15 +121,15 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                 </table>
 
                 <div className="text-xs space-y-2">
-                    <p className="font-bold underline">The laptop has been issued with the below terms and conditions:</p>
+                    <p className="font-bold underline">The {deviceType.toLowerCase()} has been issued with the below terms and conditions:</p>
                     <ul className="list-decimal list-inside space-y-1 pl-2">
-                        <li>The laptop issued is for solely official purpose.</li>
+                        <li>The {deviceType.toLowerCase()} issued is for solely official purpose.</li>
                         <li>The employee shall be fully accountable for theft, loss or damage of the property.</li>
                         <li>Any additional software / hardware required by employee (before or after taking handover) should be clearly communicated through mail to the Company and get the approval.</li>
                         <li>Management is at the sole discretion on approving such requests.</li>
                         <li>In case of any malfunction, employees are required to report the same to the Company.</li>
-                        <li>Employees may not take the laptop for repair to any external agency or vendor at any point of time.</li>
-                        <li>The laptop should be returned to the Company in case of leaving the organization.</li>
+                        <li>Employees may not take the {deviceType.toLowerCase()} for repair to any external agency or vendor at any point of time.</li>
+                        <li>The {deviceType.toLowerCase()} should be returned to the Company in case of leaving the organization.</li>
                         <li>The employee shall be liable to replace or pay an equivalent amount to the organization, in case of theft, loss or damage to the property.</li>
                         <li>The organization retains the right to deduct the same from the salary in case of such an event.</li>
                     </ul>

@@ -537,8 +537,8 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                     </div>
                                     <div className="flex items-center justify-end gap-2 flex-shrink-0 self-start sm:self-center">
                                         <button onClick={() => setSelectedAssetId(asset.id)} className="px-3 py-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold transition-colors">View</button>
-                                        {asset.category === 'Laptop' && (
-                                            <button onClick={() => setPreviewTarget({ type: 'declaration', assetId: asset.id, userId: user.id })} className="px-3 py-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold transition-colors">Form</button>
+                                        {(asset.category === 'Laptop' || asset.category === 'Desktop' || asset.assetId?.includes('-LAP-') || asset.assetId?.includes('-DES-')) && (
+                                            <button onClick={() => setPreviewTarget({ type: 'declaration', assetId: asset.id, userId: user.id })} className="px-3 py-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold transition-colors" title="View / Print Declaration Form">Form</button>
                                         )}
                                         <button onClick={() => setAssetToUnassign(asset)} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-500" title="Unassign Asset">
                                             {ICONS.unassign}

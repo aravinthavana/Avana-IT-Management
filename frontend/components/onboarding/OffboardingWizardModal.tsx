@@ -43,11 +43,15 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
     const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
     const [returnCondition, setReturnCondition] = useState<string>('Good');
     const [returnRemarks, setReturnRemarks] = useState('');
-    const [accessoriesReturned, setAccessoriesReturned] = useState({
+    const [accessoriesReturned, setAccessoriesReturned] = useState<Record<string, boolean>>({
         charger: true,
         bag: true,
         mouse: false,
         dongle: false,
+        powerCable: true,
+        monitor: false,
+        keyboard: false,
+        displayCable: false,
     });
 
     // Step 3: Asset Routing
@@ -340,26 +344,29 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                             ) : (
                                 <div className="space-y-4">
                                     {/* Prominent device being returned banner */}
-                                    {activeAssetToReturn && (
-                                        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Device Being Returned</p>
-                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mt-0.5">
-                                                    💻 {activeAssetToReturn.name}
-                                                    <span className="font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded text-xs">
-                                                        [{activeAssetToReturn.assetId}]
-                                                    </span>
-                                                </p>
-                                                <p className="text-xs text-slate-500 mt-0.5">
-                                                    Serial No: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{activeAssetToReturn.serialNumber || 'N/A'}</span>
-                                                    {activeAssetToReturn.brand ? ` • ${activeAssetToReturn.brand} ${activeAssetToReturn.model || ''}` : ''}
-                                                </p>
+                                    {activeAssetToReturn && (() => {
+                                        const isDesktopAsset = activeAssetToReturn?.category?.toLowerCase() === 'desktop' || activeAssetToReturn?.assetId?.includes('-DES-');
+                                        return (
+                                            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Device Being Returned</p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mt-0.5">
+                                                        {isDesktopAsset ? '🖥️' : '💻'} {activeAssetToReturn.name}
+                                                        <span className="font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded text-xs">
+                                                            [{activeAssetToReturn.assetId}]
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 mt-0.5">
+                                                        Serial No: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{activeAssetToReturn.serialNumber || 'N/A'}</span>
+                                                        {activeAssetToReturn.brand ? ` • ${activeAssetToReturn.brand} ${activeAssetToReturn.model || ''}` : ''}
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300">
+                                                    Currently Assigned
+                                                </span>
                                             </div>
-                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300">
-                                                Currently Assigned
-                                            </span>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     {userAssets.length > 1 && (
                                         <div>
@@ -434,38 +441,55 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                                         </select>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Accessories Returned</label>
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                            {[
-                                                { key: 'charger', label: 'OEM Charger / Power Adapter' },
-                                                { key: 'bag', label: 'Laptop Bag / Backpack' },
-                                                { key: 'mouse', label: 'Wireless Mouse' },
-                                                { key: 'dongle', label: 'USB-C / HDMI Adapter' },
-                                            ].map(acc => (
-                                                <label key={acc.key} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={(accessoriesReturned as any)[acc.key]}
-                                                        onChange={e => setAccessoriesReturned({ ...accessoriesReturned, [acc.key]: e.target.checked })}
-                                                        className="rounded text-red-600"
-                                                    />
-                                                    <span>{acc.label}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const isDesktopAsset = activeAssetToReturn?.category?.toLowerCase() === 'desktop' || activeAssetToReturn?.assetId?.includes('-DES-');
+                                        const accessoryOptions = isDesktopAsset ? [
+                                            { key: 'powerCable', label: 'Power Cable / Cord' },
+                                            { key: 'monitor', label: 'Monitor / Display Unit' },
+                                            { key: 'keyboard', label: 'Keyboard (USB / Wireless)' },
+                                            { key: 'mouse', label: 'Mouse (USB / Wireless)' },
+                                            { key: 'displayCable', label: 'HDMI / DP / VGA Cable' },
+                                        ] : [
+                                            { key: 'charger', label: 'OEM Charger / Power Adapter' },
+                                            { key: 'bag', label: 'Laptop Bag / Backpack' },
+                                            { key: 'mouse', label: 'Wireless Mouse' },
+                                            { key: 'dongle', label: 'USB-C / HDMI Adapter' },
+                                        ];
 
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Return Inspection Remarks</label>
-                                        <input
-                                            type="text"
-                                            value={returnRemarks}
-                                            onChange={e => setReturnRemarks(e.target.value)}
-                                            placeholder="e.g. Device returned with original charger. Minor scratch on top cover."
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-red-500"
-                                        />
-                                    </div>
+                                        return (
+                                            <>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                                                        Accessories Returned ({isDesktopAsset ? 'Desktop Peripherals' : 'Laptop Accessories'})
+                                                    </label>
+                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                        {accessoryOptions.map(acc => (
+                                                            <label key={acc.key} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={Boolean(accessoriesReturned[acc.key])}
+                                                                    onChange={e => setAccessoriesReturned({ ...accessoriesReturned, [acc.key]: e.target.checked })}
+                                                                    className="rounded text-red-600"
+                                                                />
+                                                                <span>{acc.label}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Return Inspection Remarks</label>
+                                                    <input
+                                                        type="text"
+                                                        value={returnRemarks}
+                                                        onChange={e => setReturnRemarks(e.target.value)}
+                                                        placeholder={isDesktopAsset ? "e.g. Desktop returned with monitor, keyboard and power cables. All working." : "e.g. Device returned with original charger. Minor scratch on top cover."}
+                                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-red-500"
+                                                    />
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             )}
                         </div>
