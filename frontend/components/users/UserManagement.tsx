@@ -6,6 +6,7 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import UserForm from './UserForm';
 import UserDetailView from './UserDetailView';
 import UserHierarchy from './UserHierarchy';
+import OnboardingWizardModal from '../onboarding/OnboardingWizardModal';
 import { User } from '../../types';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
@@ -29,11 +30,22 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [isLoading, setIsLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
     const [reclaimAll, setReclaimAll] = useState(true);
+    const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
+    const [wizardUser, setWizardUser] = useState<User | null>(null);
 
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
 
-    const handleSaveUser = async (userData: any, assetAssignment?: { assetId: number, condition: string }) => {
+    const handleSaveUser = async (
+        userData: any, 
+        assetAssignment?: { 
+            assetId?: number; 
+            condition?: string; 
+            action?: 'assign' | 'unassign'; 
+            unassignAssetId?: number;
+        },
+        launchWizard?: boolean
+    ) => {
         setIsLoading(true);
         try {
             if (editingUser) {
@@ -50,6 +62,67 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 }
                 const updated = await res.json();
                 setUsers(users.map(u => u.id === editingUser.id ? updated : u));
+
+                // If unassigning previous asset on edit
+                if (assetAssignment?.unassignAssetId) {
+                    const oldAsset = assets.find(a => a.id === assetAssignment.unassignAssetId);
+                    if (oldAsset) {
+                        try {
+                            const unassignRes = await fetch(`${API_URL}/api/assets/${oldAsset.id}`, {
+                                method: 'PUT',
+                                headers: getHeaders(),
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    ...oldAsset,
+                                    assigneeId: null,
+                                    assigneeType: null,
+                                    assignedTo: null,
+                                    userId: null,
+                                    status: 'In Stock',
+                                    specs: oldAsset.specs ? (typeof oldAsset.specs === 'string' ? oldAsset.specs : JSON.stringify(oldAsset.specs)) : null
+                                })
+                            });
+                            if (unassignRes.ok) {
+                                const unassignedAsset = await unassignRes.json();
+                                setAssets(prev => prev.map(a => a.id === unassignedAsset.id ? { ...unassignedAsset, specs: typeof unassignedAsset.specs === 'string' ? JSON.parse(unassignedAsset.specs) : unassignedAsset.specs } : a));
+                                fetchAssetHistory();
+                            }
+                        } catch (err) {
+                            console.error('Failed to unassign previous asset on edit:', err);
+                        }
+                    }
+                }
+
+                // If assigning new asset on edit
+                if (assetAssignment?.action === 'assign' && assetAssignment.assetId) {
+                    const assetToAssign = assets.find(a => a.id === assetAssignment.assetId);
+                    if (assetToAssign) {
+                        try {
+                            const assignRes = await fetch(`${API_URL}/api/assets/${assetToAssign.id}`, {
+                                method: 'PUT',
+                                headers: getHeaders(),
+                                credentials: 'include',
+                                body: JSON.stringify({
+                                    ...assetToAssign,
+                                    assigneeId: updated.id,
+                                    assigneeType: 'User',
+                                    status: 'Assigned',
+                                    location: updated.location,
+                                    condition: assetAssignment.condition || 'Good',
+                                    specs: assetToAssign.specs ? (typeof assetToAssign.specs === 'string' ? assetToAssign.specs : JSON.stringify(assetToAssign.specs)) : null
+                                })
+                            });
+                            if (assignRes.ok) {
+                                const updatedAsset = await assignRes.json();
+                                setAssets(prev => prev.map(a => a.id === updatedAsset.id ? { ...updatedAsset, specs: typeof updatedAsset.specs === 'string' ? JSON.parse(updatedAsset.specs) : updatedAsset.specs } : a));
+                                fetchAssetHistory();
+                            }
+                        } catch (assignErr) {
+                            console.error('Failed to assign asset on user edit:', assignErr);
+                        }
+                    }
+                }
+
                 setNotification({ message: `User "${updated.name}" updated successfully.`, type: 'success' });
             } else {
                 const res = await fetch(`${API_URL}/api/users`, {
@@ -102,6 +175,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         : `User "${created.name}" created. They can now log in.`, 
                     type: 'success'
                 });
+
+                if (launchWizard) {
+                    setWizardUser(created);
+                    setIsOnboardingWizardOpen(true);
+                }
             }
             handleCloseModal();
         } catch (err: any) {
@@ -186,10 +264,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
 
             let matchesLaptopStatus = true;
             if (filterLaptopStatus !== 'All') {
-                const userAssets = assets.filter(a => a.assigneeId === user.id && a.assigneeType?.toLowerCase() === 'user');
+                const userAssets = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === user.id) || a.assignedTo === user.id || a.userId === user.id);
                 const hasAsset = userAssets.length > 0;
                 
-                if (filterLaptopStatus === 'Has Assigned Laptop') {
+                if (filterLaptopStatus === 'Has Assigned Laptop' || filterLaptopStatus === 'Has Assigned Device') {
                     matchesLaptopStatus = hasAsset;
                 } else if (filterLaptopStatus === 'Uses Own Laptop') {
                     matchesLaptopStatus = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
@@ -316,7 +394,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         const isSelf = user.id === loggedInUser?.id;
                         const isInactive = user.status === 'Inactive';
                         const deptName = user.department?.name || '';
-                        const assignedAsset = assets.find(a => a.assignedTo === user.id);
+                        const assignedAsset = assets.find(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === user.id) || a.assignedTo === user.id || a.userId === user.id);
                         const isUsingOwnLaptop = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
 
                         return (
@@ -357,14 +435,17 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                     <div>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Device</p>
                                         <div className="mt-1">
-                                            {assignedAsset ? (
-                                                <span 
-                                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 max-w-[110px] truncate" 
-                                                    title={`${assignedAsset.name} (${assignedAsset.assetId || assignedAsset.id})`}
-                                                >
-                                                    {assignedAsset.assetId || assignedAsset.name || 'Assigned'}
-                                                </span>
-                                            ) : isUsingOwnLaptop ? (
+                                            {assignedAsset ? (() => {
+                                                const isDesk = assignedAsset.category?.toLowerCase() === 'desktop' || assignedAsset.assetId?.includes('-DES-');
+                                                return (
+                                                    <span 
+                                                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 max-w-[120px] truncate" 
+                                                        title={`${isDesk ? '🖥️ Desktop: ' : '💻 Laptop: '}${assignedAsset.name} (${assignedAsset.assetId || assignedAsset.id})`}
+                                                    >
+                                                        {isDesk ? '🖥️ ' : '💻 '}{assignedAsset.assetId || assignedAsset.name || 'Assigned'}
+                                                    </span>
+                                                );
+                                            })() : isUsingOwnLaptop ? (
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" title="Uses Own Laptop (BYOD)">
                                                     BYOD
                                                 </span>
@@ -457,6 +538,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 )}
 
                 <UserForm isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveUser} user={editingUser} isLoading={isLoading} />
+
+                {isOnboardingWizardOpen && (
+                    <OnboardingWizardModal
+                        isOpen={isOnboardingWizardOpen}
+                        onClose={() => {
+                            setIsOnboardingWizardOpen(false);
+                            setWizardUser(null);
+                        }}
+                        initialUser={wizardUser}
+                        onSuccess={(updatedUser) => {
+                            setUsers(users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
+                        }}
+                    />
+                )}
             </div>
         </>
     );
