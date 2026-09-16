@@ -31,11 +31,12 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
     const selectedUser = users.find(u => u.id === Number(selectedUserId));
 
     // User's assigned assets and licenses
-    const userAssets = selectedUser ? assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === selectedUser.id) : [];
+    const userAssets = selectedUser ? assets.filter(a => ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === selectedUser.id) || a.assignedTo === selectedUser.id || a.userId === selectedUser.id)) : [];
     const userLicenses = selectedUser ? licenses.filter(l => l.assignments?.some(a => a.userId === selectedUser.id)) : [];
 
     // Step 2: Asset Return & Condition
     const [selectedAssetId, setSelectedAssetId] = useState<number | ''>('');
+    const activeAssetToReturn = userAssets.find(a => a.id === Number(selectedAssetId)) || (userAssets.length > 0 ? userAssets[0] : null);
     const [returnMode, setReturnMode] = useState<'In-Person' | 'Courier'>('In-Person');
     const [returnCourier, setReturnCourier] = useState('Blue Dart');
     const [returnDocket, setReturnDocket] = useState('');
@@ -65,22 +66,47 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
     const [deactivateUser, setDeactivateUser] = useState(true);
     const [offboardingRemarks, setOffboardingRemarks] = useState('');
 
+    // When modal opens or initialUser changes, set user and select their assigned asset
     useEffect(() => {
         if (isOpen) {
-            if (initialUser) {
-                setSelectedUserId(initialUser.id);
-            } else if (users.length > 0 && !selectedUserId) {
-                setSelectedUserId(users[0].id);
+            const targetUser = initialUser || (users.length > 0 ? users[0] : null);
+            const targetId = targetUser ? targetUser.id : '';
+            setSelectedUserId(targetId);
+            
+            if (targetId) {
+                const targetAssets = assets.filter(a => 
+                    ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === Number(targetId)) || 
+                     a.assignedTo === Number(targetId) || 
+                     a.userId === Number(targetId))
+                );
+                setSelectedAssetId(targetAssets.length > 0 ? targetAssets[0].id : '');
+            } else {
+                setSelectedAssetId('');
             }
             setCurrentStep(1);
         }
-    }, [isOpen, initialUser, users]);
+    }, [isOpen, initialUser]);
 
+    // When selectedUserId changes, strictly sync selectedAssetId to that specific employee's assets
     useEffect(() => {
-        if (userAssets.length > 0 && !selectedAssetId) {
-            setSelectedAssetId(userAssets[0].id);
+        if (selectedUserId) {
+            const currentOwnedAssets = assets.filter(a => 
+                ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === Number(selectedUserId)) || 
+                 a.assignedTo === Number(selectedUserId) || 
+                 a.userId === Number(selectedUserId))
+            );
+            if (currentOwnedAssets.length > 0) {
+                // If selectedAssetId does not belong to this user, reset to their first asset
+                if (!currentOwnedAssets.some(a => a.id === Number(selectedAssetId))) {
+                    setSelectedAssetId(currentOwnedAssets[0].id);
+                }
+            } else {
+                setSelectedAssetId('');
+            }
+        } else {
+            setSelectedAssetId('');
         }
-    }, [userAssets]);
+    }, [selectedUserId, assets]);
 
     if (!isOpen) return null;
 
@@ -97,7 +123,8 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
         setIsSubmitting(true);
 
         try {
-            const hasAsset = userAssets.length > 0 && selectedAssetId;
+            const assetToSubmit = activeAssetToReturn;
+            const hasAsset = !!assetToSubmit;
 
             const res = await fetch(`${API_URL}/api/offboarding/process`, {
                 method: 'POST',
@@ -106,7 +133,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                 body: JSON.stringify({
                     userId: selectedUser.id,
                     assetReturn: hasAsset ? {
-                        assetId: Number(selectedAssetId),
+                        assetId: Number(assetToSubmit.id),
                         destinationStatus,
                         condition: returnCondition,
                         returnMode,
@@ -134,8 +161,8 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
             setUsers(users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
 
             // If asset was returned, update asset locally
-            if (hasAsset) {
-                setAssets(assets.map(a => a.id === Number(selectedAssetId) ? {
+            if (hasAsset && assetToSubmit) {
+                setAssets(assets.map(a => a.id === assetToSubmit.id ? {
                     ...a,
                     status: destinationStatus,
                     userId: null,
@@ -312,9 +339,31 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                                 </div>
                             ) : (
                                 <div className="space-y-4">
+                                    {/* Prominent device being returned banner */}
+                                    {activeAssetToReturn && (
+                                        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Device Being Returned</p>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mt-0.5">
+                                                    💻 {activeAssetToReturn.name}
+                                                    <span className="font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded text-xs">
+                                                        [{activeAssetToReturn.assetId}]
+                                                    </span>
+                                                </p>
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    Serial No: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{activeAssetToReturn.serialNumber || 'N/A'}</span>
+                                                    {activeAssetToReturn.brand ? ` • ${activeAssetToReturn.brand} ${activeAssetToReturn.model || ''}` : ''}
+                                                </p>
+                                            </div>
+                                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300">
+                                                Currently Assigned
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {userAssets.length > 1 && (
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Select Asset Being Returned</label>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Select Asset Being Returned ({userAssets.length} assigned to employee)</label>
                                             <select
                                                 value={selectedAssetId}
                                                 onChange={e => setSelectedAssetId(Number(e.target.value))}
@@ -427,7 +476,11 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                         <div className="space-y-4 max-w-xl mx-auto">
                             <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 3: Asset Status Routing</h3>
-                                <p className="text-xs text-slate-500">Choose the destination status in the inventory pool for the returned hardware</p>
+                                <p className="text-xs text-slate-500">
+                                    {activeAssetToReturn 
+                                        ? `Routing ${activeAssetToReturn.name} [${activeAssetToReturn.assetId}] to destination status in inventory pool`
+                                        : 'Choose the destination status in the inventory pool for the returned hardware'}
+                                </p>
                             </div>
 
                             {userAssets.length === 0 ? (
@@ -559,6 +612,25 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                             <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 6: Account Deactivation & IT Sign-off</h3>
                                 <p className="text-xs text-slate-500">Revoke access and finalize employee departure</p>
+                            </div>
+
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Offboarding Action Summary</p>
+                                <div className="text-xs space-y-1.5 text-slate-700 dark:text-slate-300">
+                                    <p><strong>Employee:</strong> {selectedUser?.name} ({selectedUser?.email})</p>
+                                    <p>
+                                        <strong>Hardware Return:</strong> {activeAssetToReturn ? (
+                                            <span className="text-red-600 dark:text-red-400 font-semibold">
+                                                {activeAssetToReturn.name} [{activeAssetToReturn.assetId}] &rarr; Status will become "{destinationStatus}" ({returnCondition})
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-400 italic">No device to return</span>
+                                        )}
+                                    </p>
+                                    <p><strong>License Reclamation:</strong> {revokeAllLicenses && userLicenses.length > 0 ? `Revoke ${userLicenses.length} subscription license(s)` : 'Keep licenses'}</p>
+                                    <p><strong>Sanitization:</strong> {deviceWiped ? `Device wiped (${wipeDetails})` : 'Not wiped'}</p>
+                                    <p><strong>Account Status:</strong> {deactivateUser ? 'Mark employee Inactive in portal' : 'Leave active'}</p>
+                                </div>
                             </div>
 
                             <div className="space-y-3">

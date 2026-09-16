@@ -1380,44 +1380,77 @@ app.post('/api/offboarding/process', authenticateToken, requireAdmin, async (req
 
         // 1. Process Asset Return if provided
         if (assetReturn && assetReturn.assetId) {
-            const assetId = Number(assetReturn.assetId);
+            let assetId = Number(assetReturn.assetId);
             const destinationStatus = assetReturn.destinationStatus || 'Under Inspection';
             const condition = assetReturn.condition || 'Good';
 
-            await prisma.asset.update({
-                where: { id: assetId },
-                data: {
-                    userId: null,
-                    assigneeId: null,
-                    assigneeType: null,
-                    status: destinationStatus,
-                    remarks: assetReturn.remarks || null
+            // Security & Integrity check: Verify that the asset actually belongs to targetUser
+            let assetToReturn = await prisma.asset.findFirst({
+                where: {
+                    id: assetId,
+                    OR: [
+                        { assigneeId: targetUser.id },
+                        { userId: targetUser.id }
+                    ]
                 }
             });
 
-            const modeText = assetReturn.returnMode === 'Courier' 
-                ? `Courier Return (${assetReturn.courierName || 'Carrier'} - Docket: ${assetReturn.docketNumber || 'N/A'})`
-                : 'In-Person Handover';
-
-            await prisma.assetHistory.create({
-                data: {
-                    assetId,
-                    userId: requestingUserId,
-                    event: 'Unassigned',
-                    condition,
-                    details: `Asset returned during offboarding of ${targetUser.name}. Mode: ${modeText}. Return condition: ${condition}. Remarks: ${assetReturn.remarks || 'None'}. Routed to status "${destinationStatus}".`
+            // If the specified assetId does NOT belong to targetUser, do not unassign someone else's asset!
+            if (!assetToReturn) {
+                console.warn(`[Offboarding Warning] Asset ID ${assetId} does not belong to user ${targetUser.name} (${targetUser.id}). Checking for user's assigned asset...`);
+                const userActualAsset = await prisma.asset.findFirst({
+                    where: {
+                        OR: [
+                            { assigneeId: targetUser.id },
+                            { userId: targetUser.id }
+                        ]
+                    }
+                });
+                if (userActualAsset) {
+                    console.log(`[Offboarding Auto-Correct] Routed offboarding return to user's actual assigned asset ID ${userActualAsset.id} (${userActualAsset.assetId}).`);
+                    assetToReturn = userActualAsset;
+                    assetId = userActualAsset.id;
                 }
-            });
+            }
 
-            if (deviceWiped) {
+            if (assetToReturn) {
+                await prisma.asset.update({
+                    where: { id: assetId },
+                    data: {
+                        userId: null,
+                        assigneeId: null,
+                        assigneeType: null,
+                        status: destinationStatus,
+                        remarks: assetReturn.remarks || null
+                    }
+                });
+
+                const modeText = assetReturn.returnMode === 'Courier' 
+                    ? `Courier Return (${assetReturn.courierName || 'Carrier'} - Docket: ${assetReturn.docketNumber || 'N/A'})`
+                    : 'In-Person Handover';
+
                 await prisma.assetHistory.create({
                     data: {
                         assetId,
                         userId: requestingUserId,
-                        event: 'Wiped',
-                        details: `Device wiped during offboarding. Method / Remarks: ${wipeDetails || 'Standard Factory Reset'}.`
+                        event: 'Unassigned',
+                        condition,
+                        details: `Asset returned during offboarding of ${targetUser.name}. Mode: ${modeText}. Return condition: ${condition}. Remarks: ${assetReturn.remarks || 'None'}. Routed to status "${destinationStatus}".`
                     }
                 });
+
+                if (deviceWiped) {
+                    await prisma.assetHistory.create({
+                        data: {
+                            assetId,
+                            userId: requestingUserId,
+                            event: 'Wiped',
+                            details: `Device wiped during offboarding. Method / Remarks: ${wipeDetails || 'Standard Factory Reset'}.`
+                        }
+                    });
+                }
+            } else {
+                console.warn(`[Offboarding Info] Target user ${targetUser.name} has no hardware assets to unassign. Skipping asset return update.`);
             }
         }
 
