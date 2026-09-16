@@ -27,11 +27,28 @@ model User {
   laptopStatus String?      // e.g. "Using own laptop", "No laptop assigned", "Details not collected"
   location     String?      // Work Location e.g. "Hyderabad", "Pune", "Remote"
   
-  // IT Operations Checklist
-  m365AccountCreated    Boolean @default(false)
-  softwareInstalled     Boolean @default(false)
-  credentialsHandedOver Boolean @default(false)
-  m365AccountDisabled   Boolean @default(false)
+  // IT Operations - Onboarding Checklist
+  m365AccountCreated       Boolean   @default(false)
+  m365LicenseAssigned      Boolean   @default(false)
+  softwareInstalled        Boolean   @default(false)
+  hardwareTested           Boolean   @default(false)
+  credentialsHandedOver    Boolean   @default(false)
+  dispatchDetails          String?   // JSON: address, courier, docketNo, dispatchDate, trackingUrl, remarks
+  onboardingStatus         String?   @default("Pending") // "Pending", "In Progress", "Completed", "Not Required"
+  onboardingCompletedDate  DateTime?
+  onboardingStep           Int?      @default(1)
+
+  // IT Operations - Offboarding Checklist
+  assetReturned            Boolean   @default(false)
+  assetReturnCondition     String?   // "Good", "Minor Damage", "Major Damage", "Non-functional"
+  assetReturnRemarks       String?
+  assetReturnDocket        String?   // JSON: courier, docketNo, returnDate
+  deviceWiped              Boolean   @default(false)
+  dataBackedUp             Boolean   @default(false)
+  m365LicenseRevoked       Boolean   @default(false)
+  m365AccountDisabled      Boolean   @default(false)
+  offboardingStatus        String?   @default("Pending") // "Pending", "In Progress", "Completed"
+  offboardingCompletedDate DateTime?
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
   manager      User?        @relation("UserManager", fields: [managerId], references: [id])

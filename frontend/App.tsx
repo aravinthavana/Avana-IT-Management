@@ -21,6 +21,7 @@ import AssetRequestList from './components/requests/AssetRequestList';
 import SupportTickets from './components/tickets/SupportTickets';
 import KnowledgeBase from './components/kb/KnowledgeBase';
 import SelfAuditsList from './components/audits/SelfAuditsList';
+import OnboardingManagement from './components/onboarding/OnboardingManagement';
 import { useAuth } from './contexts/AuthContext';
 
 class ErrorBoundary extends React.Component<any, any> {
@@ -89,6 +90,9 @@ export default function App() {
             case 'users':
                 if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
                 return <UserManagement initialFilters={pageState?.initialFilters} onFiltersApplied={clearPageState} />;
+            case 'onboarding':
+                if (user?.role === 'User') return <div className="p-8 text-center text-brand-500">Access Denied</div>;
+                return <OnboardingManagement />;
             case 'requests':
                 return <AssetRequestList />;
             case 'departments':

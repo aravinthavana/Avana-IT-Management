@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { Asset } from '../../types';
+import { Asset, User } from '../../types';
 import { ICONS } from '../../constants';
 import AssignAssetModal from './AssignAssetModal';
 import UnassignAssetModal from './UnassignAssetModal';
+import OnboardingWizardModal from '../onboarding/OnboardingWizardModal';
+import OffboardingWizardModal from '../onboarding/OffboardingWizardModal';
 
 interface UserDetailViewProps {
     userId: number;
@@ -16,6 +18,8 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const userAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
+    const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+    const [isOffboardingModalOpen, setIsOffboardingModalOpen] = useState(false);
     const [userAssetHistory, setUserAssetHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
@@ -114,14 +118,14 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         setAssetToUnassign(null);
     };
 
-    const handleToggleChecklistFlag = async (flag: 'm365AccountCreated' | 'softwareInstalled' | 'credentialsHandedOver' | 'm365AccountDisabled') => {
+    const handleToggleChecklistFlag = async (flag: keyof User) => {
         try {
             const newValue = !user[flag];
             const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${user.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
-                body: JSON.stringify({ ...user, [flag]: newValue })
+                body: JSON.stringify({ [flag]: newValue })
             });
             if (!res.ok) throw new Error('Failed to update checklist');
             const updatedUser = await res.json();
@@ -210,35 +214,186 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
                 </div>
                 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">IT Operations Checklist</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={user.m365AccountCreated} onChange={() => handleToggleChecklistFlag('m365AccountCreated')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+                {/* 1. Onboarding Checklist Card */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2.5">
+                            <span className="p-1.5 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-lg">
+                                {ICONS.onboarding}
+                            </span>
                             <div>
-                                <p className="font-medium text-slate-800 dark:text-slate-200">M365 Account Created</p>
-                                <p className="text-xs text-slate-500">Email & Office 365 provisioning</p>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Onboarding Checklist</h3>
+                                <p className="text-xs text-slate-500">Equipment allocation, M365 provisioning & dispatch tracking</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                                user.onboardingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                user.onboardingStatus === 'In Progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+                                'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                            }`}>
+                                {user.onboardingStatus || 'Pending Onboarding'}
+                            </span>
+                            <button
+                                onClick={() => setIsOnboardingModalOpen(true)}
+                                className="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
+                            >
+                                ⚡ Launch Onboarding Wizard
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.m365AccountCreated)} onChange={() => handleToggleChecklistFlag('m365AccountCreated')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Created</p>
+                                <p className="text-xs text-slate-500">Email & Entra ID user provisioning</p>
                             </div>
                         </label>
-                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={user.softwareInstalled} onChange={() => handleToggleChecklistFlag('softwareInstalled')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.m365LicenseAssigned)} onChange={() => handleToggleChecklistFlag('m365LicenseAssigned')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
                             <div>
-                                <p className="font-medium text-slate-800 dark:text-slate-200">Required Software Installed</p>
-                                <p className="text-xs text-slate-500">Antivirus, VPN, role-specific tools</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 License Allocated</p>
+                                <p className="text-xs text-slate-500">Active seat linked in Licenses & Subs</p>
                             </div>
                         </label>
-                        <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
-                            <input type="checkbox" checked={user.credentialsHandedOver} onChange={() => handleToggleChecklistFlag('credentialsHandedOver')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={userAssets.length > 0 || user.laptopStatus === 'Using own laptop'} onChange={() => {}} disabled className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
                             <div>
-                                <p className="font-medium text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
-                                <p className="text-xs text-slate-500">Provided to user on joining day</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware Allocation</p>
+                                <p className="text-xs text-slate-500">
+                                    {userAssets.length > 0 ? `${userAssets[0].name} (${userAssets[0].assetId}) Assigned` : user.laptopStatus || 'No Device Assigned'}
+                                </p>
                             </div>
                         </label>
-                        <label className={`flex items-center gap-3 p-3 rounded-lg border ${user.status === 'Inactive' ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-700'} hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors`}>
-                            <input type="checkbox" checked={user.m365AccountDisabled} onChange={() => handleToggleChecklistFlag('m365AccountDisabled')} className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.softwareInstalled)} onChange={() => handleToggleChecklistFlag('softwareInstalled')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
                             <div>
-                                <p className="font-medium text-slate-800 dark:text-slate-200">M365 Account Disabled</p>
-                                <p className="text-xs text-slate-500">Offboarding action completed</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Software & Antivirus Installed</p>
+                                <p className="text-xs text-slate-500">Defender, Office 365, Teams, VPN configured</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.hardwareTested)} onChange={() => handleToggleChecklistFlag('hardwareTested')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware QA Diagnostics Passed</p>
+                                <p className="text-xs text-slate-500">Display, keyboard, battery, camera/mic verified</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.credentialsHandedOver)} onChange={() => handleToggleChecklistFlag('credentialsHandedOver')} className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
+                                <p className="text-xs text-slate-500">Temporary passwords & login guidance shared</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    {/* Dispatch & Docket Info (if available) */}
+                    {user.dispatchDetails && (() => {
+                        try {
+                            const d = typeof user.dispatchDetails === 'string' ? JSON.parse(user.dispatchDetails) : user.dispatchDetails;
+                            return (
+                                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="space-y-0.5">
+                                        <span className="font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                                            {ICONS.truck} {d.mode === 'Courier' ? `Dispatched via ${d.courierName || 'Courier'}` : `Handover: ${d.mode || 'In-Person'}`}
+                                        </span>
+                                        {d.docketNumber && <p className="font-mono text-slate-700 dark:text-slate-300">Docket / Tracking: <strong>{d.docketNumber}</strong></p>}
+                                        {d.shippingAddress && <p className="text-slate-500 truncate max-w-md">Address: {d.shippingAddress}</p>}
+                                    </div>
+                                    <div className="text-right text-slate-400">
+                                        {d.dispatchDate && <p>Date: {d.dispatchDate}</p>}
+                                        {user.onboardingCompletedDate && <p>Completed: {new Date(user.onboardingCompletedDate).toLocaleDateString()}</p>}
+                                    </div>
+                                </div>
+                            );
+                        } catch { return null; }
+                    })()}
+                </div>
+
+                {/* 2. Offboarding Checklist Card */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2.5">
+                            <span className="p-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg">
+                                {ICONS.offboarding}
+                            </span>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Offboarding Checklist</h3>
+                                <p className="text-xs text-slate-500">Asset return, data sanitization, license release & account exit clearance</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                                user.status === 'Inactive' || user.offboardingStatus === 'Completed' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' :
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                            }`}>
+                                {user.status === 'Inactive' ? 'Account Inactive' : 'Active Employee'}
+                            </span>
+                            <button
+                                onClick={() => setIsOffboardingModalOpen(true)}
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
+                            >
+                                ⚡ Launch Offboarding Wizard
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.assetReturned)} onChange={() => handleToggleChecklistFlag('assetReturned')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Company Hardware Returned</p>
+                                <p className="text-xs text-slate-500">
+                                    {user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Return condition check'}
+                                </p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.deviceWiped)} onChange={() => handleToggleChecklistFlag('deviceWiped')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Device Wiped & Sanitized</p>
+                                <p className="text-xs text-slate-500">Factory reset completed, BitLocker erased</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.dataBackedUp)} onChange={() => handleToggleChecklistFlag('dataBackedUp')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">User Data Backed Up</p>
+                                <p className="text-xs text-slate-500">Synced to OneDrive / handed over to manager</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.m365LicenseRevoked)} onChange={() => handleToggleChecklistFlag('m365LicenseRevoked')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-red-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Subscriptions Revoked</p>
+                                <p className="text-xs text-slate-500">M365 & software seats returned to pool</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={Boolean(user.m365AccountDisabled)} onChange={() => handleToggleChecklistFlag('m365AccountDisabled')} className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Disabled</p>
+                                <p className="text-xs text-slate-500">Sign-in blocked & cloud sessions revoked</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors">
+                            <input type="checkbox" checked={user.status === 'Inactive'} onChange={() => {}} disabled className="w-4 h-4 mt-0.5 text-red-600 rounded focus:ring-brand-500" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Portal Account Deactivated</p>
+                                <p className="text-xs text-slate-500">{user.status === 'Inactive' ? 'Status set to Inactive' : 'Active user status'}</p>
                             </div>
                         </label>
                     </div>
@@ -364,6 +519,19 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     )}
                 </div>
             </div>
+
+            {/* Onboarding & Offboarding Modals */}
+            <OnboardingWizardModal
+                isOpen={isOnboardingModalOpen}
+                onClose={() => setIsOnboardingModalOpen(false)}
+                initialUser={user}
+            />
+
+            <OffboardingWizardModal
+                isOpen={isOffboardingModalOpen}
+                onClose={() => setIsOffboardingModalOpen(false)}
+                initialUser={user}
+            />
         </>
     );
 };

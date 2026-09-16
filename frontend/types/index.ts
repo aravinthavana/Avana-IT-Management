@@ -20,10 +20,48 @@ export interface User {
     licenseAssignments?: LicenseAssignment[];
     accountType?: string;
     laptopStatus?: string;
+
+    // IT Operations - Onboarding Checklist
     m365AccountCreated?: boolean;
+    m365LicenseAssigned?: boolean;
     softwareInstalled?: boolean;
+    hardwareTested?: boolean;
     credentialsHandedOver?: boolean;
+    dispatchDetails?: string | null; // JSON string of DispatchDetails
+    onboardingStatus?: 'Pending' | 'In Progress' | 'Completed' | 'Not Required';
+    onboardingCompletedDate?: string | null;
+    onboardingStep?: number | null;
+
+    // IT Operations - Offboarding Checklist
+    assetReturned?: boolean;
+    assetReturnCondition?: string | null; // "Good" | "Minor Damage" | "Major Damage" | "Non-functional"
+    assetReturnRemarks?: string | null;
+    assetReturnDocket?: string | null; // JSON string of ReturnDocketDetails
+    deviceWiped?: boolean;
+    dataBackedUp?: boolean;
+    m365LicenseRevoked?: boolean;
     m365AccountDisabled?: boolean;
+    offboardingStatus?: 'Pending' | 'In Progress' | 'Completed' | 'Not Started';
+    offboardingCompletedDate?: string | null;
+}
+
+export interface DispatchDetails {
+    mode?: 'Courier' | 'In-Person' | 'Remote' | 'Not Applicable';
+    shippingAddress?: string;
+    courierName?: string;
+    docketNumber?: string;
+    dispatchDate?: string;
+    trackingUrl?: string;
+    officeLocation?: string;
+    remarks?: string;
+}
+
+export interface ReturnDocketDetails {
+    mode?: 'Courier' | 'In-Person';
+    courier?: string;
+    docketNo?: string;
+    returnDate?: string;
+    remarks?: string;
 }
 
 export interface AssetRequest {
