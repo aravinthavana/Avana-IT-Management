@@ -15,7 +15,9 @@ interface UserDetailViewProps {
 const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const { users, setUsers, assets, setAssets, setNotification, setSelectedAssetId, setPreviewTarget, getHeaders, fetchAssetHistory } = useAppContext();
     const user = users.find(u => u.id === userId);
-    const userAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId);
+    const userAssets = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === userId) || a.assignedTo === userId);
+    const hasAssignedDevice = userAssets.length > 0;
+    const isUsingOwnLaptop = user ? (user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop') : false;
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
@@ -189,7 +191,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                     isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
                                     'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                 }`}>
-                                    {hasAssignedDevice ? `${userAssets[0].name} (${userAssets[0].assetId})` : isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
+                                    {hasAssignedDevice ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` : isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
                                 </span>
                             </p>
                         </div>
@@ -265,7 +267,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware Allocation</p>
                                 <p className="text-xs text-slate-500">
-                                    {hasAssignedDevice ? `${userAssets[0].name} (${userAssets[0].assetId}) Assigned` :
+                                    {hasAssignedDevice ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''}) Assigned` :
                                      isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' :
                                      'No Device Assigned'}
                                 </p>

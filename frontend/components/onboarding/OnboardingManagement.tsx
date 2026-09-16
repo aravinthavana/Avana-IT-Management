@@ -43,7 +43,7 @@ const OnboardingManagement: React.FC = () => {
     // Helper: calculate onboarding progress percentage
     const getOnboardingProgress = (u: User) => {
         if (u.onboardingStatus === 'Completed') return 100;
-        const hasDevice = assets.some(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id);
+        const hasDevice = assets.some(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || a.assignedTo === u.id);
         const isOwn = u.laptopStatus === 'Uses Own Laptop' || u.laptopStatus === 'Using own laptop';
         let score = 0;
         let total = 0;
@@ -261,122 +261,128 @@ const OnboardingManagement: React.FC = () => {
                                     filteredOnboardingUsers.map(u => {
                                         const progress = getOnboardingProgress(u);
                                         const dispatch = parseDispatch(u);
-                                        const assignedAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id);
-                                        const statusBadge = u.onboardingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                                                            u.onboardingStatus === 'In Progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
-                                                            'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+                                        const assignedAssets = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || a.assignedTo === u.id);
+                                         const statusBadge = u.onboardingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                                             u.onboardingStatus === 'In Progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+                                                             'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
 
-                                        return (
-                                            <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
-                                                <td className="px-5 py-3.5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 font-bold flex items-center justify-center text-xs shrink-0">
-                                                            {u.name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                                                                {u.name}
-                                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusBadge}`}>
-                                                                    {u.onboardingStatus || 'Pending'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-xs text-slate-400">{u.email} {u.employeeId ? `• ID: ${u.employeeId}` : ''}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
+                                         return (
+                                             <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                                                 <td className="px-5 py-3.5">
+                                                     <div className="flex items-center gap-3">
+                                                         <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 font-bold flex items-center justify-center text-xs shrink-0">
+                                                             {u.name.charAt(0).toUpperCase()}
+                                                         </div>
+                                                         <div>
+                                                             <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                                                 {u.name}
+                                                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusBadge}`}>
+                                                                     {u.onboardingStatus || 'Pending'}
+                                                                 </span>
+                                                             </div>
+                                                             <div className="text-xs text-slate-400">{u.email} {u.employeeId ? `• ID: ${u.employeeId}` : ''}</div>
+                                                         </div>
+                                                     </div>
+                                                 </td>
 
-                                                <td className="px-4 py-3.5 text-xs">
-                                                    <div className="font-medium text-slate-800 dark:text-slate-200">{u.department?.name || 'No Department'}</div>
-                                                    <div className="text-slate-400">{u.branch?.name || u.location || 'HQ'}</div>
-                                                </td>
+                                                 <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300">
+                                                     {u.department?.name || '—'}
+                                                 </td>
 
-                                                <td className="px-4 py-3.5 text-xs">
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className={u.m365AccountCreated ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400'}>
-                                                            {u.m365AccountCreated ? '✓ Account Created' : '✗ No Account'}
-                                                        </span>
-                                                        <span className="text-[11px] text-slate-500">
-                                                            {u.m365LicenseAssigned ? '✓ License Allocated' : 'No License'}
-                                                        </span>
-                                                    </div>
-                                                </td>
+                                                 <td className="px-4 py-3.5">
+                                                     {u.m365AccountCreated ? (
+                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                             ✓ Ready
+                                                         </span>
+                                                     ) : (
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                                             Pending
+                                                         </span>
+                                                     )}
+                                                 </td>
 
-                                                <td className="px-4 py-3.5 text-xs">
-                                                    {assignedAssets.length > 0 ? (
-                                                        <div className="space-y-0.5">
-                                                            {assignedAssets.map(a => (
-                                                                <div key={a.id} className="font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
-                                                                    <span>💻</span> {a.name} [{a.assetId}]
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
-                                                            u.laptopStatus === 'Uses Own Laptop'
-                                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                        }`}>
-                                                            {u.laptopStatus === 'Uses Own Laptop' ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
-                                                        </span>
-                                                    )}
-                                                </td>
+                                                 <td className="px-4 py-3.5">
+                                                     {assignedAssets.length > 0 ? (
+                                                         <div className="flex flex-col">
+                                                             <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">
+                                                                 {assignedAssets[0].name}
+                                                             </span>
+                                                             <span className="text-[10px] text-slate-400">
+                                                                 {assignedAssets[0].assetId} {assignedAssets.length > 1 ? `(+${assignedAssets.length - 1} more)` : ''}
+                                                             </span>
+                                                         </div>
+                                                     ) : u.laptopStatus === 'Uses Own Laptop' || u.laptopStatus === 'Using own laptop' ? (
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                                             Uses Own Laptop (BYOD)
+                                                         </span>
+                                                     ) : (
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                                             No Device Assigned
+                                                         </span>
+                                                     )}
+                                                 </td>
 
-                                                <td className="px-4 py-3.5 text-xs">
-                                                    {dispatch ? (
-                                                        <div>
-                                                            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                                                                {dispatch.mode === 'Courier' ? '📦 ' + (dispatch.courierName || 'Courier') : '🏢 In-Person'}
-                                                            </span>
-                                                            {dispatch.docketNumber && (
-                                                                <span className="font-mono text-[11px] text-slate-500">
-                                                                    Docket: {dispatch.docketNumber}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-slate-400 italic">Not Dispatched</span>
-                                                    )}
-                                                </td>
+                                                 <td className="px-4 py-3.5">
+                                                     {dispatch?.isDispatched ? (
+                                                         <div className="flex flex-col">
+                                                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                                                 🚚 {dispatch.courierName || 'Courier'}
+                                                             </span>
+                                                             {dispatch.docketNumber && (
+                                                                 <span className="text-[10px] text-slate-400 font-mono">
+                                                                     #{dispatch.docketNumber}
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                     ) : (
+                                                         <span className="text-xs text-slate-400">—</span>
+                                                     )}
+                                                 </td>
 
-                                                <td className="px-4 py-3.5">
-                                                    <div className="w-28 space-y-1">
-                                                        <div className="flex justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                                                            <span>Progress</span>
-                                                            <span>{progress}%</span>
-                                                        </div>
-                                                        <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
-                                                            <div 
-                                                                className={`h-full transition-all duration-300 ${progress === 100 ? 'bg-emerald-500' : progress > 50 ? 'bg-brand-500' : 'bg-amber-500'}`}
-                                                                style={{ width: `${progress}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </td>
+                                                 <td className="px-4 py-3.5">
+                                                     <div className="w-32">
+                                                         <div className="flex justify-between text-xs mb-1">
+                                                             <span className="font-semibold text-slate-700 dark:text-slate-300">{progress}%</span>
+                                                         </div>
+                                                         <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                                             <div
+                                                                 className={`h-full rounded-full transition-all duration-300 ${
+                                                                     progress === 100 ? 'bg-emerald-500' : progress >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                                                                 }`}
+                                                                 style={{ width: `${progress}%` }}
+                                                             />
+                                                         </div>
+                                                     </div>
+                                                 </td>
 
-                                                <td className="px-4 py-3.5 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                setWizardUser(u);
-                                                                setIsOnboardingOpen(true);
-                                                            }}
-                                                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900 transition-colors"
-                                                            title="Launch Guided Onboarding Wizard"
-                                                        >
-                                                            {u.onboardingStatus === 'Completed' ? 'Review' : 'Continue'}
-                                                        </button>
+                                                 <td className="px-4 py-3.5 text-right">
+                                                     <div className="flex items-center justify-end gap-2">
+                                                         <button
+                                                             onClick={() => {
+                                                                 setWizardUser(u);
+                                                                 setIsOnboardingOpen(true);
+                                                             }}
+                                                             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900 transition-colors"
+                                                             title="Launch Guided Onboarding Wizard"
+                                                         >
+                                                             {u.onboardingStatus === 'Completed' ? 'Review' : 'Continue'}
+                                                         </button>
 
-                                                        {assignedAssets.length > 0 && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setPreviewTarget({ type: 'declaration', id: u.id });
-                                                                }}
-                                                                className="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                                                title="View Declaration Form"
-                                                            >
-                                                                📄
-                                                            </button>
-                                                        )}
+                                                         {assignedAssets.length > 0 && (
+                                                             <button
+                                                                 onClick={() => {
+                                                                     setPreviewTarget({ 
+                                                                         type: 'declaration', 
+                                                                         userId: u.id,
+                                                                         assetId: assignedAssets[0].id 
+                                                                     });
+                                                                 }}
+                                                                 className="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                                 title="View Declaration Form"
+                                                             >
+                                                                 📄
+                                                             </button>
+                                                         )}
 
                                                         <button
                                                             onClick={() => {
@@ -418,7 +424,7 @@ const OnboardingManagement: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
                                 {filteredOffboardingUsers.map(u => {
-                                    const userHoldings = assets.filter(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id);
+                                    const userHoldings = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || a.assignedTo === u.id);
                                     const isDeactivated = u.status === 'Inactive';
 
                                     return (

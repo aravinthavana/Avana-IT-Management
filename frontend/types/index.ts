@@ -161,7 +161,9 @@ export interface NotificationType {
 
 export interface PreviewTarget {
     type: 'declaration' | 'label';
-    assetId: number;
+    assetId?: number;
+    userId?: number;
+    id?: number;
 }
 
 export interface Filter {

@@ -11,8 +11,17 @@ export default function DeclarationFormPreview() {
 
     if (!previewTarget || previewTarget.type !== 'declaration') return null;
 
-    const user = users.find(u => u.id === previewTarget.userId);
-    const laptop = assets.find(a => a.id === previewTarget.assetId);
+    const targetUserId = previewTarget.userId || (previewTarget as any).id;
+    const targetAssetId = previewTarget.assetId;
+
+    // Resolve the asset: either by targetAssetId or by finding the device assigned to user
+    const laptop = (targetAssetId ? assets.find(a => a.id === targetAssetId) : null)
+        || (targetUserId ? assets.find(a => ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === targetUserId) || a.assignedTo === targetUserId)) : null);
+
+    // Resolve the user: either by targetUserId or from laptop's assignee
+    const user = (targetUserId ? users.find(u => u.id === targetUserId) : null)
+        || (laptop?.assigneeId ? users.find(u => u.id === laptop.assigneeId) : null)
+        || (laptop?.assignedTo ? users.find(u => u.id === laptop.assignedTo) : null);
 
     const iframeSrcDoc = `
     <!DOCTYPE html>
