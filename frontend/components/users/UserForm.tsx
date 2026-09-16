@@ -278,10 +278,10 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                         )}
 
                         {onboardingOption === 'laptop_status' && (
-                            <FormSelect label="Laptop Status" name="laptopStatus" value={formData.laptopStatus} onChange={handleChange}>
+                            <FormSelect label="Device Allocation Status" name="laptopStatus" value={formData.laptopStatus} onChange={handleChange}>
                                 <option value="">-- Not Set --</option>
-                                <option value="Uses Own Laptop">Uses Own Laptop</option>
-                                <option value="No Laptop Assigned">No Laptop Assigned</option>
+                                <option value="Uses Own Laptop">Uses Own Laptop (BYOD)</option>
+                                <option value="No Device Assigned">No Device Assigned</option>
                                 <option value="Details Not Collected">Details Not Collected</option>
                             </FormSelect>
                         )}

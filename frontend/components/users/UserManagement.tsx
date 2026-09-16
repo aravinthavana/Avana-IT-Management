@@ -192,9 +192,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 if (filterLaptopStatus === 'Has Assigned Laptop') {
                     matchesLaptopStatus = hasAsset;
                 } else if (filterLaptopStatus === 'Uses Own Laptop') {
-                    matchesLaptopStatus = user.laptopStatus === 'Uses Own Laptop';
-                } else if (filterLaptopStatus === 'No Laptop Assigned') {
-                    matchesLaptopStatus = !hasAsset && user.laptopStatus !== 'Uses Own Laptop';
+                    matchesLaptopStatus = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
+                } else if (filterLaptopStatus === 'No Device Assigned' || filterLaptopStatus === 'No Laptop Assigned') {
+                    matchesLaptopStatus = !hasAsset && user.laptopStatus !== 'Uses Own Laptop' && user.laptopStatus !== 'Using own laptop';
                 }
             }
 
@@ -289,10 +289,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             <option value="Others">Others</option>
                         </select>
                         <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
-                            <option value="All">All Laptop Statuses</option>
-                            <option value="Has Assigned Laptop">Has Assigned Laptop</option>
-                            <option value="No Laptop Assigned">No Laptop Assigned</option>
-                            <option value="Uses Own Laptop">Uses Own Laptop</option>
+                            <option value="All">All Device Statuses</option>
+                            <option value="Has Assigned Laptop">Has Assigned Device</option>
+                            <option value="No Device Assigned">No Device Assigned</option>
+                            <option value="Uses Own Laptop">Uses Own Laptop (BYOD)</option>
                         </select>
                         <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="name-asc">Name (A-Z)</option>
@@ -316,6 +316,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         const isSelf = user.id === loggedInUser?.id;
                         const isInactive = user.status === 'Inactive';
                         const deptName = user.department?.name || '';
+                        const assignedAsset = assets.find(a => a.assignedTo === user.id);
+                        const isUsingOwnLaptop = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
 
                         return (
                             <div
@@ -353,14 +355,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
 
                                 <div className="hidden lg:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 text-center">
                                     <div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Laptop</p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Device</p>
                                         <div className="mt-1">
-                                            {user.laptopStatus ? (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300" title={user.laptopStatus}>
-                                                    {user.laptopStatus.length > 12 ? user.laptopStatus.substring(0, 10) + '...' : user.laptopStatus}
+                                            {assignedAsset ? (
+                                                <span 
+                                                    className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 max-w-[110px] truncate" 
+                                                    title={`${assignedAsset.name} (${assignedAsset.assetId || assignedAsset.id})`}
+                                                >
+                                                    {assignedAsset.assetId || assignedAsset.name || 'Assigned'}
+                                                </span>
+                                            ) : isUsingOwnLaptop ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" title="Uses Own Laptop (BYOD)">
+                                                    BYOD
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-slate-400 italic">-</span>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" title="No Device Assigned">
+                                                    No Device
+                                                </span>
                                             )}
                                         </div>
                                     </div>

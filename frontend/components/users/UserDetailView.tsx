@@ -182,16 +182,16 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Reporting Manager:</strong> {user.manager?.name || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Licenses:</strong> {user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}</p>
-                            {user.laptopStatus && (
-                                <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                    <strong>Laptop Status:</strong>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                                        user.laptopStatus === 'Uses Own Laptop' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
-                                        user.laptopStatus === 'No Laptop Assigned' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
-                                        'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
-                                    }`}>{user.laptopStatus}</span>
-                                </p>
-                            )}
+                            <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                <strong>Device Status:</strong>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                    hasAssignedDevice ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                                    isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                    'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                }`}>
+                                    {hasAssignedDevice ? `${userAssets[0].name} (${userAssets[0].assetId})` : isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
+                                </span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -256,56 +256,78 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                userAssets.length > 0 || user.laptopStatus === 'Using own laptop' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                hasAssignedDevice ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                                isUsingOwnLaptop ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' :
+                                'bg-slate-200 dark:bg-slate-700 text-slate-400'
                             }`}>
-                                {userAssets.length > 0 || user.laptopStatus === 'Using own laptop' ? '✓' : '—'}
+                                {hasAssignedDevice || isUsingOwnLaptop ? '✓' : '—'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware Allocation</p>
                                 <p className="text-xs text-slate-500">
-                                    {userAssets.length > 0 ? `${userAssets[0].name} (${userAssets[0].assetId}) Assigned` : user.laptopStatus || 'No Device Assigned'}
+                                    {hasAssignedDevice ? `${userAssets[0].name} (${userAssets[0].assetId}) Assigned` :
+                                     isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' :
+                                     'No Device Assigned'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.softwareInstalled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
+                                hasAssignedDevice
+                                    ? (user.softwareInstalled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
+                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
                             }`}>
-                                {user.softwareInstalled ? '✓' : '—'}
+                                {hasAssignedDevice ? (user.softwareInstalled ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Software & Antivirus Installed</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.softwareInstalled ? 'Defender, Office 365, Teams, VPN configured' : 'Pending installation'}
+                                    {hasAssignedDevice
+                                        ? (user.softwareInstalled ? 'Defender, Office 365, Teams, VPN configured' : 'Pending installation')
+                                        : isUsingOwnLaptop
+                                        ? 'Not Applicable (Personal Device / BYOD)'
+                                        : 'Not Applicable (No device assigned)'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.hardwareTested ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
+                                hasAssignedDevice
+                                    ? (user.hardwareTested ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
+                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
                             }`}>
-                                {user.hardwareTested ? '✓' : '—'}
+                                {hasAssignedDevice ? (user.hardwareTested ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware QA Diagnostics</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.hardwareTested ? 'Display, keyboard, battery, camera/mic verified' : 'Diagnostic check pending'}
+                                    {hasAssignedDevice
+                                        ? (user.hardwareTested ? 'Display, keyboard, battery, camera/mic verified' : 'Diagnostic check pending')
+                                        : isUsingOwnLaptop
+                                        ? 'Not Applicable (Personal Hardware)'
+                                        : 'Not Applicable (No device assigned)'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.credentialsHandedOver ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
+                                (hasAssignedDevice || user.m365AccountCreated)
+                                    ? (user.credentialsHandedOver ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
+                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
                             }`}>
-                                {user.credentialsHandedOver ? '✓' : '—'}
+                                {(hasAssignedDevice || user.m365AccountCreated) ? (user.credentialsHandedOver ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.credentialsHandedOver ? 'Temporary passwords & login guidance shared' : 'Pending handover'}
+                                    {hasAssignedDevice
+                                        ? (user.credentialsHandedOver ? 'Laptop PIN & login guidance shared' : 'Pending credential handover')
+                                        : user.m365AccountCreated
+                                        ? (user.credentialsHandedOver ? 'M365 cloud credentials shared' : 'Pending M365 credential sharing')
+                                        : 'Not Applicable (No accounts or devices)'}
                                 </p>
                             </div>
                         </div>
@@ -364,29 +386,45 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.assetReturned ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
+                                user.assetReturned
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs'
+                                    : hasAssignedDevice
+                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs'
+                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
                             }`}>
-                                {user.assetReturned ? '✓' : '—'}
+                                {user.assetReturned ? '✓' : hasAssignedDevice ? '—' : 'N/A'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Company Hardware Returned</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.assetReturned ? (user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Hardware received') : 'Hardware not returned'}
+                                    {user.assetReturned
+                                        ? (user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Hardware received')
+                                        : hasAssignedDevice
+                                        ? 'Pending equipment return'
+                                        : 'Not Applicable (No company hardware assigned)'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.deviceWiped ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
+                                user.deviceWiped
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs'
+                                    : hasAssignedDevice
+                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs'
+                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
                             }`}>
-                                {user.deviceWiped ? '✓' : '—'}
+                                {user.deviceWiped ? '✓' : hasAssignedDevice ? '—' : 'N/A'}
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Device Wiped & Sanitized</p>
                                 <p className="text-xs text-slate-500">
-                                    {user.deviceWiped ? 'Factory reset completed, BitLocker erased' : 'Device not wiped'}
+                                    {user.deviceWiped
+                                        ? 'Factory reset completed, BitLocker erased'
+                                        : hasAssignedDevice
+                                        ? 'Pending sanitization'
+                                        : 'Not Applicable (No company device to wipe)'}
                                 </p>
                             </div>
                         </div>

@@ -42,15 +42,38 @@ const OnboardingManagement: React.FC = () => {
 
     // Helper: calculate onboarding progress percentage
     const getOnboardingProgress = (u: User) => {
+        if (u.onboardingStatus === 'Completed') return 100;
+        const hasDevice = assets.some(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id);
+        const isOwn = u.laptopStatus === 'Uses Own Laptop' || u.laptopStatus === 'Using own laptop';
         let score = 0;
-        let total = 6;
+        let total = 0;
+
+        // 1. Account
+        total++;
         if (u.m365AccountCreated) score++;
+
+        // 2. License
+        total++;
         if (u.m365LicenseAssigned) score++;
-        if (assets.some(a => a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || u.laptopStatus === 'Using own laptop') score++;
-        if (u.softwareInstalled) score++;
-        if (u.hardwareTested) score++;
-        if (u.credentialsHandedOver) score++;
-        return Math.round((score / total) * 100);
+
+        // 3. Hardware Allocation decision
+        total++;
+        if (hasDevice || isOwn || u.laptopStatus === 'No Device Assigned') score++;
+
+        // 4 & 5. Software & QA (only applicable if company device assigned)
+        if (hasDevice) {
+            total += 2;
+            if (u.softwareInstalled) score++;
+            if (u.hardwareTested) score++;
+        }
+
+        // 6. Credentials (applicable if device assigned or M365 created)
+        if (hasDevice || u.m365AccountCreated) {
+            total++;
+            if (u.credentialsHandedOver) score++;
+        }
+
+        return total > 0 ? Math.round((score / total) * 100) : 0;
     };
 
     // Helper: parse dispatch details
@@ -288,8 +311,12 @@ const OnboardingManagement: React.FC = () => {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-slate-400 italic">
-                                                            {u.laptopStatus || 'No Device Assigned'}
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                                                            u.laptopStatus === 'Uses Own Laptop'
+                                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                        }`}>
+                                                            {u.laptopStatus === 'Uses Own Laptop' ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
                                                         </span>
                                                     )}
                                                 </td>
