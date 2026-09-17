@@ -17,7 +17,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
 );
 
 const BranchManagement: React.FC = () => {
-    const { branches, setBranches, assets, setNotification, selectedBranchId, setSelectedBranchId, getHeaders } = useAppContext();
+    const { branches, setBranches, assets, users, setNotification, selectedBranchId, setSelectedBranchId, getHeaders } = useAppContext();
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
@@ -32,6 +32,19 @@ const BranchManagement: React.FC = () => {
         });
         return counts;
     }, [assets, branches]);
+
+    const userCounts = useMemo(() => {
+        const counts: { [key: number]: number } = {};
+        branches.forEach(branch => {
+            counts[branch.id] = users.filter(user => 
+                user.branchId === branch.id ||
+                (typeof user.branch === 'string' && user.branch.toLowerCase() === branch.name.toLowerCase()) ||
+                (typeof user.branch === 'object' && user.branch?.name?.toLowerCase() === branch.name.toLowerCase()) ||
+                (typeof user.branch === 'object' && user.branch?.id === branch.id)
+            ).length;
+        });
+        return counts;
+    }, [users, branches]);
 
     const handleOpenForm = (branch: Branch | null = null) => {
         setEditingBranch(branch);
@@ -154,7 +167,7 @@ const BranchManagement: React.FC = () => {
                          <div key={branch.id} onClick={() => setSelectedBranchId(branch.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
                              <div>
                                  <p className="font-semibold text-slate-800 dark:text-slate-100">{branch.name}</p>
-                                 <p className="text-sm text-slate-500 dark:text-slate-400">{branch.location} &bull; Assets: {assetCounts[branch.id] || 0}</p>
+                                 <p className="text-sm text-slate-500 dark:text-slate-400">{branch.location} &bull; Assets: {assetCounts[branch.id] || 0} &bull; Users: {userCounts[branch.id] || 0}</p>
                              </div>
                              <div className="flex items-center space-x-2">
                                  <button onClick={(e) => { e.stopPropagation(); handleOpenForm(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-brand-600 dark:hover:text-brand-500" title="Edit">{ICONS.edit}</button>

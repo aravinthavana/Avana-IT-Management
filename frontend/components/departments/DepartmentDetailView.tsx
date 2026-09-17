@@ -20,7 +20,12 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
 
     const departmentUsers = useMemo(() => {
         if (!department) return [];
-        return users.filter(user => user.department === department.name);
+        return users.filter(user => 
+            user.departmentId === department.id || 
+            (typeof user.department === 'string' && user.department.toLowerCase() === department.name.toLowerCase()) ||
+            (typeof user.department === 'object' && user.department?.name?.toLowerCase() === department.name.toLowerCase()) ||
+            (typeof user.department === 'object' && user.department?.id === department.id)
+        );
     }, [users, department]);
 
     if (!department) {
@@ -93,7 +98,6 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
 
     const handleUserClick = (userId: number) => {
         setSelectedUserId(userId);
-        navigate('users');
     };
 
     return (
@@ -152,16 +156,26 @@ const DepartmentDetailView: React.FC<DepartmentDetailViewProps> = ({ departmentI
                                 <div 
                                     key={user.id} 
                                     onClick={() => handleUserClick(user.id)}
-                                    className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                    className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
-                                        <div>
-                                            <p className="font-semibold text-slate-800 dark:text-slate-100">{user.name}</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">{user.employeeId}</p>
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {user.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0" />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{user.name}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate flex items-center gap-2">
+                                                {user.employeeId && <span>{user.employeeId}</span>}
+                                                {user.jobTitle && <span>&bull; {user.jobTitle}</span>}
+                                                {user.email && <span className="hidden sm:inline">&bull; {user.email}</span>}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="p-2 text-slate-500 dark:text-slate-400">
+                                    <div className="p-2 text-slate-400 dark:text-slate-500 flex-shrink-0">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                                     </div>
                                 </div>

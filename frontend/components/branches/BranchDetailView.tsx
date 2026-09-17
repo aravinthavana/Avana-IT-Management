@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Asset } from '../../types';
 import { ICONS } from '../../constants';
@@ -11,12 +11,22 @@ interface BranchDetailViewProps {
 }
 
 const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack }) => {
-    const { branches, assets, setAssets, setNotification, setSelectedAssetId, getHeaders, fetchAssetHistory } = useAppContext();
+    const { branches, assets, setAssets, setNotification, setSelectedAssetId, setSelectedUserId, users, getHeaders, fetchAssetHistory } = useAppContext();
     const branch = branches.find(b => b.id === branchId);
     const branchAssets = assets.filter(a => a.assigneeType?.toLowerCase() === 'branch' && a.assigneeId === branchId);
     
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assetToUnassign, setAssetToUnassign] = useState<Asset | null>(null);
+
+    const branchUsers = useMemo(() => {
+        if (!branch) return [];
+        return users.filter(user => 
+            user.branchId === branch.id ||
+            (typeof user.branch === 'string' && user.branch.toLowerCase() === branch.name.toLowerCase()) ||
+            (typeof user.branch === 'object' && user.branch?.name?.toLowerCase() === branch.name.toLowerCase()) ||
+            (typeof user.branch === 'object' && user.branch?.id === branch.id)
+        );
+    }, [users, branch]);
 
     if (!branch) {
         return (
@@ -132,6 +142,46 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
                             ))
                         ) : (
                             <p className="text-gray-500 dark:text-gray-400 text-center py-4">No assets are currently assigned to this branch.</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Users in Branch ({branchUsers.length})</h3>
+                    </div>
+                    <div className="space-y-3">
+                        {branchUsers.length > 0 ? (
+                            branchUsers.map(user => (
+                                <div 
+                                    key={user.id} 
+                                    onClick={() => setSelectedUserId(user.id)}
+                                    className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-700/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {user.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0" />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{user.name}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate flex items-center gap-2">
+                                                {user.employeeId && <span>{user.employeeId}</span>}
+                                                {user.jobTitle && <span>&bull; {user.jobTitle}</span>}
+                                                {user.email && <span className="hidden sm:inline">&bull; {user.email}</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="p-2 text-slate-400 dark:text-slate-500 flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No users found in this branch.</p>
                         )}
                     </div>
                 </div>
