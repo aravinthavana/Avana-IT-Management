@@ -18,11 +18,33 @@ export default function PrintLabelPreview() {
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=10.0, user-scalable=yes">
-        <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
         <style>
+          *, *::before, *::after { box-sizing: border-box; }
           html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-          body { background-color: transparent; display: flex; align-items: center; justify-content: center; }
+          body { background-color: transparent; display: flex; align-items: center; justify-content: center; font-family: 'Arial', sans-serif; }
+          /* Tailwind-compatible utilities used by AssetLabel */
+          .flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; }
+          .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
+          .w-full { width: 100%; } .h-full { height: 100%; }
+          .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; } .text-base { font-size: 1rem; }
+          .text-lg { font-size: 1.125rem; } .font-bold { font-weight: 700; } .font-semibold { font-weight: 600; }
+          .font-medium { font-weight: 500; } .font-mono { font-family: monospace; }
+          .text-center { text-align: center; } .uppercase { text-transform: uppercase; } .tracking-wider { letter-spacing: 0.05em; }
+          .p-1 { padding: 0.25rem; } .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; } .p-4 { padding: 1rem; }
+          .px-1 { padding-left: 0.25rem; padding-right: 0.25rem; } .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+          .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+          .m-0 { margin: 0; } .mx-auto { margin-left: auto; margin-right: auto; }
+          .mt-1 { margin-top: 0.25rem; } .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; }
+          .gap-1 { gap: 0.25rem; } .gap-2 { gap: 0.5rem; }
+          .border { border: 1px solid; } .border-2 { border-width: 2px; } .border-black { border-color: #000; }
+          .border-gray-300 { border-color: #d1d5db; } .border-t { border-top: 1px solid; } .border-b { border-bottom: 1px solid; }
+          .rounded { border-radius: 0.25rem; } .rounded-lg { border-radius: 0.5rem; }
+          .bg-white { background-color: #fff; } .bg-black { background-color: #000; } .bg-gray-100 { background-color: #f3f4f6; }
+          .text-white { color: #fff; } .text-black { color: #000; } .text-gray-500 { color: #6b7280; } .text-gray-600 { color: #4b5563; }
+          .overflow-hidden { overflow: hidden; } .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .shrink-0 { flex-shrink: 0; } .relative { position: relative; } .absolute { position: absolute; }
+          .space-y-1 > * + * { margin-top: 0.25rem; }
           @media print {
             @page { size: 50mm 30mm; margin: 0; }
             html, body { width: 50mm; height: 30mm; overflow: hidden; background-color: #FFFFFF; }
@@ -36,6 +58,7 @@ export default function PrintLabelPreview() {
       </body>
     </html>
     `;
+
 
     const handlePrint = () => {
         const iframe = iframeRef.current;

@@ -71,14 +71,14 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                         >
                             {themeIcons[theme]}
                         </button>
-                        <div className={`absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 border border-slate-200 dark:border-slate-700 origin-top-right transition-all duration-200 ease-out ${dropdownOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}>
+                        <div className={`absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-lg py-1 border border-slate-200 dark:border-slate-700 origin-top-right transition-all duration-200 ease-out z-50 ${dropdownOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}>
                             {(['light', 'dark', 'system'] as const).map(t => (
                                 <button
                                     key={t}
                                     onClick={() => { setTheme(t); setDropdownOpen(false); }}
                                     className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
                                         theme === t 
-                                        ? 'bg-red-50 dark:bg-red-900/50 text-brand-600 dark:text-red-400' 
+                                        ? 'bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-semibold' 
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                     }`}
                                 >
@@ -89,20 +89,20 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
                         </div>
                     </div>
                     <div className="relative" ref={userMenuRef}>
-                        <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center space-x-3 focus:outline-none">
-                            <span className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300">{user?.name}</span>
-                            <div className="w-9 h-9 rounded-full bg-red-100 text-brand-600 flex items-center justify-center font-bold">
-                                {user?.name?.charAt(0)}
+                        <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center space-x-2.5 focus:outline-none p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <span className="hidden sm:inline font-medium text-sm text-slate-700 dark:text-slate-300">{user?.name}</span>
+                            <div className="w-8 h-8 rounded-full bg-avana-dark text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                {user?.name?.charAt(0).toUpperCase()}
                             </div>
                         </button>
-                        <div className={`absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 border border-slate-200 dark:border-slate-700 origin-top-right transition-all duration-200 ease-out ${userMenuOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}>
+                        <div className={`absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg py-1 border border-slate-200 dark:border-slate-700 origin-top-right transition-all duration-200 ease-out z-50 ${userMenuOpen ? 'transform opacity-100 scale-100' : 'transform opacity-0 scale-95 pointer-events-none'}`}>
                             <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.name}</p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.name}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">{user?.role}</p>
                             </div>
                             <button
                                 onClick={logout}
-                                className="w-full text-left px-4 py-2 text-sm text-brand-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-2"
                             >
                                 Sign out
                             </button>

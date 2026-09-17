@@ -150,63 +150,95 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             </div>
 
             <div className="space-y-6 pt-6">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-                    <div className="flex flex-col items-center text-center md:flex-row md:items-start md:space-x-6 md:text-left">
+                {/* Minimalist Profile Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    {/* Header with Avatar & Primary Info */}
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-6 border-b border-slate-100 dark:border-slate-800 text-center sm:text-left">
                         {user.avatar ? (
-                            <img src={user.avatar} alt="User Avatar" className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-700 shadow-md flex-shrink-0 object-cover"/>
+                            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex-shrink-0 object-cover"/>
                         ) : (
-                            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-700 shadow-md flex-shrink-0 flex items-center justify-center font-bold text-3xl bg-gradient-to-br from-red-400 to-red-600 text-white">
+                            <div className="w-20 h-20 rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center font-bold text-2xl bg-avana-dark text-white">
                                 {user.name?.charAt(0).toUpperCase()}
                             </div>
                         )}
-                        <div className="mt-4 md:mt-0">
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
-                                {user.name}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{user.name}</h2>
                                 {user.accountType && user.accountType !== 'Employee' && (
-                                    <span className="text-sm px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-semibold tracking-wide">
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 font-semibold">
                                         {user.accountType}
                                     </span>
                                 )}
-                            </h2>
-                            <p className="text-slate-600 dark:text-slate-300 mt-2"><strong>Email:</strong> {user.email || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2 mb-2">
-                                <strong>Role:</strong>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' : user.role === 'Manager' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>{user.role || 'User'}</span>
-                                <strong className="ml-3">Status:</strong>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${user.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>{user.status || 'Active'}</span>
-                            </p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Employee ID:</strong> {user.employeeId || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Mobile:</strong> {user.mobile || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Job Title:</strong> {user.jobTitle || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Official Branch:</strong> {user.branch?.name || 'Remote / Unassigned'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Work Location:</strong> {user.location || 'N/A'}</p>
-                            {(user.workAddress || user.city || user.state || user.postalCode || user.country) && (
-                                <p className="text-slate-600 dark:text-slate-300">
-                                    <strong>Work Location Address:</strong> {[user.workAddress, user.city, user.state, user.postalCode, user.country].filter(Boolean).join(', ')}
-                                </p>
-                            )}
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Reporting Manager:</strong> {user.manager?.name || 'N/A'}</p>
-                            <p className="text-slate-600 dark:text-slate-300"><strong>Licenses:</strong> {user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}</p>
-                            <p className="text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                <strong>Device Status:</strong>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                                    hasAssignedDevice ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
-                                    isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
-                                    user.laptopStatus === 'Details Not Collected' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
-                                    'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                                }`}>
-                                    {hasAssignedDevice 
-                                        ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` 
-                                        : isUsingOwnLaptop 
-                                        ? 'Uses Own Laptop (BYOD)' 
-                                        : user.laptopStatus === 'Details Not Collected'
-                                        ? 'Details Not Collected'
-                                        : 'No Device Assigned'}
+                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.role === 'Admin' ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300' : user.role === 'Manager' ? 'bg-avana-beige/60 text-avana-olive dark:bg-slate-800 dark:text-avana-beige' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
+                                    {user.role || 'User'}
                                 </span>
+                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.status === 'Active' || !user.status ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                    {user.status || 'Active'}
+                                </span>
+                            </div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                {user.jobTitle || 'Employee'} {user.department?.name ? `• ${user.department.name}` : ''} {user.company ? `• ${user.company}` : ''}
                             </p>
                         </div>
+                    </div>
+
+                    {/* Responsive Grid of Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-6">
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Email</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block" title={user.email}>{user.email || 'N/A'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Employee ID</span>
+                            <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{user.employeeId || 'N/A'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Mobile</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.mobile || 'N/A'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Official Branch</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.branch?.name || 'Remote / Unassigned'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Work Location</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.location || 'N/A'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Reporting Manager</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.manager?.name || 'N/A'}</span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Device Status</span>
+                            <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-semibold mt-0.5 ${
+                                hasAssignedDevice ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                                isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                user.laptopStatus === 'Details Not Collected' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
+                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                            }`}>
+                                {hasAssignedDevice 
+                                    ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` 
+                                    : isUsingOwnLaptop 
+                                    ? 'Uses Own Laptop (BYOD)' 
+                                    : user.laptopStatus === 'Details Not Collected'
+                                    ? 'Details Pending'
+                                    : 'No Device Assigned'}
+                            </span>
+                        </div>
+                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Licenses</span>
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block" title={user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}>
+                                {user.licenseAssignments && user.licenseAssignments.length > 0 ? `${user.licenseAssignments.length} License(s)` : 'None'}
+                            </span>
+                        </div>
+                        {(user.workAddress || user.city || user.state || user.postalCode || user.country) && (
+                            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Work Location Address</span>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                    {[user.workAddress, user.city, user.state, user.postalCode, user.country].filter(Boolean).join(', ')}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 

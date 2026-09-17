@@ -557,13 +557,18 @@ const AssetManagement: React.FC = () => {
                                             <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{asset.name}</p>
                                             {getStatusChip(asset.status)}
                                         </div>
-                                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
                                             <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">{asset.assetId}</span>
                                             <span className="flex items-center gap-1">{assignee.name} {assignee.type && <span className={`text-[9px] px-1 rounded-sm ${assignee.typeColor} opacity-80`}>{assignee.type}</span>}</span>
                                         </div>
+                                        <div className="flex lg:hidden items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 mt-1 flex-wrap">
+                                            <span>{asset.category}</span>
+                                            {asset.company && <span>• {asset.company}</span>}
+                                            {getAssetEffectiveLocation(asset) && <span>• {getAssetEffectiveLocation(asset)}</span>}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="hidden lg:flex items-center gap-8 px-6 border-x border-slate-50 dark:border-slate-700 mx-4 text-xs">
+                                <div className="hidden lg:flex items-center gap-8 px-6 border-x border-slate-100 dark:border-slate-700 mx-4 text-xs">
                                     <div className="text-center">
                                         <p className="text-slate-400 mb-1 font-bold uppercase tracking-tighter text-[9px]">Brand & Model</p>
                                         <p className="text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[120px]" title={`${asset.brand || ''} ${asset.model || ''}`}>{asset.brand || '-'} {asset.model || '-'}</p>
@@ -581,7 +586,7 @@ const AssetManagement: React.FC = () => {
                                         <p className="text-slate-700 dark:text-slate-300 font-semibold">{getAssetEffectiveLocation(asset) || 'N/A'}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 mt-3 sm:mt-0 self-end sm:self-center">
                                     {isAdminOrManager && (
                                         <>
                                             {(asset.status === 'Assigned' || asset.status === 'Pending Handover') && (
@@ -591,13 +596,13 @@ const AssetManagement: React.FC = () => {
                                                         setAssetToUnassign(asset);
                                                     }}
                                                     title={asset.status === 'Pending Handover' ? "Cancel Handover / Unassign" : "Unassign Asset"}
-                                                    className="p-2.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
+                                                    className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
                                                 >
                                                     {ICONS.unassign}
                                                 </button>
                                             )}
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditAsset(asset); }} className="p-2.5 text-slate-400 hover:text-brand-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.edit}</button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(asset.id); }} className="p-2.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">{ICONS.delete}</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditAsset(asset); }} className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-xl hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-all" title="Edit">{ICONS.edit}</button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(asset.id); }} className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-all" title="Delete">{ICONS.delete}</button>
                                         </>
                                     )}
                                 </div>
