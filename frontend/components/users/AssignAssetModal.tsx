@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Modal from '../ui/Modal';
-import { Asset } from '../../types';
+import { Asset, normalizeCompanyCode } from '../../types';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ICONS } from '../../constants';
 
@@ -31,15 +31,19 @@ const AssignAssetModal: React.FC<AssignAssetModalProps> = ({ isOpen, onClose, on
     }, [isOpen]);
 
     const availableAssets = useMemo(() => {
+        const targetCompanyCode = normalizeCompanyCode(target.company);
         return assets
+            .filter(asset => {
+                const isAvailable = asset.status === 'In Stock' || asset.status === 'Available for Reallocation';
+                if (!isAvailable) return false;
+                if (target.type !== 'user' || !targetCompanyCode) return true;
+                const assetCompanyCode = normalizeCompanyCode(asset.company || asset.assetId?.split('-')[0]);
+                return assetCompanyCode === targetCompanyCode;
+            })
             .filter(asset =>
-                (asset.status === 'In Stock' || asset.status === 'Available for Reallocation') &&
-                (target.type !== 'user' || asset.company === target.company)
-            )
-            .filter(asset =>
-                asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                asset.assetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                (asset.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (asset.assetId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (asset.serialNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
             );
     }, [assets, target, searchTerm]);
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { User } from '../../types';
+import { User, normalizeCompanyCode } from '../../types';
 import { useAppContext } from '../../hooks/useAppContext';
 
 interface UserFormProps {
@@ -69,10 +69,15 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     const activeAssignedAsset = userAssignedAssets[0] || null;
 
     const availableAssets = React.useMemo(() => {
-        return assets.filter(a =>
-            a.status === 'In Stock' || a.status === 'Available for Reallocation'
-        );
-    }, [assets]);
+        const userCompanyCode = normalizeCompanyCode(formData.company);
+        return assets.filter(a => {
+            const isAvailable = a.status === 'In Stock' || a.status === 'Available for Reallocation';
+            if (!isAvailable) return false;
+            if (!userCompanyCode) return true;
+            const assetCompanyCode = normalizeCompanyCode(a.company || a.assetId?.split('-')[0]);
+            return assetCompanyCode === userCompanyCode;
+        });
+    }, [assets, formData.company]);
 
     const desktopAssets = React.useMemo(() => {
         return availableAssets.filter(a => a.category?.toLowerCase() === 'desktop' || a.assetId?.includes('-DES-'));

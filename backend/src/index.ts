@@ -1124,7 +1124,7 @@ app.put('/api/users/:id/status', authenticateToken, requireAdmin, async (req, re
             for (const asset of assignedAssets) {
                 await prisma.asset.update({
                     where: { id: asset.id },
-                    data: { assigneeId: null, assigneeType: null, userId: null, status: 'Under Inspection' }
+                    data: { assigneeId: null, assigneeType: null, userId: null, status: 'Under Inspection', location: 'In Stock' }
                 });
                 await prisma.assetHistory.create({
                     data: {
@@ -1291,7 +1291,7 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
         // @ts-ignore
         const requestingUserId = req.user.id;
 
-        const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
+        const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) }, include: { branch: true } });
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
         // 1. Assign M365 License if requested
@@ -1326,7 +1326,8 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
                         userId: targetUser.id,
                         assigneeId: targetUser.id,
                         assigneeType: 'User',
-                        status: 'Pending Handover'
+                        status: 'Pending Handover',
+                        location: targetUser.location || (targetUser.branch ? targetUser.branch.name : null) || 'Remote / Field'
                     }
                 });
 
@@ -1440,6 +1441,7 @@ app.post('/api/offboarding/process', authenticateToken, requireAdmin, async (req
                         assigneeId: null,
                         assigneeType: null,
                         status: destinationStatus,
+                        location: 'In Stock',
                         remarks: assetReturn.remarks || null
                     }
                 });
@@ -1581,9 +1583,27 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
         const assetCompany = data.company || (data.assetId ? data.assetId.split('-')[0] : null);
         const finalStatus = newUserId ? (data.status === 'Assigned' ? 'Assigned' : 'Pending Handover') : (data.status || 'In Stock');
 
+        // Auto-derive effective location from assignee if location not specified or empty
+        let effectiveLocation = data.location;
+        if (!effectiveLocation || effectiveLocation.trim() === '') {
+            if (newUserId) {
+                const u = await prisma.user.findUnique({ where: { id: newUserId }, include: { branch: true } });
+                effectiveLocation = u?.location || (typeof u?.branch === 'object' ? u?.branch?.name : null) || 'Remote / Field';
+            } else if (data.assigneeType === 'Branch' && data.assigneeId) {
+                const b = await prisma.branch.findUnique({ where: { id: data.assigneeId } });
+                effectiveLocation = b?.location || b?.name || 'Branch';
+            } else if (data.assigneeType === 'Department' && data.assigneeId) {
+                const d = await prisma.department.findUnique({ where: { id: data.assigneeId } });
+                effectiveLocation = d?.name || 'Department';
+            } else {
+                effectiveLocation = 'In Stock';
+            }
+        }
+
         const asset = await prisma.asset.create({
             data: { 
                 ...data, 
+                location: effectiveLocation,
                 company: assetCompany,
                 status: finalStatus,
                 specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
@@ -1730,10 +1750,32 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
 
         const updatedCompany = assetUpdateData.company || existingAsset.company || (assetUpdateData.assetId ? assetUpdateData.assetId.split('-')[0] : (existingAsset.assetId ? existingAsset.assetId.split('-')[0] : null));
 
+        // Auto-derive effective location from assignee
+        let effectiveLocation = assetUpdateData.location;
+        const isAssigneeChanging = (newUserId && existingAsset.userId !== newUserId) || 
+                                   (assetUpdateData.assigneeId && assetUpdateData.assigneeId !== existingAsset.assigneeId) ||
+                                   (!assetUpdateData.assigneeId && !newUserId && (existingAsset.assigneeId || existingAsset.userId));
+        
+        if (!effectiveLocation || effectiveLocation.trim() === '' || isAssigneeChanging) {
+            if (newUserId) {
+                const u = await prisma.user.findUnique({ where: { id: newUserId }, include: { branch: true } });
+                effectiveLocation = u?.location || (typeof u?.branch === 'object' ? u?.branch?.name : null) || 'Remote / Field';
+            } else if (assetUpdateData.assigneeType === 'Branch' && assetUpdateData.assigneeId) {
+                const b = await prisma.branch.findUnique({ where: { id: assetUpdateData.assigneeId } });
+                effectiveLocation = b?.location || b?.name || 'Branch';
+            } else if (assetUpdateData.assigneeType === 'Department' && assetUpdateData.assigneeId) {
+                const d = await prisma.department.findUnique({ where: { id: assetUpdateData.assigneeId } });
+                effectiveLocation = d?.name || 'Department';
+            } else if (!assetUpdateData.assigneeId && !newUserId) {
+                effectiveLocation = 'In Stock';
+            }
+        }
+
         const asset = await prisma.asset.update({
             where: { id: Number(id) },
             data: { 
                 ...assetUpdateData, 
+                location: effectiveLocation,
                 company: updatedCompany,
                 status: finalStatus,
                 specs: assetUpdateData.specs ? (typeof assetUpdateData.specs === 'string' ? assetUpdateData.specs : JSON.stringify(assetUpdateData.specs)) : null,

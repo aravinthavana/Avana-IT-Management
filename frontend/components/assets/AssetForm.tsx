@@ -214,11 +214,25 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 ? (customDeviceType.trim() || 'Other')
                 : formData.category;
 
+            let derivedLocation = 'In Stock';
+            const targetAssigneeId = formData.assigneeId ? Number(formData.assigneeId) : null;
+            if (formData.assigneeType === 'User' && targetAssigneeId) {
+                const u = users.find(x => x.id === targetAssigneeId);
+                derivedLocation = u?.location || (typeof u?.branch === 'object' ? u?.branch?.name : u?.branch) || 'Remote / Field';
+            } else if (formData.assigneeType === 'Branch' && targetAssigneeId) {
+                const b = branches.find(x => x.id === targetAssigneeId);
+                derivedLocation = b?.name || 'Branch';
+            } else if (formData.assigneeType === 'Department' && targetAssigneeId) {
+                const d = departments.find(x => x.id === targetAssigneeId);
+                derivedLocation = d?.name || 'Department';
+            }
+
             const finalData = { 
                 ...formData, 
+                location: derivedLocation,
                 category: effectiveCategory,
                 purchaseId: formData.purchaseId ? Number(formData.purchaseId) : null,
-                assigneeId: formData.assigneeId ? Number(formData.assigneeId) : null,
+                assigneeId: targetAssigneeId,
                 assigneeType: formData.assigneeType || null,
                 warrantyStartDate: formData.warrantyStartDate ? new Date(formData.warrantyStartDate).toISOString() : null,
                 warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate).toISOString() : null
@@ -338,7 +352,6 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
                             <input type="text" value={formData.status} className="mt-1 block w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm" readOnly />
                         </div>
-                         <FormInput label="Location" type="text" name="location" value={formData.location} onChange={handleChange} required />
                          <FormSelect label="Assign To (Type)" name="assigneeType" value={formData.assigneeType ?? ''} onChange={handleChange}>
                             <option value="">Unassigned</option>
                             <option value="User">User</option>

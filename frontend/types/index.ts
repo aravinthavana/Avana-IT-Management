@@ -316,3 +316,12 @@ export interface SelfAudit {
     asset?: Asset;
     user?: User;
 }
+
+export function normalizeCompanyCode(company?: string | null): string {
+    if (!company) return '';
+    const upper = company.trim().toUpperCase();
+    if (upper.includes('SURGICAL') || upper.startsWith('ASSP')) return 'ASSP';
+    if (upper.includes('TECHNOLOGY') || upper.startsWith('ATS')) return 'ATS';
+    if (upper.includes('MEDICAL') || upper.startsWith('AMD')) return 'AMD';
+    return upper;
+}

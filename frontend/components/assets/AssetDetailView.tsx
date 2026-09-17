@@ -71,7 +71,35 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
             return typeof p === 'string' ? JSON.parse(p) : p; 
         } catch { return { details: asset.specs }; } 
     })() : (asset.specs || {});
-    const specEntries = Object.entries(parsedSpecs);
+    const specEntries = Object.entries(parsedSpecs).filter(([k]) => {
+        const lower = k.toLowerCase().replace(/[\s_-]/g, '');
+        return lower !== 'servicetag' && lower !== 'serialnumber';
+    });
+
+    const derivedLocation = React.useMemo(() => {
+        if (asset.assigneeType?.toLowerCase() === 'user' && asset.assigneeId) {
+            const u = users.find(x => x.id === asset.assigneeId);
+            if (u) {
+                return u.location || (typeof u.branch === 'object' ? u.branch?.name : u.branch) || 'Remote / Field';
+            }
+        }
+        if (asset.assigneeType?.toLowerCase() === 'branch' && asset.assigneeId) {
+            const b = branches.find(x => x.id === asset.assigneeId);
+            if (b) return b.name;
+        }
+        if (asset.assigneeType?.toLowerCase() === 'department' && asset.assigneeId) {
+            const d = departments.find(x => x.id === asset.assigneeId);
+            if (d) return d.name;
+        }
+        if (asset.status === 'In Stock' || asset.status === 'Available for Reallocation') {
+            return 'In Stock';
+        }
+        if (asset.status === 'In Repair') {
+            return 'In Repair';
+        }
+        return 'In Stock';
+    }, [asset, users, branches, departments]);
+
     const warrantyStatus = getWarrantyStatus(asset);
     const [isAuditModalOpen, setIsAuditModalOpen] = React.useState(false);
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
@@ -274,7 +302,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         <DetailItem label="Brand" value={asset.brand} />
                         <DetailItem label="Model" value={asset.model} />
                         <DetailItem label="Serial Number" value={asset.serialNumber} />
-                        <DetailItem label="Location" value={asset.location} />
+                        <DetailItem label="Location" value={derivedLocation} />
                         {purchase && (
                             <DetailItem label="Invoice Number" value={
                                 <a href="#" onClick={handlePurchaseClick} className="text-brand-600 dark:text-red-400 hover:underline font-semibold">

@@ -53,7 +53,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
 
     const technicalDetails = [
         { label: `${deviceType} Brand`, value: laptop.brand }, { label: 'Model Number', value: laptop.model },
-        { label: `${deviceType} Color`, value: specs.color }, { label: 'Serial Number / Service Tag', value: laptop.serialNumber || specs.serviceTag },
+        { label: `${deviceType} Color`, value: specs.color }, { label: 'Serial Number', value: laptop.serialNumber },
         { label: isDesktop ? 'Power Supply / Cable' : 'Charger Adapter', value: specs.chargerAdapter || specs.powerSupply || (isDesktop ? 'Standard Power Cord Included' : undefined) }, 
         { label: 'Processor', value: specs.processor },
         { label: 'Graphics', value: specs.graphics }, { label: 'Storage', value: specs.storage },

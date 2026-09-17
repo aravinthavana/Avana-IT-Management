@@ -178,6 +178,28 @@ const AssetManagement: React.FC = () => {
         return getAssigneeDisplayInfo(assigneeId as any, assigneeType as any, users, departments, branches);
     }, [users, departments, branches]);
     
+    const getAssetEffectiveLocation = React.useCallback((asset: Asset): string => {
+        if (asset.assigneeType?.toLowerCase() === 'user' && asset.assigneeId) {
+            const u = users.find(x => x.id === asset.assigneeId);
+            if (u) return u.location || (typeof u.branch === 'object' ? u.branch?.name : u.branch) || 'Remote / Field';
+        }
+        if (asset.assigneeType?.toLowerCase() === 'branch' && asset.assigneeId) {
+            const b = branches.find(x => x.id === asset.assigneeId);
+            if (b) return b.name;
+        }
+        if (asset.assigneeType?.toLowerCase() === 'department' && asset.assigneeId) {
+            const d = departments.find(x => x.id === asset.assigneeId);
+            if (d) return d.name;
+        }
+        if (asset.status === 'In Stock' || asset.status === 'Available for Reallocation') {
+            return 'In Stock';
+        }
+        if (asset.status === 'In Repair') {
+            return 'In Repair';
+        }
+        return 'In Stock';
+    }, [users, branches, departments]);
+
     const addFilter = () => {
         const usedFields = assetFilters.map(f => f.field);
         const nextField = Object.keys(filterableAssetFields).find(f => !usedFields.includes(f));
@@ -193,6 +215,10 @@ const AssetManagement: React.FC = () => {
     };
 
     const getOptionsForAssetField = (field: string) => {
+        if (field === 'location') {
+            const options = [...new Set(assets.map(asset => getAssetEffectiveLocation(asset)))].filter(Boolean);
+            return ['All', ...options];
+        }
         const options = [...new Set(assets.map(asset => (asset as any)[field]))].filter(Boolean);
         return ['All', ...options];
     };
@@ -216,7 +242,7 @@ const AssetManagement: React.FC = () => {
                 if (filter.value === 'All') return true;
                 if (filter.field === 'status') return asset.status === filter.value;
                 if (filter.field === 'category') return asset.category === filter.value;
-                if (filter.field === 'location') return asset.location === filter.value;
+                if (filter.field === 'location') return getAssetEffectiveLocation(asset) === filter.value;
                 if (filter.field === 'warrantyStatus') {
                     const status = getWarrantyStatus(asset);
                     return status.label === filter.value;
@@ -414,7 +440,7 @@ const AssetManagement: React.FC = () => {
                 asset.brand || '',
                 asset.model || '',
                 `"${asset.serialNumber || ''}"`,
-                asset.location || ''
+                `"${getAssetEffectiveLocation(asset) || ''}"`
             ];
             csvRows.push(row.join(','));
         });
@@ -552,7 +578,7 @@ const AssetManagement: React.FC = () => {
                                     </div>
                                     <div className="text-center">
                                         <p className="text-slate-400 mb-1 font-bold uppercase tracking-tighter text-[9px]">Location</p>
-                                        <p className="text-slate-700 dark:text-slate-300 font-semibold">{asset.location || 'N/A'}</p>
+                                        <p className="text-slate-700 dark:text-slate-300 font-semibold">{getAssetEffectiveLocation(asset) || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
