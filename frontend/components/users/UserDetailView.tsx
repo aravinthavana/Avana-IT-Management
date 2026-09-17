@@ -50,10 +50,19 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     }, [userId]);
 
     if (!user) {
+        if (users.length === 0) {
+            return (
+                <div className="flex items-center justify-center py-24 text-slate-500 dark:text-slate-400">
+                    <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+                    <span className="font-body text-sm">Loading user details...</span>
+                </div>
+            );
+        }
         return (
-            <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold">User not found</h2>
-                <button onClick={onBack} className="mt-4 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">&larr; Back to Users</button>
+            <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-md mx-auto my-12">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-heading">User Not Found</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-body">The requested user could not be located.</p>
+                <button onClick={onBack} className="mt-5 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 text-sm font-medium">&larr; Back to Users</button>
             </div>
         );
     }

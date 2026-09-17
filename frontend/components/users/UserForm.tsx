@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { User, normalizeCompanyCode } from '../../types';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface UserFormProps {
     isOpen: boolean;
@@ -35,7 +36,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
     return (
         <div>
             <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <select id={selectId} name={name} value={value ?? ''} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100">
+            <select id={selectId} name={name} value={value ?? ''} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed">
                 {children}
             </select>
         </div>
@@ -50,6 +51,8 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
 
 const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLoading }) => {
     const { departments, branches, users, assets } = useAppContext();
+    const { user: loggedInUser } = useAuth();
+    const isAdmin = loggedInUser?.role === 'Admin';
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'User', status: 'Active',
         departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
@@ -163,8 +166,8 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
         const payload: any = {
             name: formData.name,
             email: formData.email,
-            role: formData.role,
-            status: formData.status,
+            role: isAdmin ? formData.role : (user ? user.role : 'User'),
+            status: isAdmin ? formData.status : (user ? user.status : 'Active'),
             accountType: formData.accountType,
             departmentId: formData.departmentId ? Number(formData.departmentId) : null,
             branchId: formData.branchId ? Number(formData.branchId) : null,
@@ -237,15 +240,25 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
                     {/* Role & Access */}
                     <SectionHeader title="Role & Access" />
-                    <FormSelect label="Role *" name="role" value={formData.role} onChange={handleChange} required>
-                        <option value="User">User</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Admin">Admin</option>
-                    </FormSelect>
-                    <FormSelect label="Status *" name="status" value={formData.status} onChange={handleChange} required>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </FormSelect>
+                    <div>
+                        <FormSelect label="Role *" name="role" value={formData.role} onChange={handleChange} disabled={!isAdmin} required>
+                            <option value="User">User</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Admin">Admin</option>
+                        </FormSelect>
+                        {!isAdmin && (
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-body">Role can only be modified by an Admin.</p>
+                        )}
+                    </div>
+                    <div>
+                        <FormSelect label="Status *" name="status" value={formData.status} onChange={handleChange} disabled={!isAdmin} required>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </FormSelect>
+                        {!isAdmin && (
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-body">Status can only be modified by an Admin.</p>
+                        )}
+                    </div>
                     <FormSelect label="Account Type *" name="accountType" value={formData.accountType} onChange={handleChange} required>
                         <option value="Employee">Employee</option>
                         <option value="Shared Account">Shared Account</option>

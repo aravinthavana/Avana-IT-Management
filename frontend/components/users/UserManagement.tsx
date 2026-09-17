@@ -21,11 +21,12 @@ const UserActionMenu: React.FC<{
     user: User;
     isSelf: boolean;
     isInactive: boolean;
+    isAdmin: boolean;
     onEdit: () => void;
     onDeactivate: () => void;
     onReactivate: () => void;
     onDelete: () => void;
-}> = ({ user, isSelf, isInactive, onEdit, onDeactivate, onReactivate, onDelete }) => {
+}> = ({ user, isSelf, isInactive, isAdmin, onEdit, onDeactivate, onReactivate, onDelete }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -51,19 +52,19 @@ const UserActionMenu: React.FC<{
                     <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                         {ICONS.edit} Edit
                     </button>
-                    {!isSelf && !isInactive && (
+                    {isAdmin && !isSelf && !isInactive && (
                         <button onClick={() => { onDeactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-amber-700 dark:text-amber-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                             Deactivate
                         </button>
                     )}
-                    {!isSelf && isInactive && (
+                    {isAdmin && !isSelf && isInactive && (
                         <button onClick={() => { onReactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-green-700 dark:text-green-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             Reactivate
                         </button>
                     )}
-                    {!isSelf && (
+                    {isAdmin && !isSelf && (
                         <button onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700 mt-1">
                             {ICONS.delete} Delete
                         </button>
@@ -250,6 +251,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     }, [initialFilters]);
 
     const handleStatusChange = async (userId: number, newStatus: string, reclaimAllAssets?: boolean) => {
+        if (loggedInUser?.role !== 'Admin') {
+            setNotification({ message: 'Only Administrators have permission to change user status.', type: 'error' });
+            return;
+        }
         setIsLoading(true);
         try {
             const res = await fetch(`${API_URL}/api/users/${userId}/status`, {
@@ -274,6 +279,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     };
 
     const handleDeleteUser = async (userId: number) => {
+        if (loggedInUser?.role !== 'Admin') {
+            setNotification({ message: 'Only Administrators have permission to delete users.', type: 'error' });
+            return;
+        }
         if (userId === loggedInUser?.id) {
             setNotification({ message: 'You cannot delete your own account.', type: 'error' });
             return;
@@ -571,6 +580,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                 user={user}
                                                 isSelf={isSelf}
                                                 isInactive={isInactive}
+                                                isAdmin={loggedInUser?.role === 'Admin'}
                                                 onEdit={() => handleOpenModal(user)}
                                                 onDeactivate={() => setConfirmAction({ type: 'deactivate', userId: user.id, userName: user.name })}
                                                 onReactivate={() => setConfirmAction({ type: 'reactivate', userId: user.id, userName: user.name })}

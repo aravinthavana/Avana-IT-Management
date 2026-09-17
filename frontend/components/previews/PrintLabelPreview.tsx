@@ -69,11 +69,21 @@ export default function PrintLabelPreview() {
     };
 
     if (!asset) {
+        if (assets.length === 0) {
+            return (
+                <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-center justify-center text-slate-800 dark:text-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="font-semibold text-base font-body">Loading label preview...</p>
+                    </div>
+                </div>
+            );
+        }
         return (
             <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-center justify-center text-slate-800 dark:text-slate-100">
                 <div className="text-center p-4">
-                    <p className="font-semibold text-lg">Error: Could not find asset data for preview.</p>
-                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700">Go Back</button>
+                    <p className="font-semibold text-lg font-heading">Error: Could not find asset data for preview.</p>
+                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium text-sm">Go Back</button>
                 </div>
             </div>
         );

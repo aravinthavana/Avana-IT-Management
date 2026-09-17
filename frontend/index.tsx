@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import { msalConfig } from "./authConfig";
@@ -23,11 +24,14 @@ msalInstance.initialize().then(() => {
     <React.StrictMode>
       <MsalProvider instance={msalInstance}>
         <AuthProvider>
-          <AppProvider>
-            <App />
-          </AppProvider>
+          <BrowserRouter>
+            <AppProvider>
+              <App />
+            </AppProvider>
+          </BrowserRouter>
         </AuthProvider>
       </MsalProvider>
     </React.StrictMode>
   );
 });
+
