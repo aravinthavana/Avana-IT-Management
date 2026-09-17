@@ -21,22 +21,41 @@ interface UserFormProps {
     isLoading?: boolean;
 }
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, name, ...props }) => {
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, name, autoComplete = "off", ...props }) => {
     const inputId = id || name;
     return (
         <div>
             <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+            <input
+                id={inputId}
+                name={name}
+                autoComplete={autoComplete}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                {...props}
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+            />
         </div>
     );
 };
 
-const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }> = ({ label, id, name, value, children, ...props }) => {
+const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }> = ({ label, id, name, value, children, autoComplete = "off", ...props }) => {
     const selectId = id || name;
     return (
         <div>
             <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <select id={selectId} name={name} value={value ?? ''} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed">
+            <select
+                id={selectId}
+                name={name}
+                value={value ?? ''}
+                autoComplete={autoComplete}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                {...props}
+                className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed"
+            >
                 {children}
             </select>
         </div>
@@ -113,51 +132,70 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
         return availableAssets;
     }, [assetCategoryFilter, desktopAssets, laptopAssets, otherAssets, availableAssets]);
 
+    const prevOpenRef = React.useRef(false);
+    const prevUserIdRef = React.useRef<number | string | null | undefined>(undefined);
+
     useEffect(() => {
-        if (user) {
-            setFormData({
-                name: user.name || '',
-                email: user.email || '',
-                password: '',
-                role: user.role || 'User',
-                status: user.status || 'Active',
-                departmentId: user.departmentId ? String(user.departmentId) : '',
-                branchId: user.branchId ? String(user.branchId) : '',
-                managerId: user.managerId ? String(user.managerId) : '',
-                accountType: user.accountType || 'Employee',
-                employeeId: user.employeeId || '',
-                mobile: user.mobile || '',
-                jobTitle: user.jobTitle || '',
-                company: user.company || '',
-                laptopStatus: user.laptopStatus || '',
-                location: user.location || '',
-                workAddress: user.workAddress || '',
-                city: user.city || '',
-                state: user.state || '',
-                postalCode: user.postalCode || '',
-                country: user.country || '',
-            });
-            setAssignmentAction('keep');
-            setDeviceOption(activeAssignedAsset ? 'assign_now' : 'no_device');
-            setSelectedAssetId('');
-            setLaunchWizardOnSave(false);
-        } else {
-            setFormData({
-                name: '', email: '', password: '', role: 'User', status: 'Active',
-                departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
-                employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
-                workAddress: '', city: '', state: '', postalCode: '', country: ''
-            });
-            setAssignmentAction('keep');
-            setDeviceOption(availableAssets.length > 0 ? 'assign_now' : 'no_device');
-            setSelectedAssetId('');
-            setHandoverCondition('Good');
-            setLaunchWizardOnSave(false);
+        if (!isOpen) {
+            prevOpenRef.current = false;
+            prevUserIdRef.current = undefined;
+            return;
         }
-    }, [user, isOpen, availableAssets.length]);
+
+        const isFirstOpen = !prevOpenRef.current;
+        const isUserSwitched = prevUserIdRef.current !== (user ? user.id : null);
+
+        if (isFirstOpen || isUserSwitched) {
+            prevOpenRef.current = true;
+            prevUserIdRef.current = user ? user.id : null;
+
+            if (user) {
+                setFormData({
+                    name: user.name || '',
+                    email: user.email || '',
+                    password: '',
+                    role: user.role || 'User',
+                    status: user.status || 'Active',
+                    departmentId: user.departmentId ? String(user.departmentId) : '',
+                    branchId: user.branchId ? String(user.branchId) : '',
+                    managerId: user.managerId ? String(user.managerId) : '',
+                    accountType: user.accountType || 'Employee',
+                    employeeId: user.employeeId || '',
+                    mobile: user.mobile || '',
+                    jobTitle: user.jobTitle || '',
+                    company: user.company || '',
+                    laptopStatus: user.laptopStatus || '',
+                    location: user.location || '',
+                    workAddress: user.workAddress || '',
+                    city: user.city || '',
+                    state: user.state || '',
+                    postalCode: user.postalCode || '',
+                    country: user.country || '',
+                });
+                setAssignmentAction('keep');
+                setDeviceOption(activeAssignedAsset ? 'assign_now' : 'no_device');
+                setSelectedAssetId('');
+                setLaunchWizardOnSave(false);
+            } else {
+                setFormData({
+                    name: '', email: '', password: '', role: 'User', status: 'Active',
+                    departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
+                    employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
+                    workAddress: '', city: '', state: '', postalCode: '', country: ''
+                });
+                setAssignmentAction('keep');
+                setDeviceOption(availableAssets.length > 0 ? 'assign_now' : 'no_device');
+                setSelectedAssetId('');
+                setHandoverCondition('Good');
+                setLaunchWizardOnSave(false);
+            }
+        }
+    }, [user, isOpen]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+        const rawName = e.target.name;
+        const name = rawName.startsWith('uf_') ? rawName.slice(3) : rawName;
+        const { value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -217,18 +255,18 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Add New User'}>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     {/* Account Credentials */}
                     <SectionHeader title="Account Credentials" />
-                    <FormInput label="Full Name *" type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="e.g. John Doe" />
-                    <FormInput label="Email Address *" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="john@avana.com" />
+                    <FormInput label="Full Name *" type="text" name="uf_name" value={formData.name} onChange={handleChange} required placeholder="e.g. John Doe" />
+                    <FormInput label="Email Address *" type="email" name="uf_email" value={formData.email} onChange={handleChange} required placeholder="john@avana.com" />
                     <div className="md:col-span-2">
                         <FormInput
                             label={user ? 'New Password (leave blank to keep current)' : 'Password *'}
                             type="password"
-                            name="password"
+                            name="uf_password"
                             value={formData.password}
                             onChange={handleChange}
                             required={!user}
@@ -241,7 +279,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                     {/* Role & Access */}
                     <SectionHeader title="Role & Access" />
                     <div>
-                        <FormSelect label="Role *" name="role" value={formData.role} onChange={handleChange} disabled={!isAdmin} required>
+                        <FormSelect label="Role *" name="uf_role" value={formData.role} onChange={handleChange} disabled={!isAdmin} required>
                             <option value="User">User</option>
                             <option value="Manager">Manager</option>
                             <option value="Admin">Admin</option>
@@ -251,7 +289,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                         )}
                     </div>
                     <div>
-                        <FormSelect label="Status *" name="status" value={formData.status} onChange={handleChange} disabled={!isAdmin} required>
+                        <FormSelect label="Status *" name="uf_status" value={formData.status} onChange={handleChange} disabled={!isAdmin} required>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </FormSelect>
@@ -259,7 +297,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-body">Status can only be modified by an Admin.</p>
                         )}
                     </div>
-                    <FormSelect label="Account Type *" name="accountType" value={formData.accountType} onChange={handleChange} required>
+                    <FormSelect label="Account Type *" name="uf_accountType" value={formData.accountType} onChange={handleChange} required>
                         <option value="Employee">Employee</option>
                         <option value="Shared Account">Shared Account</option>
                         <option value="External Employee">External Employee</option>
@@ -268,34 +306,34 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
                     {/* Employee Details */}
                     <SectionHeader title="Employee Details" />
-                    <FormInput label="Employee ID" type="text" name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder="e.g. AMD_001" />
-                    <FormInput label="Job Title" type="text" name="jobTitle" value={formData.jobTitle} onChange={handleChange} placeholder="e.g. Sales Executive" />
-                    <FormInput label="Mobile Number" type="tel" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="e.g. +91 9876543210" />
-                    <FormInput label="Company" type="text" name="company" value={formData.company} onChange={handleChange} placeholder="e.g. Avana Medical Devices" />
+                    <FormInput label="Employee ID" type="text" name="uf_employeeId" value={formData.employeeId} onChange={handleChange} placeholder="e.g. AMD_001" />
+                    <FormInput label="Job Title" type="text" name="uf_jobTitle" value={formData.jobTitle} onChange={handleChange} placeholder="e.g. Sales Executive" />
+                    <FormInput label="Mobile Number" type="tel" name="uf_mobile" value={formData.mobile} onChange={handleChange} placeholder="e.g. +91 9876543210" />
+                    <FormInput label="Company" type="text" name="uf_company" value={formData.company} onChange={handleChange} placeholder="e.g. Avana Medical Devices" />
 
                     {/* Organisation */}
                     <SectionHeader title="Organisation" />
-                    <FormSelect label="Department" name="departmentId" value={formData.departmentId} onChange={handleChange}>
+                    <FormSelect label="Department" name="uf_departmentId" value={formData.departmentId} onChange={handleChange}>
                         <option value="">-- No Department --</option>
                         {departments.map(dept => (
                             <option key={dept.id} value={dept.id}>{dept.name}</option>
                         ))}
                     </FormSelect>
-                    <FormSelect label="Official Branch" name="branchId" value={formData.branchId} onChange={handleChange}>
+                    <FormSelect label="Official Branch" name="uf_branchId" value={formData.branchId} onChange={handleChange}>
                         <option value="">-- No Branch (Remote / Unassigned) --</option>
                         {branches.map(branch => (
                             <option key={branch.id} value={branch.id}>{branch.name}</option>
                         ))}
                     </FormSelect>
-                    <FormInput label="Work Location (City / Station)" type="text" name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Hyderabad, Pune, Cochin, Remote" />
-                    <FormInput label="Work Location Address (Office Premises)" type="text" name="workAddress" value={formData.workAddress} onChange={handleChange} placeholder="e.g. No.91, Sundar Nagar 4th Avenue, Nandambakkam or Field" />
+                    <FormInput label="Work Location (City / Station)" type="text" name="uf_location" value={formData.location} onChange={handleChange} placeholder="e.g. Hyderabad, Pune, Cochin, Remote" />
+                    <FormInput label="Work Location Address (Office Premises)" type="text" name="uf_workAddress" value={formData.workAddress} onChange={handleChange} placeholder="e.g. No.91, Sundar Nagar 4th Avenue, Nandambakkam or Field" />
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <FormInput label="City" type="text" name="city" value={formData.city} onChange={handleChange} placeholder="e.g. Chennai" />
-                        <FormInput label="State" type="text" name="state" value={formData.state} onChange={handleChange} placeholder="e.g. Tamil Nadu" />
-                        <FormInput label="Postal Code" type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="e.g. 600032" />
-                        <FormInput label="Country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. India" />
+                        <FormInput label="City" type="text" name="uf_city" value={formData.city} onChange={handleChange} placeholder="e.g. Chennai" />
+                        <FormInput label="State" type="text" name="uf_state" value={formData.state} onChange={handleChange} placeholder="e.g. Tamil Nadu" />
+                        <FormInput label="Postal Code" type="text" name="uf_postalCode" value={formData.postalCode} onChange={handleChange} placeholder="e.g. 600032" />
+                        <FormInput label="Country" type="text" name="uf_country" value={formData.country} onChange={handleChange} placeholder="e.g. India" />
                     </div>
-                    <FormSelect label="Reports To (Manager)" name="managerId" value={formData.managerId} onChange={handleChange}>
+                    <FormSelect label="Reports To (Manager)" name="uf_managerId" value={formData.managerId} onChange={handleChange}>
                         <option value="">-- No Manager --</option>
                         {users.filter(u => u.id !== user?.id && (u.role === 'Manager' || u.role === 'Admin')).map(u => (
                             <option key={u.id} value={u.id}>{u.name} ({u.role})</option>

@@ -14,35 +14,63 @@ interface AssetFormProps {
     purchaseDate?: string;
 }
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }> = ({ label, error, id, name, ...props }) => {
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }> = ({ label, id, name, error, autoComplete = "off", ...props }) => {
     const inputId = id || name;
     return (
         <div>
             <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <input id={inputId} name={name} {...props} className={`mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`} />
+            <input
+                id={inputId}
+                name={name}
+                autoComplete={autoComplete}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                {...props}
+                className={`mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`}
+            />
             {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
         </div>
     );
 };
 
-const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }> = ({ label, id, name, children, ...props }) => {
+const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }> = ({ label, id, name, children, autoComplete = "off", ...props }) => {
     const selectId = id || name;
     return (
         <div>
             <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <select id={selectId} name={name} {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 text-slate-900 dark:text-slate-100">
+            <select
+                id={selectId}
+                name={name}
+                autoComplete={autoComplete}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                {...props}
+                className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 text-slate-900 dark:text-slate-100"
+            >
                 {children}
             </select>
         </div>
     );
 };
 
-const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, id, name, ...props }) => {
+const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, id, name, autoComplete = "off", ...props }) => {
     const textareaId = id || name;
     return (
         <div>
             <label htmlFor={textareaId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <textarea id={textareaId} name={name} {...props} rows={3} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"></textarea>
+            <textarea
+                id={textareaId}
+                name={name}
+                autoComplete={autoComplete}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                {...props}
+                rows={3}
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+            ></textarea>
         </div>
     );
 };
@@ -66,8 +94,23 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     const [quantity, setQuantity] = useState(1);
     const [serialNumbers, setSerialNumbers] = useState<{ value: string; error?: string }[]>([{ value: '' }]);
 
+    const prevOpenRef = React.useRef(false);
+    const prevAssetIdRef = React.useRef<any>(undefined);
+
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) {
+            prevOpenRef.current = false;
+            prevAssetIdRef.current = undefined;
+            return;
+        }
+
+        const isFirstOpen = !prevOpenRef.current;
+        const isAssetSwitched = prevAssetIdRef.current !== (asset ? asset.id : null);
+
+        if (isFirstOpen || isAssetSwitched) {
+            prevOpenRef.current = true;
+            prevAssetIdRef.current = asset ? asset.id : null;
+
             if (asset) { // Covers both editing an existing asset and pre-filling a new one
                 const rawSpecs = { ...(asset.specs || {}) };
                 delete rawSpecs.serviceTag; // Clean up legacy serviceTag
@@ -278,7 +321,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? `Edit ${asset.name}` : `Add New ${assetType}`} maxWidth="max-w-4xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="space-y-6">
                 
                 <fieldset>
                     <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Core Information</legend>
