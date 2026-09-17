@@ -426,6 +426,12 @@ const userSchema = z.object({
     employeeId: z.string().nullable().optional(),
     accountType: z.string().default('Employee'),
     laptopStatus: z.string().nullable().optional(),
+    location: z.string().nullable().optional(),
+    workAddress: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+    postalCode: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
     m365AccountCreated: z.boolean().default(false),
     m365LicenseAssigned: z.boolean().default(false),
     softwareInstalled: z.boolean().default(false),
@@ -916,6 +922,7 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
         
         const { 
             name, email, password, role, status, departmentId, branchId, managerId, accountType, mobile, jobTitle, company, employeeId, laptopStatus,
+            location, workAddress, city, state, postalCode, country,
             m365AccountCreated, m365LicenseAssigned, softwareInstalled, hardwareTested, credentialsHandedOver, dispatchDetails, onboardingStatus, onboardingStep,
             assetReturned, assetReturnCondition, assetReturnRemarks, assetReturnDocket, deviceWiped, dataBackedUp, m365LicenseRevoked, m365AccountDisabled, offboardingStatus
         } = validation.data;
@@ -944,6 +951,12 @@ app.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
                 company: company || null,
                 employeeId: employeeId || null,
                 laptopStatus: laptopStatus || null,
+                location: location || null,
+                workAddress: workAddress || null,
+                city: city || null,
+                state: state || null,
+                postalCode: postalCode || null,
+                country: country || null,
                 m365AccountCreated: m365AccountCreated || false,
                 m365LicenseAssigned: m365LicenseAssigned || false,
                 softwareInstalled: softwareInstalled || false,
@@ -989,7 +1002,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: firstErr });
         }
         
-        const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId, accountType, laptopStatus } = validation.data;
+        const { name, email, role, status, departmentId, branchId, managerId, password, avatar, mobile, jobTitle, company, employeeId, accountType, laptopStatus, location, workAddress, city, state, postalCode, country } = validation.data;
 
         const updateData: any = {};
         if (name) updateData.name = name;
@@ -1001,6 +1014,12 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
         if (employeeId !== undefined) updateData.employeeId = employeeId;
         if (accountType !== undefined) updateData.accountType = accountType;
         if (laptopStatus !== undefined) updateData.laptopStatus = laptopStatus;
+        if (location !== undefined) updateData.location = location;
+        if (workAddress !== undefined) updateData.workAddress = workAddress;
+        if (city !== undefined) updateData.city = city;
+        if (state !== undefined) updateData.state = state;
+        if (postalCode !== undefined) updateData.postalCode = postalCode;
+        if (country !== undefined) updateData.country = country;
         
         // IT Operations - Onboarding Checklist fields
         if (req.body.m365AccountCreated !== undefined) updateData.m365AccountCreated = Boolean(req.body.m365AccountCreated);

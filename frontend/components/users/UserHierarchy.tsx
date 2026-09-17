@@ -122,7 +122,7 @@ const UserHierarchy: React.FC<UserHierarchyProps> = ({ users, searchTerm, filter
     const { rootNodes, childrenMap, matchedUserIds, ancestorsOfMatched } = useMemo(() => {
         // 1. Filter by company and account type (these actually remove nodes from the tree)
         const visibleUsers = users.filter(user => {
-            const matchesCompany = filterCompany === 'All' || user.company === filterCompany;
+            const matchesCompany = filterCompany === 'All' || Boolean(user.company && (user.company === filterCompany || user.company.includes(filterCompany) || filterCompany.includes(user.company)));
             const accType = user.accountType || 'Employee';
             const matchesAccountType = filterAccountType === 'All' || accType === filterAccountType;
             return matchesCompany && matchesAccountType;

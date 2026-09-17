@@ -181,6 +181,11 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <p className="text-slate-600 dark:text-slate-300"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Official Branch:</strong> {user.branch?.name || 'Remote / Unassigned'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Work Location:</strong> {user.location || 'N/A'}</p>
+                            {(user.workAddress || user.city || user.state || user.postalCode || user.country) && (
+                                <p className="text-slate-600 dark:text-slate-300">
+                                    <strong>Work Location Address:</strong> {[user.workAddress, user.city, user.state, user.postalCode, user.country].filter(Boolean).join(', ')}
+                                </p>
+                            )}
                             <p className="text-slate-600 dark:text-slate-300"><strong>Company:</strong> {user.company || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Reporting Manager:</strong> {user.manager?.name || 'N/A'}</p>
                             <p className="text-slate-600 dark:text-slate-300"><strong>Licenses:</strong> {user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}</p>
@@ -189,9 +194,16 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                                     hasAssignedDevice ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
                                     isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                    user.laptopStatus === 'Details Not Collected' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
                                     'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                 }`}>
-                                    {hasAssignedDevice ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` : isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' : 'No Device Assigned'}
+                                    {hasAssignedDevice 
+                                        ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` 
+                                        : isUsingOwnLaptop 
+                                        ? 'Uses Own Laptop (BYOD)' 
+                                        : user.laptopStatus === 'Details Not Collected'
+                                        ? 'Details Not Collected'
+                                        : 'No Device Assigned'}
                                 </span>
                             </p>
                         </div>
@@ -289,6 +301,8 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                         ? (user.softwareInstalled ? 'Defender, Office 365, Teams, VPN configured' : 'Pending installation')
                                         : isUsingOwnLaptop
                                         ? 'Not Applicable (Personal Device / BYOD)'
+                                        : user.laptopStatus === 'Details Not Collected'
+                                        ? 'Pending device details collection'
                                         : 'Not Applicable (No device assigned)'}
                                 </p>
                             </div>
@@ -309,6 +323,8 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                         ? (user.hardwareTested ? 'Display, keyboard, battery, camera/mic verified' : 'Diagnostic check pending')
                                         : isUsingOwnLaptop
                                         ? 'Not Applicable (Personal Hardware)'
+                                        : user.laptopStatus === 'Details Not Collected'
+                                        ? 'Pending device details collection'
                                         : 'Not Applicable (No device assigned)'}
                                 </p>
                             </div>

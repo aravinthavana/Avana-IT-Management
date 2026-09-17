@@ -53,7 +53,8 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'User', status: 'Active',
         departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
-        employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
+        employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
+        workAddress: '', city: '', state: '', postalCode: '', country: ''
     });
 
     const userAssignedAssets = React.useMemo(() => {
@@ -122,16 +123,22 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                 company: user.company || '',
                 laptopStatus: user.laptopStatus || '',
                 location: user.location || '',
+                workAddress: user.workAddress || '',
+                city: user.city || '',
+                state: user.state || '',
+                postalCode: user.postalCode || '',
+                country: user.country || '',
             });
             setAssignmentAction('keep');
-            setDeviceOption(availableAssets.length > 0 ? 'assign_now' : 'no_device');
+            setDeviceOption(activeAssignedAsset ? 'assign_now' : 'no_device');
             setSelectedAssetId('');
             setLaunchWizardOnSave(false);
         } else {
             setFormData({
                 name: '', email: '', password: '', role: 'User', status: 'Active',
                 departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
-                employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: ''
+                employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
+                workAddress: '', city: '', state: '', postalCode: '', country: ''
             });
             setAssignmentAction('keep');
             setDeviceOption(availableAssets.length > 0 ? 'assign_now' : 'no_device');
@@ -163,6 +170,11 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
             company: formData.company || null,
             laptopStatus: formData.laptopStatus || null,
             location: formData.location || null,
+            workAddress: formData.workAddress || null,
+            city: formData.city || null,
+            state: formData.state || null,
+            postalCode: formData.postalCode || null,
+            country: formData.country || null,
         };
         if (formData.password && formData.password.trim() !== '') {
             payload.password = formData.password;
@@ -258,6 +270,13 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                         ))}
                     </FormSelect>
                     <FormInput label="Work Location (City / Station)" type="text" name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Hyderabad, Pune, Cochin, Remote" />
+                    <FormInput label="Work Location Address (Office Premises)" type="text" name="workAddress" value={formData.workAddress} onChange={handleChange} placeholder="e.g. No.91, Sundar Nagar 4th Avenue, Nandambakkam or Field" />
+                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <FormInput label="City" type="text" name="city" value={formData.city} onChange={handleChange} placeholder="e.g. Chennai" />
+                        <FormInput label="State" type="text" name="state" value={formData.state} onChange={handleChange} placeholder="e.g. Tamil Nadu" />
+                        <FormInput label="Postal Code" type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="e.g. 600032" />
+                        <FormInput label="Country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. India" />
+                    </div>
                     <FormSelect label="Reports To (Manager)" name="managerId" value={formData.managerId} onChange={handleChange}>
                         <option value="">-- No Manager --</option>
                         {users.filter(u => u.id !== user?.id && (u.role === 'Manager' || u.role === 'Admin')).map(u => (

@@ -315,6 +315,10 @@ const OnboardingManagement: React.FC = () => {
                                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
                                                              Uses Own Laptop (BYOD)
                                                          </span>
+                                                     ) : u.laptopStatus === 'Details Not Collected' ? (
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
+                                                             Details Not Collected
+                                                         </span>
                                                      ) : (
                                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                                                              No Device Assigned

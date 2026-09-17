@@ -257,7 +257,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (user.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
             
-            const matchesCompany = filterCompany === 'All' || user.company === filterCompany;
+            const matchesCompany = filterCompany === 'All' || Boolean(user.company && (user.company === filterCompany || user.company.includes(filterCompany) || filterCompany.includes(user.company)));
             
             const accType = user.accountType || 'Employee';
             const matchesAccountType = filterAccountType === 'All' || accType === filterAccountType;
@@ -271,8 +271,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     matchesLaptopStatus = hasAsset;
                 } else if (filterLaptopStatus === 'Uses Own Laptop') {
                     matchesLaptopStatus = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
+                } else if (filterLaptopStatus === 'Details Not Collected') {
+                    matchesLaptopStatus = !hasAsset && user.laptopStatus === 'Details Not Collected';
                 } else if (filterLaptopStatus === 'No Device Assigned' || filterLaptopStatus === 'No Laptop Assigned') {
-                    matchesLaptopStatus = !hasAsset && user.laptopStatus !== 'Uses Own Laptop' && user.laptopStatus !== 'Using own laptop';
+                    matchesLaptopStatus = !hasAsset && user.laptopStatus !== 'Uses Own Laptop' && user.laptopStatus !== 'Using own laptop' && user.laptopStatus !== 'Details Not Collected';
                 }
             }
 
@@ -358,6 +360,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             <option value="Avana Medical Devices">Avana Medical</option>
                             <option value="Avana Surgical Systems">Avana Surgical</option>
                             <option value="Avana Technology Services">Avana Technology</option>
+                            <option value="Avana Group of Companies">Avana Group</option>
                         </select>
                         <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="All">All Account Types</option>
@@ -369,6 +372,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
                             <option value="All">All Device Statuses</option>
                             <option value="Has Assigned Laptop">Has Assigned Device</option>
+                            <option value="Details Not Collected">Details Not Collected</option>
                             <option value="No Device Assigned">No Device Assigned</option>
                             <option value="Uses Own Laptop">Uses Own Laptop (BYOD)</option>
                         </select>
@@ -448,6 +452,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                             })() : isUsingOwnLaptop ? (
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" title="Uses Own Laptop (BYOD)">
                                                     BYOD
+                                                </span>
+                                            ) : user.laptopStatus === 'Details Not Collected' ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700" title="Device Details Not Collected">
+                                                    Details Pending
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" title="No Device Assigned">

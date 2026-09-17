@@ -14,6 +14,11 @@ export interface User {
     mobile?: string;
     company?: string;
     location?: string;
+    workAddress?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
     avatar?: string;
     jobTitle?: string;
     password?: string;
