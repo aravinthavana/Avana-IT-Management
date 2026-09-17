@@ -44,23 +44,22 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
         role: 'User' as 'User' | 'Manager' | 'Admin',
     });
 
-    // Step 2: M365 & License
+    // Step 2: M365 & License (support multiple licenses)
     const [m365AccountCreated, setM365AccountCreated] = useState(false);
     const [licenseOption, setLicenseOption] = useState<'assign' | 'skip'>('skip');
-    const [selectedLicenseId, setSelectedLicenseId] = useState<number | ''>('');
+    const [selectedLicenseIds, setSelectedLicenseIds] = useState<number[]>([]);
 
     // Step 3: Hardware Assignment
     const [assetOption, setAssetOption] = useState<'assign' | 'skip'>('skip');
     const [selectedAssetId, setSelectedAssetId] = useState<number | ''>('');
     const [assetCondition, setAssetCondition] = useState<string>('Good');
 
-    // Step 4: Software Configuration
+    // Step 4: Software Configuration (only the 4 office-standard checks)
     const [softwareChecks, setSoftwareChecks] = useState({
         osConfigured: false,
         m365Apps: false,
-        antivirus: false,
-        vpnTools: false,
-        diskEncryption: false,
+        necessaryApps: false,
+        driversInstalled: false,
         notApplicable: false,
     });
 
@@ -74,13 +73,13 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
         notApplicable: false,
     });
 
-    // Step 6: Logistics & Dispatch
-    const [dispatchMode, setDispatchMode] = useState<'Courier' | 'In-Person' | 'Remote'>('Courier');
+    // Step 6: Logistics & Dispatch (Courier or In-Person, with DC No)
+    const [dispatchMode, setDispatchMode] = useState<'Courier' | 'In-Person'>('Courier');
+    const [dcNumber, setDcNumber] = useState('');
     const [shippingAddress, setShippingAddress] = useState('');
     const [courierName, setCourierName] = useState('Blue Dart');
     const [docketNumber, setDocketNumber] = useState('');
     const [dispatchDate, setDispatchDate] = useState(new Date().toISOString().split('T')[0]);
-    const [estimatedDelivery, setEstimatedDelivery] = useState('');
     const [inPersonBranch, setInPersonBranch] = useState('');
     const [dispatchRemarks, setDispatchRemarks] = useState('');
 
@@ -91,39 +90,127 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
         policyCommunicated: false,
     });
 
+    // Helper to populate wizard state from a user record
+    const loadUserData = (targetUser: User) => {
+        setSelectedUserId(targetUser.id);
+        setUserData({
+            name: targetUser.name,
+            email: targetUser.email,
+            mobile: targetUser.mobile || '',
+            employeeId: targetUser.employeeId || '',
+            company: targetUser.company || 'Avana Medical Devices Pvt Ltd',
+            departmentId: targetUser.departmentId || '',
+            branchId: targetUser.branchId || '',
+            jobTitle: targetUser.jobTitle || '',
+            location: targetUser.location || '',
+            accountType: targetUser.accountType || 'Employee',
+            role: targetUser.role || 'User',
+        });
+        setM365AccountCreated(Boolean(targetUser.m365AccountCreated));
+
+        // Find assigned licenses
+        const userLicenses = licenses.filter(l => l.assignments?.some(a => a.userId === targetUser.id));
+        if (userLicenses.length > 0) {
+            setLicenseOption('assign');
+            setSelectedLicenseIds(userLicenses.map(l => l.id));
+        } else {
+            setLicenseOption(targetUser.m365LicenseAssigned ? 'assign' : 'skip');
+            setSelectedLicenseIds([]);
+        }
+
+        // Find assigned asset
+        const userAsset = assets.find(a =>
+            (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === targetUser.id) ||
+            a.assignedTo === targetUser.id ||
+            a.userId === targetUser.id
+        );
+        if (userAsset) {
+            setAssetOption('assign');
+            setSelectedAssetId(userAsset.id);
+        } else if (targetUser.laptopStatus === 'Uses Own Laptop' || targetUser.laptopStatus === 'Using own laptop' || targetUser.laptopStatus === 'No Device Assigned') {
+            setAssetOption('skip');
+            setSelectedAssetId('');
+        }
+
+        // Software and QA checks
+        if (targetUser.softwareInstalled) {
+            setSoftwareChecks({
+                osConfigured: true,
+                m365Apps: true,
+                necessaryApps: true,
+                driversInstalled: true,
+                notApplicable: false
+            });
+        }
+        if (targetUser.hardwareTested) {
+            setQaChecks({
+                display: true,
+                keyboard: true,
+                battery: true,
+                cameraMic: true,
+                network: true,
+                notApplicable: false
+            });
+        }
+        if (targetUser.credentialsHandedOver) {
+            setCredentialsChecks({
+                m365CredsShared: true,
+                laptopCredsShared: true,
+                policyCommunicated: true
+            });
+        }
+
+        // Dispatch details
+        if (targetUser.dispatchDetails) {
+            try {
+                const parsed = typeof targetUser.dispatchDetails === 'string'
+                    ? JSON.parse(targetUser.dispatchDetails)
+                    : targetUser.dispatchDetails;
+                if (parsed.mode === 'In-Person') setDispatchMode('In-Person');
+                else setDispatchMode('Courier');
+                if (parsed.dcNumber) setDcNumber(parsed.dcNumber);
+                if (parsed.shippingAddress) setShippingAddress(parsed.shippingAddress);
+                if (parsed.courierName) setCourierName(parsed.courierName);
+                if (parsed.docketNumber) setDocketNumber(parsed.docketNumber);
+                if (parsed.dispatchDate) setDispatchDate(parsed.dispatchDate);
+                if (parsed.officeLocation) setInPersonBranch(parsed.officeLocation);
+                if (parsed.remarks) setDispatchRemarks(parsed.remarks);
+            } catch {}
+        }
+
+        if (targetUser.onboardingStep && targetUser.onboardingStep > 1 && targetUser.onboardingStatus !== 'Completed') {
+            setCurrentStep(targetUser.onboardingStep);
+        }
+    };
+
     useEffect(() => {
         if (isOpen) {
             if (initialUser) {
-                setSelectedUserId(initialUser.id);
-                setUserData({
-                    name: initialUser.name,
-                    email: initialUser.email,
-                    mobile: initialUser.mobile || '',
-                    employeeId: initialUser.employeeId || '',
-                    company: initialUser.company || 'Avana Medical Devices Pvt Ltd',
-                    departmentId: initialUser.departmentId || '',
-                    branchId: initialUser.branchId || '',
-                    jobTitle: initialUser.jobTitle || '',
-                    location: initialUser.location || '',
-                    accountType: initialUser.accountType || 'Employee',
-                    role: initialUser.role || 'User',
-                });
-                setM365AccountCreated(Boolean(initialUser.m365AccountCreated));
-                if (initialUser.dispatchDetails) {
-                    try {
-                        const parsed = JSON.parse(initialUser.dispatchDetails);
-                        if (parsed.mode) setDispatchMode(parsed.mode);
-                        if (parsed.shippingAddress) setShippingAddress(parsed.shippingAddress);
-                        if (parsed.courierName) setCourierName(parsed.courierName);
-                        if (parsed.docketNumber) setDocketNumber(parsed.docketNumber);
-                        if (parsed.dispatchDate) setDispatchDate(parsed.dispatchDate);
-                        if (parsed.officeLocation) setInPersonBranch(parsed.officeLocation);
-                        if (parsed.remarks) setDispatchRemarks(parsed.remarks);
-                    } catch {}
-                }
+                loadUserData(initialUser);
             } else {
                 setSelectedUserId('new');
                 setCurrentStep(1);
+                setUserData({
+                    name: '', email: '', mobile: '', employeeId: '',
+                    company: 'Avana Medical Devices Pvt Ltd',
+                    departmentId: '', branchId: '', jobTitle: '',
+                    location: '', accountType: 'Employee', role: 'User'
+                });
+                setM365AccountCreated(false);
+                setLicenseOption('skip');
+                setSelectedLicenseIds([]);
+                setAssetOption('skip');
+                setSelectedAssetId('');
+                setSoftwareChecks({ osConfigured: false, m365Apps: false, necessaryApps: false, driversInstalled: false, notApplicable: false });
+                setQaChecks({ display: false, keyboard: false, battery: false, cameraMic: false, network: false, notApplicable: false });
+                setDispatchMode('Courier');
+                setDcNumber('');
+                setShippingAddress('');
+                setCourierName('Blue Dart');
+                setDocketNumber('');
+                setInPersonBranch('');
+                setDispatchRemarks('');
+                setCredentialsChecks({ m365CredsShared: false, laptopCredsShared: false, policyCommunicated: false });
             }
         }
     }, [isOpen, initialUser]);
@@ -131,10 +218,6 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
     if (!isOpen) return null;
 
     const inStockAssets = assets.filter(a => a.status === 'In Stock');
-    const availableLicenses = licenses.filter(l => {
-        const assigned = l.assignments?.length || 0;
-        return (l.seats - assigned) > 0;
-    });
 
     const handleCreateOrSelectUser = async (): Promise<User | null> => {
         if (selectedUserId !== 'new') {
@@ -186,7 +269,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
         setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
     };
 
-    const handleFinalSubmit = async () => {
+    const handleSaveProgress = async (status: 'In Progress' | 'Completed' = 'In Progress') => {
         setIsSubmitting(true);
         try {
             let activeUser: User | null = null;
@@ -196,21 +279,51 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                 activeUser = users.find(u => u.id === selectedUserId) || null;
             }
 
-            if (!activeUser) throw new Error('User not identified');
+            if (!activeUser) {
+                return;
+            }
 
             // Dispatch payload
-            const dispatchPayload: DispatchDetails = {
-                mode: dispatchMode,
-                shippingAddress: dispatchMode === 'Courier' ? shippingAddress : undefined,
-                courierName: dispatchMode === 'Courier' ? courierName : undefined,
-                docketNumber: dispatchMode === 'Courier' ? docketNumber : undefined,
-                dispatchDate: dispatchMode === 'Courier' ? dispatchDate : undefined,
-                officeLocation: dispatchMode === 'In-Person' ? inPersonBranch : undefined,
-                remarks: dispatchRemarks || undefined
-            };
+            const hasDispatchData = dispatchMode === 'Courier'
+                ? Boolean(shippingAddress.trim() || courierName.trim() || docketNumber.trim() || dcNumber.trim())
+                : Boolean(inPersonBranch.trim() || dcNumber.trim());
 
-            const softwareAllDone = softwareChecks.notApplicable || (softwareChecks.osConfigured && softwareChecks.m365Apps && softwareChecks.antivirus);
-            const qaAllDone = qaChecks.notApplicable || (qaChecks.display && qaChecks.keyboard && qaChecks.battery);
+            let dispatchPayload: DispatchDetails | null = null;
+            if (hasDispatchData) {
+                dispatchPayload = {
+                    mode: dispatchMode,
+                    dcNumber: dcNumber.trim() || undefined,
+                    shippingAddress: dispatchMode === 'Courier' ? shippingAddress.trim() : undefined,
+                    courierName: dispatchMode === 'Courier' ? courierName.trim() : undefined,
+                    docketNumber: dispatchMode === 'Courier' ? docketNumber.trim() : undefined,
+                    dispatchDate: dispatchDate || undefined,
+                    officeLocation: dispatchMode === 'In-Person' ? inPersonBranch.trim() : undefined,
+                    remarks: dispatchRemarks.trim() || undefined,
+                    isDispatched: Boolean(docketNumber.trim() || (dispatchMode === 'In-Person' && inPersonBranch.trim()))
+                };
+            } else if (activeUser.dispatchDetails) {
+                try {
+                    dispatchPayload = typeof activeUser.dispatchDetails === 'string'
+                        ? JSON.parse(activeUser.dispatchDetails)
+                        : activeUser.dispatchDetails;
+                } catch {
+                    dispatchPayload = null;
+                }
+            }
+
+            const softwareAllDone = softwareChecks.notApplicable || (
+                softwareChecks.osConfigured && 
+                softwareChecks.m365Apps && 
+                softwareChecks.necessaryApps && 
+                softwareChecks.driversInstalled
+            );
+            const qaAllDone = qaChecks.notApplicable || (
+                qaChecks.display && 
+                qaChecks.keyboard && 
+                qaChecks.battery && 
+                qaChecks.cameraMic && 
+                qaChecks.network
+            );
             const credsHandedOver = credentialsChecks.m365CredsShared || credentialsChecks.laptopCredsShared;
 
             const res = await fetch(`${API_URL}/api/onboarding/complete`, {
@@ -220,20 +333,21 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                 body: JSON.stringify({
                     userId: activeUser.id,
                     m365AccountCreated,
-                    assignLicenseId: licenseOption === 'assign' && selectedLicenseId ? Number(selectedLicenseId) : undefined,
+                    assignLicenseIds: licenseOption === 'assign' ? selectedLicenseIds : [],
                     assignAssetId: assetOption === 'assign' && selectedAssetId ? Number(selectedAssetId) : undefined,
                     assetCondition,
                     softwareInstalled: softwareAllDone,
                     hardwareTested: qaAllDone,
                     dispatchDetails: dispatchPayload,
                     credentialsHandedOver: credsHandedOver,
-                    onboardingStatus: 'Completed',
+                    onboardingStatus: status,
+                    onboardingStep: currentStep,
                 })
             });
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Failed to complete onboarding');
+                throw new Error(err.error || 'Failed to save onboarding progress');
             }
 
             const updatedUser = await res.json();
@@ -252,15 +366,27 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
             }
 
             // If license was assigned, update license local state
-            if (licenseOption === 'assign' && selectedLicenseId) {
-                setLicenses(licenses.map(l => l.id === Number(selectedLicenseId) ? {
-                    ...l,
-                    assignedSeats: (l.assignedSeats || 0) + 1,
-                    assignments: [...(l.assignments || []), { id: Date.now(), licenseId: l.id, userId: updatedUser.id, assignedDate: new Date().toISOString() }]
-                } : l));
+            if (licenseOption === 'assign' && selectedLicenseIds.length > 0) {
+                setLicenses(licenses.map(l => {
+                    if (selectedLicenseIds.includes(l.id)) {
+                        const alreadyInAssignments = l.assignments?.some(a => a.userId === updatedUser.id);
+                        if (!alreadyInAssignments) {
+                            return {
+                                ...l,
+                                assignedSeats: (l.assignedSeats || 0) + 1,
+                                assignments: [...(l.assignments || []), { id: Date.now() + l.id, licenseId: l.id, userId: updatedUser.id, assignedDate: new Date().toISOString() }]
+                            };
+                        }
+                    }
+                    return l;
+                }));
             }
 
-            setNotification({ message: `Onboarding completed successfully for ${updatedUser.name}!`, type: 'success' });
+            if (status === 'Completed') {
+                setNotification({ message: `Onboarding completed successfully for ${updatedUser.name}!`, type: 'success' });
+            } else {
+                setNotification({ message: `Onboarding progress saved for ${updatedUser.name}! You can resume anytime from the dashboard.`, type: 'success' });
+            }
             if (onSuccess) onSuccess(updatedUser);
             onClose();
         } catch (err: any) {
@@ -296,14 +422,19 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         {STEPS.map((step, idx) => {
                             const isDone = currentStep > step.id;
                             const isCurrent = currentStep === step.id;
+                            const canJump = selectedUserId !== 'new' || step.id <= currentStep;
                             return (
                                 <React.Fragment key={step.id}>
                                     <button 
-                                        onClick={() => step.id < currentStep && setCurrentStep(step.id)}
-                                        disabled={step.id > currentStep}
+                                        type="button"
+                                        onClick={() => {
+                                            if (canJump) setCurrentStep(step.id);
+                                        }}
+                                        disabled={!canJump}
                                         className={`flex items-center gap-2 text-left group transition-all ${
                                             isCurrent ? 'text-brand-600 dark:text-brand-400 font-semibold' : 
-                                            isDone ? 'text-emerald-600 dark:text-emerald-400 cursor-pointer' : 'text-slate-400 cursor-not-allowed'
+                                            isDone ? 'text-emerald-600 dark:text-emerald-400 cursor-pointer' : 
+                                            canJump ? 'text-slate-600 dark:text-slate-400 hover:text-brand-600 cursor-pointer' : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                                         }`}
                                     >
                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -340,17 +471,21 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     <p className="text-xs text-slate-500">Select an existing pending employee or create a new user profile</p>
                                 </div>
                                 {!initialUser && (
-                                    <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
+                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedUserId('new')}
                                             className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId === 'new' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500'}`}
                                         >
-                                            + New Employee
+                                            + New User
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedUserId(users[0]?.id || 'new')}
+                                            onClick={() => {
+                                                if (users.length > 0) {
+                                                    loadUserData(users[0]);
+                                                }
+                                            }}
                                             className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId !== 'new' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500'}`}
                                         >
                                             Select Existing
@@ -366,23 +501,9 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         value={selectedUserId}
                                         onChange={(e) => {
                                             const uId = Number(e.target.value);
-                                            setSelectedUserId(uId);
                                             const found = users.find(u => u.id === uId);
                                             if (found) {
-                                                setUserData({
-                                                    name: found.name,
-                                                    email: found.email,
-                                                    mobile: found.mobile || '',
-                                                    employeeId: found.employeeId || '',
-                                                    company: found.company || 'Avana Medical Devices Pvt Ltd',
-                                                    departmentId: found.departmentId || '',
-                                                    branchId: found.branchId || '',
-                                                    jobTitle: found.jobTitle || '',
-                                                    location: found.location || '',
-                                                    accountType: found.accountType || 'Employee',
-                                                    role: found.role || 'User',
-                                                });
-                                                setM365AccountCreated(Boolean(found.m365AccountCreated));
+                                                loadUserData(found);
                                             }
                                         }}
                                         className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
@@ -485,11 +606,11 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         </div>
                     )}
 
-                    {/* STEP 2: M365 Account & License */}
+                    {/* STEP 2: M365 Account & Multiple Licenses */}
                     {currentStep === 2 && (
                         <div className="space-y-6 max-w-2xl mx-auto">
                             <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 2: Microsoft 365 Account & License</h3>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 2: Microsoft 365 Account & Licenses</h3>
                                 <p className="text-xs text-slate-500">Configure Microsoft 365 cloud credentials and software subscriptions</p>
                             </div>
 
@@ -518,9 +639,9 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     >
                                         <div className="flex items-center gap-2 font-semibold text-sm">
                                             <input type="radio" name="licenseOpt" checked={licenseOption === 'assign'} onChange={() => setLicenseOption('assign')} className="text-brand-600" />
-                                            <span>Assign M365 License</span>
+                                            <span>Assign Licenses</span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1 pl-5">Allocate an available subscription seat from company inventory</p>
+                                        <p className="text-xs text-slate-500 mt-1 pl-5">Select one or more software subscriptions (e.g. M365 + others)</p>
                                     </div>
 
                                     <div 
@@ -536,27 +657,76 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 </div>
 
                                 {licenseOption === 'assign' && (
-                                    <div className="mt-4 p-4 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/30 dark:bg-brand-950/20 space-y-2 animate-in fade-in duration-150">
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Choose Available License</label>
-                                        <select
-                                            value={selectedLicenseId}
-                                            onChange={e => setSelectedLicenseId(Number(e.target.value))}
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
-                                        >
-                                            <option value="">-- Select License --</option>
-                                            {availableLicenses.map(l => {
+                                    <div className="mt-4 p-4 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/30 dark:bg-brand-950/20 space-y-3 animate-in fade-in duration-150">
+                                        <div className="flex items-center justify-between">
+                                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                Available Licenses ({selectedLicenseIds.length} selected)
+                                            </label>
+                                            <span className="text-[11px] text-slate-500">Multiple licenses can be selected</span>
+                                        </div>
+
+                                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                            {licenses.map(l => {
                                                 const assigned = l.assignments?.length || 0;
                                                 const available = l.seats - assigned;
+                                                const isAlreadyAssigned = selectedUserId !== 'new' && l.assignments?.some(a => a.userId === selectedUserId);
+                                                const isChecked = selectedLicenseIds.includes(l.id);
+                                                const isAvailable = available > 0 || isAlreadyAssigned;
+
                                                 return (
-                                                    <option key={l.id} value={l.id}>
-                                                        {l.name} ({l.category}) — {available} of {l.seats} seats available
-                                                    </option>
+                                                    <label 
+                                                        key={l.id} 
+                                                        className={`flex items-center justify-between p-3 rounded-lg border text-xs cursor-pointer transition-all ${
+                                                            isChecked 
+                                                                ? 'bg-brand-50/80 dark:bg-brand-900/30 border-brand-500 text-brand-900 dark:text-brand-200 font-semibold' 
+                                                                : isAvailable 
+                                                                    ? 'border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300' 
+                                                                    : 'opacity-50 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/40 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2.5">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                disabled={!isAvailable && !isChecked}
+                                                                onChange={e => {
+                                                                    if (e.target.checked) {
+                                                                        setSelectedLicenseIds(prev => [...prev, l.id]);
+                                                                    } else {
+                                                                        setSelectedLicenseIds(prev => prev.filter(id => id !== l.id));
+                                                                    }
+                                                                }}
+                                                                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                                            />
+                                                            <div>
+                                                                <p className="font-semibold">{l.name}</p>
+                                                                <p className="text-[10px] text-slate-500 font-normal">{l.category} {l.vendor ? `• ${l.vendor}` : ''}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-right">
+                                                            {isAlreadyAssigned ? (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                                    ✓ Assigned
+                                                                </span>
+                                                            ) : available > 0 ? (
+                                                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                                                                    {available} / {l.seats} available
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-red-500 font-bold">
+                                                                    0 seats left
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </label>
                                                 );
                                             })}
-                                        </select>
-                                        {availableLicenses.length === 0 && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400">⚠️ No available license seats found. You can add more in Licenses & Subs.</p>
-                                        )}
+
+                                            {licenses.length === 0 && (
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">No licenses found in inventory. You can add licenses in Licenses & Subs.</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -631,22 +801,21 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         </div>
                     )}
 
-                    {/* STEP 4: Software Configuration */}
+                    {/* STEP 4: Software Configuration (Exact Office Standards) */}
                     {currentStep === 4 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
                             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 4: Software & Security Configuration</h3>
-                                    <p className="text-xs text-slate-500">Verify company software stack, security policies, and domain configuration</p>
+                                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 4: Software & Application Configuration</h3>
+                                    <p className="text-xs text-slate-500">Verify company software setup, drivers, and standard application stack</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setSoftwareChecks({
                                         osConfigured: true,
                                         m365Apps: true,
-                                        antivirus: true,
-                                        vpnTools: true,
-                                        diskEncryption: true,
+                                        necessaryApps: true,
+                                        driversInstalled: true,
                                         notApplicable: false,
                                     })}
                                     className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline"
@@ -657,11 +826,10 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
 
                             <div className="space-y-2.5">
                                 {[
-                                    { key: 'osConfigured', title: 'Operating System Setup', desc: 'Windows 11 / macOS installed, updated, and joined to organization domain/Entra ID' },
-                                    { key: 'm365Apps', title: 'Microsoft 365 Apps', desc: 'Outlook, Microsoft Teams, OneDrive, Word, Excel, and Edge/Chrome configured' },
-                                    { key: 'antivirus', title: 'Endpoint Security & Antivirus', desc: 'Microsoft Defender for Endpoint / Antivirus running with latest definition updates' },
-                                    { key: 'vpnTools', title: 'VPN & Departmental Tools', desc: 'Secure network access, internal portals, and department-specific software installed' },
-                                    { key: 'diskEncryption', title: 'Disk Encryption & Security Policies', desc: 'BitLocker / FileVault enabled, complex PIN configured, screen timeout enforced' },
+                                    { key: 'osConfigured', title: 'Operating System Setup', desc: 'Operating system clean install / setup, updated to latest version, and initial user account configured' },
+                                    { key: 'm365Apps', title: 'M365 Apps Setup', desc: 'Outlook, Microsoft Teams, OneDrive, Word, Excel, and Office suite configured with employee credentials' },
+                                    { key: 'necessaryApps', title: 'Necessary Applications Installation', desc: 'Essential company applications, tools, web browsers (Chrome/Edge), and PDF viewer installed' },
+                                    { key: 'driversInstalled', title: 'Drivers Installation', desc: 'Latest OEM chipset, display, audio, Wi-Fi, Ethernet, and peripheral drivers installed and verified' },
                                 ].map(item => (
                                     <label key={item.key} className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
                                         <input
@@ -685,9 +853,8 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         onChange={e => setSoftwareChecks({
                                             osConfigured: false,
                                             m365Apps: false,
-                                            antivirus: false,
-                                            vpnTools: false,
-                                            diskEncryption: false,
+                                            necessaryApps: false,
+                                            driversInstalled: false,
                                             notApplicable: e.target.checked,
                                         })}
                                         className="rounded text-brand-600"
@@ -765,28 +932,36 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         </div>
                     )}
 
-                    {/* STEP 6: Logistics & Dispatch */}
+                    {/* STEP 6: Logistics & Dispatch (Courier or In-Person, with DC No) */}
                     {currentStep === 6 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
                             <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 6: Handover / Dispatch Logistics</h3>
-                                <p className="text-xs text-slate-500">Record courier docket details, shipping address, or office handover location</p>
+                                <p className="text-xs text-slate-500">Record courier dispatch details, Delivery Challan (DC) number, or in-person handover desk</p>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { id: 'Courier', title: 'Courier Dispatch', icon: ICONS.truck },
-                                    { id: 'In-Person', title: 'In-Person Handover', icon: ICONS.users },
-                                    { id: 'Remote', title: 'Remote / Digital', icon: ICONS.dashboard },
+                                    { id: 'Courier', title: 'Courier Dispatch', desc: 'Ship equipment via courier to employee location', icon: ICONS.truck },
+                                    { id: 'In-Person', title: 'In-Person Handover', desc: 'Direct equipment handover at office premises', icon: ICONS.users },
                                 ].map(mode => (
                                     <button
                                         type="button"
                                         key={mode.id}
                                         onClick={() => setDispatchMode(mode.id as any)}
-                                        className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all ${dispatchMode === mode.id ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 font-semibold' : 'border-slate-200 dark:border-slate-700 text-slate-600'}`}
+                                        className={`p-3.5 rounded-xl border-2 flex items-center gap-3 text-left transition-all ${
+                                            dispatchMode === mode.id 
+                                                ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 font-semibold' 
+                                                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                                        }`}
                                     >
-                                        {mode.icon}
-                                        <span className="text-xs">{mode.title}</span>
+                                        <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm shrink-0">
+                                            {mode.icon}
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-bold block">{mode.title}</span>
+                                            <span className="text-[10px] text-slate-400 block">{mode.desc}</span>
+                                        </div>
                                     </button>
                                 ))}
                             </div>
@@ -794,19 +969,30 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                             {dispatchMode === 'Courier' && (
                                 <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 animate-in fade-in duration-150">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Dispatched Shipping Address *</label>
+                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Dispatched Shipping Address</label>
                                         <textarea
                                             rows={2}
                                             value={shippingAddress}
                                             onChange={e => setShippingAddress(e.target.value)}
-                                            placeholder="Employee residential/office delivery address with pincode..."
+                                            placeholder="Employee residential / field delivery address with pincode..."
                                             className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Courier / Carrier Name *</label>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Delivery Challan (DC) No</label>
+                                            <input
+                                                type="text"
+                                                value={dcNumber}
+                                                onChange={e => setDcNumber(e.target.value)}
+                                                placeholder="e.g. DC-2024-0012"
+                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Courier / Carrier Name</label>
                                             <input
                                                 type="text"
                                                 value={courierName}
@@ -817,7 +1003,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Docket / AWB Tracking Number *</label>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Docket / AWB Tracking Number</label>
                                             <input
                                                 type="text"
                                                 value={docketNumber}
@@ -836,31 +1022,34 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                                 className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
                                             />
                                         </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Estimated Delivery Date</label>
-                                            <input
-                                                type="date"
-                                                value={estimatedDelivery}
-                                                onChange={e => setEstimatedDelivery(e.target.value)}
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
-                                            />
-                                        </div>
                                     </div>
                                 </div>
                             )}
 
                             {dispatchMode === 'In-Person' && (
                                 <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 animate-in fade-in duration-150">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Handover Branch / Desk Location</label>
-                                        <input
-                                            type="text"
-                                            value={inPersonBranch}
-                                            onChange={e => setInPersonBranch(e.target.value)}
-                                            placeholder="e.g. Chennai Office, IT Support Desk Floor 3"
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Handover Branch / Desk Location</label>
+                                            <input
+                                                type="text"
+                                                value={inPersonBranch}
+                                                onChange={e => setInPersonBranch(e.target.value)}
+                                                placeholder="e.g. Chennai Office, IT Support Desk Floor 3"
+                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Delivery Challan (DC) No (Optional)</label>
+                                            <input
+                                                type="text"
+                                                value={dcNumber}
+                                                onChange={e => setDcNumber(e.target.value)}
+                                                placeholder="e.g. DC-2024-0012"
+                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -933,8 +1122,8 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {currentStep === 8 && (
                         <div className="space-y-5 max-w-2xl mx-auto">
                             <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 8: Final Review & Onboarding Completion</h3>
-                                <p className="text-xs text-slate-500">Verify summary before recording the onboarding completion in the audit log</p>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 8: Final Review & Confirmation</h3>
+                                <p className="text-xs text-slate-500">Verify the onboarding setup below. You can save as In Progress or mark 100% complete.</p>
                             </div>
 
                             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
@@ -945,7 +1134,9 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
                                     <span className="text-slate-500">Microsoft 365:</span>
                                     <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {m365AccountCreated ? '✓ Account Created' : 'Not Set'} | {licenseOption === 'assign' && selectedLicenseId ? `License Assigned` : 'No License Needed'}
+                                        {m365AccountCreated ? '✓ Account Created' : 'Not Set'} | {licenseOption === 'assign' && selectedLicenseIds.length > 0 
+                                            ? `${selectedLicenseIds.length} License(s) Assigned (${selectedLicenseIds.map(id => licenses.find(l => l.id === id)?.name).filter(Boolean).join(', ')})` 
+                                            : 'No License Needed'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
@@ -959,15 +1150,15 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
                                     <span className="text-slate-500">Software & QA:</span>
                                     <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                        ✓ Configured & Tested
+                                        {softwareChecks.notApplicable ? 'Hardware N/A' : (softwareChecks.osConfigured && softwareChecks.m365Apps ? '✓ Configured & Tested' : 'Partial / In Progress')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
                                     <span className="text-slate-500">Dispatch / Logistics:</span>
                                     <span className="font-semibold text-slate-800 dark:text-slate-100">
                                         {dispatchMode === 'Courier' 
-                                            ? `Courier: ${courierName} (Docket: ${docketNumber || 'N/A'})`
-                                            : dispatchMode === 'In-Person' ? `In-Person Handover (${inPersonBranch || 'Office'})` : 'Remote'}
+                                            ? `Courier: ${courierName}${dcNumber ? ` (DC: ${dcNumber})` : ''}${docketNumber ? ` (Docket: ${docketNumber})` : ''}`
+                                            : `In-Person Handover (${inPersonBranch || 'Office'})${dcNumber ? ` (DC: ${dcNumber})` : ''}`}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1">
@@ -978,10 +1169,27 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 </div>
                             </div>
 
+                            <div className="p-3.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">Pending dispatch or later handover?</p>
+                                    <p className="text-[11px] text-blue-700 dark:text-blue-300 mt-0.5">
+                                        If dispatch or credentials handover will be completed later, you can save your progress as <strong>"In Progress"</strong>.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSaveProgress('In Progress')}
+                                    disabled={isSubmitting}
+                                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shrink-0 transition-colors shadow-sm"
+                                >
+                                    💾 Save as In Progress
+                                </button>
+                            </div>
+
                             <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-3">
                                 <span className="text-emerald-600 dark:text-emerald-400 text-lg">✓</span>
                                 <p className="text-xs text-emerald-800 dark:text-emerald-300">
-                                    Clicking <strong>"Complete Onboarding & Handover"</strong> will mark onboarding 100% complete, assign the asset and license, and record the dispatch log.
+                                    Clicking <strong>"Complete Onboarding & Handover"</strong> will mark onboarding 100% complete and update the employee's onboarding status to Completed.
                                 </p>
                             </div>
                         </div>
@@ -996,16 +1204,26 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         disabled={currentStep === 1 || isSubmitting}
                         className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        &larr; Back
+                        ← Back
                     </button>
 
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={onClose}
                             className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                         >
                             Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleSaveProgress('In Progress')}
+                            disabled={isSubmitting || (selectedUserId === 'new' && (!userData.name.trim() || !userData.email.trim()))}
+                            className="px-4 py-2 rounded-xl text-sm font-semibold border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Save all changes so far and continue later"
+                        >
+                            <span>💾</span> Save & Continue Later
                         </button>
 
                         {currentStep < STEPS.length ? (
@@ -1015,12 +1233,12 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 disabled={isSubmitting}
                                 className="px-6 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-500/20 transition-all flex items-center gap-1.5"
                             >
-                                {isSubmitting ? 'Saving...' : 'Next Step &rarr;'}
+                                {isSubmitting ? 'Saving...' : 'Next Step →'}
                             </button>
                         ) : (
                             <button
                                 type="button"
-                                onClick={handleFinalSubmit}
+                                onClick={() => handleSaveProgress('Completed')}
                                 disabled={isSubmitting}
                                 className="px-6 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
                             >

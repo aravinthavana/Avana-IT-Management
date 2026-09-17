@@ -645,7 +645,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                                     <p>
                                         <strong>Hardware Return:</strong> {activeAssetToReturn ? (
                                             <span className="text-red-600 dark:text-red-400 font-semibold">
-                                                {activeAssetToReturn.name} [{activeAssetToReturn.assetId}] &rarr; Status will become "{destinationStatus}" ({returnCondition})
+                                                {activeAssetToReturn.name} [{activeAssetToReturn.assetId}] → Status will become "{destinationStatus}" ({returnCondition})
                                             </span>
                                         ) : (
                                             <span className="text-slate-400 italic">No device to return</span>
@@ -679,7 +679,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                                         className="w-5 h-5 mt-0.5 text-red-600 rounded focus:ring-red-500"
                                     />
                                     <div>
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Deactivate Portal Account (Status &rarr; Inactive)</span>
+                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Deactivate Portal Account (Status → Inactive)</span>
                                         <p className="text-xs text-slate-500 mt-0.5">User will no longer be able to log in to this IT Management Portal</p>
                                     </div>
                                 </label>
@@ -707,7 +707,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                         disabled={currentStep === 1 || isSubmitting}
                         className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        &larr; Back
+                        ← Back
                     </button>
 
                     <div className="flex gap-2">
@@ -726,7 +726,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                                 disabled={isSubmitting}
                                 className="px-6 py-2 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-500/20 transition-all flex items-center gap-1.5"
                             >
-                                Next Step &rarr;
+                                Next Step →
                             </button>
                         ) : (
                             <button

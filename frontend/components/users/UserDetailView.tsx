@@ -402,6 +402,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                         <span className="font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
                                             {ICONS.truck} {d.mode === 'Courier' ? `Dispatched via ${d.courierName || 'Courier'}` : `Handover: ${d.mode || 'In-Person'}`}
                                         </span>
+                                        {d.dcNumber && <p className="font-mono text-slate-700 dark:text-slate-300">Delivery Challan (DC): <strong>{d.dcNumber}</strong></p>}
                                         {d.docketNumber && <p className="font-mono text-slate-700 dark:text-slate-300">Docket / Tracking: <strong>{d.docketNumber}</strong></p>}
                                         {d.shippingAddress && <p className="text-slate-500 truncate max-w-md">Address: {d.shippingAddress}</p>}
                                     </div>

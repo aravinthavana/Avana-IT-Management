@@ -1279,13 +1279,15 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
             userId,
             m365AccountCreated,
             assignLicenseId,
+            assignLicenseIds,
             assignAssetId,
             assetCondition,
             softwareInstalled,
             hardwareTested,
             dispatchDetails,
             credentialsHandedOver,
-            onboardingStatus = 'Completed'
+            onboardingStatus = 'Completed',
+            onboardingStep
         } = req.body;
 
         // @ts-ignore
@@ -1294,10 +1296,13 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
         const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) }, include: { branch: true } });
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-        // 1. Assign M365 License if requested
+        // 1. Assign M365 License(s) if requested (single or multiple)
         let licenseAssignedFlag = targetUser.m365LicenseAssigned;
-        if (assignLicenseId && !isNaN(Number(assignLicenseId))) {
-            const licenseId = Number(assignLicenseId);
+        const licenseIdsToAssign: number[] = Array.isArray(assignLicenseIds)
+            ? assignLicenseIds.map(Number).filter(n => !isNaN(n) && n > 0)
+            : (assignLicenseId && !isNaN(Number(assignLicenseId)) ? [Number(assignLicenseId)] : []);
+
+        for (const licenseId of licenseIdsToAssign) {
             const license = await prisma.license.findUnique({
                 where: { id: licenseId },
                 include: { assignments: true }
@@ -1319,7 +1324,7 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
         if (assignAssetId && !isNaN(Number(assignAssetId))) {
             const assetId = Number(assignAssetId);
             const asset = await prisma.asset.findUnique({ where: { id: assetId } });
-            if (asset) {
+            if (asset && asset.assigneeId !== targetUser.id) {
                 await prisma.asset.update({
                     where: { id: assetId },
                     data: {
@@ -1363,8 +1368,8 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
                 credentialsHandedOver: credentialsHandedOver !== undefined ? Boolean(credentialsHandedOver) : targetUser.credentialsHandedOver,
                 dispatchDetails: dispatchDetails ? (typeof dispatchDetails === 'string' ? dispatchDetails : JSON.stringify(dispatchDetails)) : targetUser.dispatchDetails,
                 onboardingStatus,
-                onboardingCompletedDate: onboardingStatus === 'Completed' ? new Date() : targetUser.onboardingCompletedDate,
-                onboardingStep: onboardingStatus === 'Completed' ? 8 : 1
+                onboardingCompletedDate: onboardingStatus === 'Completed' ? new Date() : (onboardingStatus === 'In Progress' ? null : targetUser.onboardingCompletedDate),
+                onboardingStep: onboardingStatus === 'Completed' ? 8 : (onboardingStep ? Number(onboardingStep) : (targetUser.onboardingStep || 1))
             },
             include: { department: true, branch: true, manager: true }
         });

@@ -52,6 +52,7 @@ export interface User {
 
 export interface DispatchDetails {
     mode?: 'Courier' | 'In-Person' | 'Remote' | 'Not Applicable';
+    dcNumber?: string;
     shippingAddress?: string;
     courierName?: string;
     docketNumber?: string;
@@ -59,6 +60,7 @@ export interface DispatchDetails {
     trackingUrl?: string;
     officeLocation?: string;
     remarks?: string;
+    isDispatched?: boolean;
 }
 
 export interface ReturnDocketDetails {

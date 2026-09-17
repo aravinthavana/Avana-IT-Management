@@ -60,14 +60,16 @@ const OnboardingManagement: React.FC = () => {
         total++;
         if (hasDevice || isOwn || u.laptopStatus === 'No Device Assigned') score++;
 
-        // 4 & 5. Software & QA (only applicable if company device assigned)
+        // 4, 5 & 6. Software, QA, Logistics (only applicable if company device assigned)
         if (hasDevice) {
-            total += 2;
+            total += 3;
             if (u.softwareInstalled) score++;
             if (u.hardwareTested) score++;
+            const d = parseDispatch(u);
+            if (d && (d.isDispatched || d.docketNumber || d.dcNumber || d.officeLocation)) score++;
         }
 
-        // 6. Credentials (applicable if device assigned or M365 created)
+        // 7. Credentials (applicable if device assigned or M365 created)
         if (hasDevice || u.m365AccountCreated) {
             total++;
             if (u.credentialsHandedOver) score++;
@@ -327,14 +329,19 @@ const OnboardingManagement: React.FC = () => {
                                                  </td>
 
                                                  <td className="px-4 py-3.5">
-                                                     {dispatch?.isDispatched ? (
+                                                     {dispatch?.isDispatched || dispatch?.docketNumber || dispatch?.dcNumber ? (
                                                          <div className="flex flex-col">
                                                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                                                                 🚚 {dispatch.courierName || 'Courier'}
+                                                                 🚚 {dispatch.courierName || (dispatch.mode === 'In-Person' ? 'In-Person Handover' : 'Courier')}
                                                              </span>
+                                                             {dispatch.dcNumber && (
+                                                                 <span className="text-[10px] text-slate-700 dark:text-slate-300 font-mono font-medium">
+                                                                     DC: #{dispatch.dcNumber}
+                                                                 </span>
+                                                             )}
                                                              {dispatch.docketNumber && (
                                                                  <span className="text-[10px] text-slate-400 font-mono">
-                                                                     #{dispatch.docketNumber}
+                                                                     AWB: #{dispatch.docketNumber}
                                                                  </span>
                                                              )}
                                                          </div>
@@ -544,8 +551,18 @@ const OnboardingManagement: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3.5 font-medium text-xs">{dispatch.courierName || 'In-Person'}</td>
-                                                        <td className="px-4 py-3.5 font-mono text-xs text-brand-600 dark:text-brand-400 font-semibold">
-                                                            {dispatch.docketNumber || 'N/A'}
+                                                        <td className="px-4 py-3.5 font-mono text-xs">
+                                                            {dispatch.docketNumber && (
+                                                                <span className="text-brand-600 dark:text-brand-400 font-semibold block">
+                                                                    AWB: {dispatch.docketNumber}
+                                                                </span>
+                                                            )}
+                                                            {dispatch.dcNumber && (
+                                                                <span className="text-slate-700 dark:text-slate-300 font-medium block">
+                                                                    DC: #{dispatch.dcNumber}
+                                                                </span>
+                                                            )}
+                                                            {!dispatch.docketNumber && !dispatch.dcNumber && <span className="text-slate-400">N/A</span>}
                                                         </td>
                                                         <td className="px-4 py-3.5 text-xs text-slate-500 max-w-xs truncate">
                                                             {dispatch.shippingAddress || dispatch.officeLocation || '-'}
