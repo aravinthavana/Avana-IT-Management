@@ -72,20 +72,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
     return (
         <>
             <aside className={`bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-slate-200 dark:border-slate-800 flex flex-col`}>
-                <div className="py-2 px-4 flex items-center justify-center border-b border-slate-200 dark:border-slate-800 h-16 shrink-0">
+                <div className="py-2 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 h-16 shrink-0">
                     <a
                         href="#"
                         onClick={(e) => {
                             e.preventDefault();
                             navigate('dashboard');
                         }}
-                        className="flex justify-center w-full"
+                        className="flex flex-1 justify-center"
                         aria-label="Go to dashboard"
                     >
-                        <img src="/logo.png" alt="Company Logo" className="w-full max-w-[160px] object-contain" style={{ maxHeight: '48px' }} />
+                        <img src="/logo.png" alt="Avana Logo" className="w-full max-w-[150px] object-contain" style={{ maxHeight: '44px' }} />
                     </a>
+                    {/* Mobile close button */}
+                    <button
+                        className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 ml-2"
+                        onClick={() => setSidebarOpen(false)}
+                        aria-label="Close sidebar"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
-                <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
                     {filteredNavItems.map(item => (
                         <div key={item.name}>
                              <a 
@@ -101,31 +109,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                                         handleNav(item.view);
                                     }
                                 }} 
-                                className={`group flex items-center justify-between w-full px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium ${currentView === item.view ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                className={`group flex items-center justify-between w-full px-3 py-2.5 rounded-lg transition-colors duration-150 text-sm font-medium ${
+                                    currentView === item.view 
+                                        ? 'bg-avana-dark text-white shadow-sm' 
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                                }`}
                             >
-                                <div className="flex items-center flex-1">
-                                    <span className="w-6 h-6 mr-3 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 ease-in-out">{item.icon}</span>
-                                    <span className="flex-1">{item.name}</span>
+                                <div className="flex items-center flex-1 min-w-0">
+                                    <span className="w-5 h-5 mr-3 flex-shrink-0 opacity-80">{item.icon}</span>
+                                    <span className="flex-1 truncate">{item.name}</span>
                                     {item.view === 'requests' && pendingCount > 0 && (
-                                        <span className="ml-2 bg-white text-brand-600 dark:bg-brand-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
+                                        <span className="ml-2 bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                                             {pendingCount}
                                         </span>
                                     )}
                                     {item.view === 'tickets' && user?.role === 'Admin' && useAppContext().tickets?.filter((t: any) => t.status === 'Open').length > 0 && (
-                                        <span className="ml-2 bg-white text-brand-600 dark:bg-brand-600 dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                                        <span className="ml-2 bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                             {useAppContext().tickets.filter((t: any) => t.status === 'Open').length}
                                         </span>
                                     )}
                                 </div>
                                 {item.subItems && (
-                                    <svg className={`w-4 h-4 transition-transform ${isAssetsSubMenuOpen ? 'rotate-90' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>
+                                    <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isAssetsSubMenuOpen ? 'rotate-90' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>
                                 )}
                             </a>
                             {item.subItems && isAssetsSubMenuOpen && (
-                                <div className="pl-8 py-1 space-y-1">
-                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-semibold text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
+                                <div className="pl-8 py-1 space-y-0.5">
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
                                     {item.subItems.map(subItem => (
-                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-sm px-4 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-semibold text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
                                             {subItem.name}
                                         </a>
                                     ))}
@@ -135,9 +147,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     ))}
                 </nav>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 md:hidden transition-all" onClick={() => setSidebarOpen(false)}></div>}
+            {isSidebarOpen && <div className="fixed inset-0 bg-avana-dark/50 backdrop-blur-sm z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
         </>
     );
 };
 
-export default Sidebar;
+export default Sidebar;

@@ -125,16 +125,12 @@ export default function App() {
         <>
             <style>
                 {`
-                    body {
-                        -webkit-font-smoothing: antialiased;
-                        -moz-osx-font-smoothing: grayscale;
-                    }
                     .no-print, .no-print * {
                         display: none !important;
                     }
                 `}
             </style>
-            <div className="flex min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+            <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                 <Sidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
                 <div className="flex flex-col flex-1 md:ml-64 min-w-0">
                     <Header setSidebarOpen={setSidebarOpen} />
@@ -151,4 +147,4 @@ export default function App() {
             </div>
         </>
     );
-}
+}

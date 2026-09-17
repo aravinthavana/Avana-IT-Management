@@ -1,14 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* ── Typography ── */
   --font-sans: 'Arimo', sans-serif;
   --font-heading: 'Fira Sans', sans-serif;
-  --font-subheading: 'Zalando Sans', 'Arimo', sans-serif;
+  --font-subheading: 'Zalando Sans', 'DM Sans', 'Arimo', sans-serif;
 
-  --color-brand-50: #faefd6;
+  /* ── Brand / Primary (gold scale) ── */
+  --color-brand-50:  #faefd6;
   --color-brand-100: #f1ddad;
   --color-brand-200: #e7ca83;
   --color-brand-300: #deb859;
@@ -20,55 +21,79 @@
   --color-brand-900: #3c2901;
   --color-brand-950: #2a1c00;
 
-  --color-avana-dark: #172025;
+  /* ── Avana Named Colors ── */
+  --color-avana-dark:  #172025;
   --color-avana-olive: #404131;
   --color-avana-beige: #d7d0bc;
-  --color-avana-gray: #aab2b2;
+  --color-avana-gray:  #aab2b2;
+
+  /* ── Remap slate-* → Avana warm-neutral scale ──
+     This remapping automatically applies to ALL components using slate-* classes */
+  --color-slate-50:  #faf9f6;
+  --color-slate-100: #f0ede6;
+  --color-slate-200: #d7d0bc;
+  --color-slate-300: #aab2b2;
+  --color-slate-400: #7d8e8e;
+  --color-slate-500: #5e6e6e;
+  --color-slate-600: #404131;
+  --color-slate-700: #2e3025;
+  --color-slate-800: #1e2520;
+  --color-slate-900: #172025;
+  --color-slate-950: #0e1518;
 }
 
+/* ── Base typography enforcement ── */
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+  html, body {
+    font-family: 'Arimo', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fira Sans', sans-serif;
+    font-weight: 600;
+  }
+
+  label, th, .font-subheading, [data-subheading] {
+    font-family: 'Zalando Sans', 'DM Sans', 'Arimo', sans-serif;
+  }
+
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* Ensure buttons and nav links have accessible touch targets on mobile */
+  button, [role="button"] { min-height: 36px; }
 }
 
-
+/* ── Page transition ── */
 @keyframes page-in {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
+.page-transition { animation: page-in 0.2s ease-out; }
 
-.page-transition {
-    animation: page-in 0.25s ease-out;
-}
+/* ── Sidebar scrollbar ── */
+nav::-webkit-scrollbar { width: 4px; }
+nav::-webkit-scrollbar-track { background: transparent; }
+nav::-webkit-scrollbar-thumb { background-color: rgba(170,178,178,0.4); border-radius: 9999px; }
+nav::-webkit-scrollbar-thumb:hover { background-color: rgba(170,178,178,0.7); }
 
-/* Subtle scrollbar for the sidebar */
-nav::-webkit-scrollbar {
-    width: 4px;
-}
-nav::-webkit-scrollbar-track {
-    background: transparent;
-}
-nav::-webkit-scrollbar-thumb {
-    background-color: rgba(148, 163, 184, 0.4);
-    border-radius: 9999px;
-}
-nav::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(148, 163, 184, 0.7);
-}
+/* ── Global scrollbar (subtle) ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: rgba(170,178,178,0.5); border-radius: 9999px; }
 
-/* Rich Text Editor Image Constraints */
+/* ── Rich Text Editor / Prose image constraints ── */
 .ql-editor img, .prose img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Mobile: prevent horizontal overflow ── */
+@media (max-width: 767px) {
+  main { overflow-x: hidden; }
 }

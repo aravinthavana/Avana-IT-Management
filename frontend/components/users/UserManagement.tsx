@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
@@ -16,6 +16,64 @@ interface UserManagementProps {
     onFiltersApplied: () => void;
 }
 
+// Kebab (⋯) action menu for each user row
+const UserActionMenu: React.FC<{
+    user: User;
+    isSelf: boolean;
+    isInactive: boolean;
+    onEdit: () => void;
+    onDeactivate: () => void;
+    onReactivate: () => void;
+    onDelete: () => void;
+}> = ({ user, isSelf, isInactive, onEdit, onDeactivate, onReactivate, onDelete }) => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
+            <button
+                onClick={() => setOpen(o => !o)}
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Actions"
+            >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+            </button>
+            {open && (
+                <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-10 py-1 text-sm">
+                    <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                        {ICONS.edit} Edit
+                    </button>
+                    {!isSelf && !isInactive && (
+                        <button onClick={() => { onDeactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                            Deactivate
+                        </button>
+                    )}
+                    {!isSelf && isInactive && (
+                        <button onClick={() => { onReactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2 text-green-700 dark:text-green-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Reactivate
+                        </button>
+                    )}
+                    {!isSelf && (
+                        <button onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400 border-t border-slate-100 dark:border-slate-700 mt-1">
+                            {ICONS.delete} Delete
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFiltersApplied }) => {
     const { users, setUsers, assets, setAssets, setNotification, selectedUserId, setSelectedUserId, selectedDepartmentId, navigate, getHeaders, fetchAllData, fetchAssetHistory } = useAppContext();
     const { user: loggedInUser } = useAuth();
@@ -25,6 +83,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [filterCompany, setFilterCompany] = useState('All');
     const [filterAccountType, setFilterAccountType] = useState('All');
     const [filterLaptopStatus, setFilterLaptopStatus] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
     const [confirmAction, setConfirmAction] = useState<{ type: 'deactivate' | 'reactivate' | 'delete'; userId: number; userName: string } | null>(null);
     const [sortKey, setSortKey] = useState('name-asc');
     const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +91,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [reclaimAll, setReclaimAll] = useState(true);
     const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
     const [wizardUser, setWizardUser] = useState<User | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
 
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
@@ -63,7 +123,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 const updated = await res.json();
                 setUsers(users.map(u => u.id === editingUser.id ? updated : u));
 
-                // If unassigning previous asset on edit
                 if (assetAssignment?.unassignAssetId) {
                     const oldAsset = assets.find(a => a.id === assetAssignment.unassignAssetId);
                     if (oldAsset) {
@@ -93,7 +152,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     }
                 }
 
-                // If assigning new asset on edit
                 if (assetAssignment?.action === 'assign' && assetAssignment.assetId) {
                     const assetToAssign = assets.find(a => a.id === assetAssignment.assetId);
                     if (assetToAssign) {
@@ -118,12 +176,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 fetchAssetHistory();
                             }
                         } catch (assignErr) {
-                            console.error('Failed to assign asset on user edit:', assignErr);
+                            console.error('Failed to assign new asset on edit:', assignErr);
                         }
                     }
                 }
 
-                setNotification({ message: `User "${updated.name}" updated successfully.`, type: 'success' });
+                setNotification({ message: 'User updated successfully.', type: 'success' });
+                if (launchWizard) { setWizardUser(updated); setIsOnboardingWizardOpen(true); }
             } else {
                 const res = await fetch(`${API_URL}/api/users`, {
                     method: 'POST',
@@ -136,11 +195,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     const errMsg = typeof err.error === 'string' ? err.error : (typeof err.message === 'string' ? err.message : 'Failed to create user');
                     throw new Error(errMsg);
                 }
-                const created = await res.json();
-                setUsers([...users, created]);
+                const newUser = await res.json();
+                setUsers([...users, newUser]);
 
-                // If an asset was selected during onboarding, assign it immediately
-                if (assetAssignment && assetAssignment.assetId) {
+                if (assetAssignment?.action === 'assign' && assetAssignment.assetId) {
                     const assetToAssign = assets.find(a => a.id === assetAssignment.assetId);
                     if (assetToAssign) {
                         try {
@@ -150,10 +208,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 credentials: 'include',
                                 body: JSON.stringify({
                                     ...assetToAssign,
-                                    assigneeId: created.id,
+                                    assigneeId: newUser.id,
                                     assigneeType: 'User',
                                     status: 'Assigned',
-                                    location: created.location,
+                                    location: newUser.location,
                                     condition: assetAssignment.condition || 'Good',
                                     specs: assetToAssign.specs ? (typeof assetToAssign.specs === 'string' ? assetToAssign.specs : JSON.stringify(assetToAssign.specs)) : null
                                 })
@@ -164,44 +222,41 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 fetchAssetHistory();
                             }
                         } catch (assignErr) {
-                            console.error('Failed to auto-assign asset on onboarding:', assignErr);
+                            console.error('Failed to assign asset to new user:', assignErr);
                         }
                     }
                 }
 
-                setNotification({
-                    message: assetAssignment && assetAssignment.assetId 
-                        ? `User "${created.name}" created and asset assigned successfully.` 
-                        : `User "${created.name}" created. They can now log in.`, 
-                    type: 'success'
-                });
-
-                if (launchWizard) {
-                    setWizardUser(created);
-                    setIsOnboardingWizardOpen(true);
-                }
+                setNotification({ message: 'User created successfully.', type: 'success' });
+                if (launchWizard) { setWizardUser(newUser); setIsOnboardingWizardOpen(true); }
             }
-            handleCloseModal();
         } catch (err: any) {
             setNotification({ message: err.message, type: 'error' });
         } finally {
             setIsLoading(false);
+            handleCloseModal();
+            fetchAllData();
         }
     };
 
-    const handleStatusChange = async (userId: number, newStatus: 'Active' | 'Inactive', reclaimAll?: boolean) => {
-        // Guard: cannot change own status
-        if (userId === loggedInUser?.id) {
-            setNotification({ message: 'You cannot change the status of your own account.', type: 'error' });
-            return;
+    useEffect(() => {
+        if (initialFilters) {
+            const companyFilter = initialFilters.find((f: any) => f.field === 'company');
+            if (companyFilter) setFilterCompany(companyFilter.value);
+            const statusFilter = initialFilters.find((f: any) => f.field === 'laptopStatus');
+            if (statusFilter) setFilterLaptopStatus(statusFilter.value);
+            onFiltersApplied();
         }
+    }, [initialFilters]);
+
+    const handleStatusChange = async (userId: number, newStatus: string, reclaimAllAssets?: boolean) => {
         setIsLoading(true);
         try {
             const res = await fetch(`${API_URL}/api/users/${userId}/status`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
-                body: JSON.stringify({ status: newStatus, reclaimAll }),
+                body: JSON.stringify({ status: newStatus, reclaimAll: reclaimAllAssets }),
             });
             if (!res.ok) {
                 const err = await res.json();
@@ -228,7 +283,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             const res = await fetch(`${API_URL}/api/users/${userId}`, {
                 method: 'DELETE',
                 headers: getHeaders(),
-                                credentials: 'include',
+                credentials: 'include',
             });
             if (!res.ok) {
                 const err = await res.json();
@@ -262,6 +317,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             const accType = user.accountType || 'Employee';
             const matchesAccountType = filterAccountType === 'All' || accType === filterAccountType;
 
+            const matchesStatus = filterStatus === 'All' || (filterStatus === 'Active' ? user.status !== 'Inactive' : user.status === 'Inactive');
+
             let matchesLaptopStatus = true;
             if (filterLaptopStatus !== 'All') {
                 const userAssets = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === user.id) || a.assignedTo === user.id || a.userId === user.id);
@@ -278,7 +335,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 }
             }
 
-            return matchesSearch && matchesCompany && matchesAccountType && matchesLaptopStatus;
+            return matchesSearch && matchesCompany && matchesAccountType && matchesLaptopStatus && matchesStatus;
         });
 
         const [key, direction] = sortKey.split('-');
@@ -290,7 +347,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
             return 0;
         });
         return filtered;
-    }, [users, assets, searchTerm, filterCompany, filterAccountType, filterLaptopStatus, sortKey]);
+    }, [users, assets, searchTerm, filterCompany, filterAccountType, filterLaptopStatus, filterStatus, sortKey]);
 
     const handleBackFromUser = () => {
         setSelectedUserId(null);
@@ -305,6 +362,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
         delete: `Are you sure you want to PERMANENTLY delete "${confirmAction?.userName}"? This cannot be undone.`,
     };
 
+    const activeFilterCount = [filterCompany !== 'All', filterAccountType !== 'All', filterLaptopStatus !== 'All', filterStatus !== 'All'].filter(Boolean).length;
+
     return (
         <>
             <ConfirmationModal
@@ -316,7 +375,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 <div className="flex flex-col gap-4">
                     <p>{confirmAction ? confirmMessages[confirmAction.type] : ''}</p>
                     {confirmAction?.type === 'deactivate' && (
-                        <label className="flex items-start gap-2 bg-slate-50 dark:bg-slate-700/50 p-3 rounded border border-slate-200 dark:border-slate-600 text-left">
+                        <label className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 text-left cursor-pointer">
                             <input 
                                 type="checkbox" 
                                 checked={reclaimAll} 
@@ -325,215 +384,204 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             />
                             <div className="flex flex-col">
                                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Automatically reclaim assets and licenses</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">If checked, all assets currently assigned to this user will be moved to 'Under Inspection' and licenses will be unassigned.</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All assets will be moved to 'Under Inspection' and licenses unassigned.</span>
                             </div>
                         </label>
                     )}
                 </div>
             </ConfirmationModal>
 
-            <div className="bg-transparent">
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
-                    <div className="relative w-full xl:w-auto flex-1 max-w-md">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{ICONS.search}</span>
+            <div>
+                {/* ── Top bar: Search + View toggle + Add button ── */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="relative flex-1 min-w-0">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">{ICONS.search}</span>
                         <input
                             type="text"
-                            placeholder="Search by name, email, department..."
+                            placeholder="Search by name, email, department…"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl w-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                         />
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                        <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
-                            <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-                                <span className="hidden sm:inline">List</span>
-                            </button>
-                            <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                                <span className="hidden sm:inline">Hierarchy</span>
-                            </button>
-                        </div>
-                        <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
-                            <option value="All">All Companies</option>
-                            <option value="Avana Medical Devices">Avana Medical</option>
-                            <option value="Avana Surgical Systems">Avana Surgical</option>
-                            <option value="Avana Technology Services">Avana Technology</option>
-                            <option value="Avana Group of Companies">Avana Group</option>
-                        </select>
-                        <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
-                            <option value="All">All Account Types</option>
-                            <option value="Employee">Employees Only</option>
-                            <option value="External Employee">External Employees</option>
-                            <option value="Shared Account">Shared Accounts</option>
-                            <option value="Others">Others</option>
-                        </select>
-                        <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
-                            <option value="All">All Device Statuses</option>
-                            <option value="Has Assigned Laptop">Has Assigned Device</option>
-                            <option value="Details Not Collected">Details Not Collected</option>
-                            <option value="No Device Assigned">No Device Assigned</option>
-                            <option value="Uses Own Laptop">Uses Own Laptop (BYOD)</option>
-                        </select>
-                        <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800">
-                            <option value="name-asc">Name (A-Z)</option>
-                            <option value="name-desc">Name (Z-A)</option>
-                        </select>
-                        <button onClick={() => handleOpenModal()} className="bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 w-full sm:w-auto font-medium transition-all duration-200 active:scale-95 flex-shrink-0">
-                            Add New User
-                        </button>
+
+                    {/* Filter toggle button */}
+                    <button
+                        onClick={() => setShowFilters(f => !f)}
+                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${showFilters || activeFilterCount > 0 ? 'bg-avana-dark text-white border-avana-dark' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}
+                    >
+                        {ICONS.filter}
+                        <span className="hidden sm:inline">Filters</span>
+                        {activeFilterCount > 0 && <span className="bg-brand-500 text-white text-[10px] font-bold px-1.5 rounded-full">{activeFilterCount}</span>}
+                    </button>
+
+                    {/* View toggle */}
+                    <div className="hidden sm:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>List</button>
+                        <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'tree' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>Tree</button>
                     </div>
+
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="bg-avana-dark text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5"
+                    >
+                        {ICONS.add} <span className="hidden sm:inline">Add User</span>
+                    </button>
                 </div>
+
+                {/* ── Collapsible filter panel ── */}
+                {showFilters && (
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Company</label>
+                            <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="w-full text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                <option value="All">All</option>
+                                <option value="Avana Medical Devices">Avana Medical</option>
+                                <option value="Avana Surgical Systems">Avana Surgical</option>
+                                <option value="Avana Technology Services">Avana Technology</option>
+                                <option value="Avana Group of Companies">Avana Group</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Account Type</label>
+                            <select value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="w-full text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                <option value="All">All Types</option>
+                                <option value="Employee">Employees</option>
+                                <option value="External Employee">External</option>
+                                <option value="Shared Account">Shared</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Device</label>
+                            <select value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="w-full text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                <option value="All">All</option>
+                                <option value="Has Assigned Device">Has Device</option>
+                                <option value="Details Not Collected">Details Pending</option>
+                                <option value="No Device Assigned">No Device</option>
+                                <option value="Uses Own Laptop">BYOD</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status / Sort</label>
+                            <div className="flex gap-2">
+                                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="flex-1 text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    <option value="All">All</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                                <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="flex-1 text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    <option value="name-asc">A→Z</option>
+                                    <option value="name-desc">Z→A</option>
+                                </select>
+                            </div>
+                        </div>
+                        {activeFilterCount > 0 && (
+                            <div className="col-span-2 sm:col-span-4 flex justify-end">
+                                <button onClick={() => { setFilterCompany('All'); setFilterAccountType('All'); setFilterLaptopStatus('All'); setFilterStatus('All'); }} className="text-xs text-brand-600 dark:text-brand-400 hover:underline">Clear filters</button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── Result count ── */}
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 px-1">
+                    {processedUsers.length} {processedUsers.length === 1 ? 'user' : 'users'}{searchTerm || activeFilterCount > 0 ? ' found' : ' total'}
+                </p>
 
                 {viewMode === 'list' ? (
-                    <div className="space-y-3">
-                    {processedUsers.length === 0 && (
-                        <div className="text-center py-16 text-slate-500 dark:text-slate-400">
-                            <p className="text-lg font-medium">No users found</p>
-                            <p className="text-sm mt-1">Try adjusting your search or add a new user.</p>
-                        </div>
-                    )}
-                    {processedUsers.map(user => {
-                        const isSelf = user.id === loggedInUser?.id;
-                        const isInactive = user.status === 'Inactive';
-                        const deptName = user.department?.name || '';
-                        const assignedAsset = assets.find(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === user.id) || a.assignedTo === user.id || a.userId === user.id);
-                        const isUsingOwnLaptop = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
-
-                        return (
-                            <div
-                                key={user.id}
-                                onClick={() => setSelectedUserId(user.id)}
-                                className={`bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:shadow-md dark:hover:bg-slate-700/50 hover:-translate-y-px transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between p-4 border dark:border-slate-700 ${isInactive ? 'border-slate-200 opacity-70' : 'border-slate-200/80'}`}
-                            >
-                                <div className="flex items-center w-full sm:w-auto">
-                                    {user.avatar ? (
-                                        <img src={user.avatar} alt={user.name} className="h-11 w-11 rounded-full flex-shrink-0 object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
-                                    ) : (
-                                        <div className="h-11 w-11 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-lg bg-gradient-to-br from-red-400 to-red-600 text-white shadow-sm">
-                                            {user.name?.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div className="ml-4">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-semibold text-slate-800 dark:text-slate-100">{user.name}</p>
-                                            {isSelf && <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">You</span>}
-                                            {user.accountType && user.accountType !== 'Employee' && (
-                                                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-800">
-                                                    {user.accountType}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            {user.employeeId && <span className="font-medium mr-1">[{user.employeeId}]</span>}
-                                            {user.email} {deptName ? `• ${deptName}` : ''} {user.mobile ? `• ${user.mobile}` : ''}
-                                        </p>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                            {[user.jobTitle, user.branch?.name, user.location].filter(Boolean).join(' • ')}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="hidden lg:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 text-center">
-                                    <div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Device</p>
-                                        <div className="mt-1">
-                                            {assignedAsset ? (() => {
-                                                const isDesk = assignedAsset.category?.toLowerCase() === 'desktop' || assignedAsset.assetId?.includes('-DES-');
-                                                return (
-                                                    <span 
-                                                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 max-w-[120px] truncate" 
-                                                        title={`${isDesk ? '🖥️ Desktop: ' : '💻 Laptop: '}${assignedAsset.name} (${assignedAsset.assetId || assignedAsset.id})`}
-                                                    >
-                                                        {isDesk ? '🖥️ ' : '💻 '}{assignedAsset.assetId || assignedAsset.name || 'Assigned'}
-                                                    </span>
-                                                );
-                                            })() : isUsingOwnLaptop ? (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" title="Uses Own Laptop (BYOD)">
-                                                    BYOD
-                                                </span>
-                                            ) : user.laptopStatus === 'Details Not Collected' ? (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700" title="Device Details Not Collected">
-                                                    Details Pending
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" title="No Device Assigned">
-                                                    No Device
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">License</p>
-                                        <div className="mt-1">
-                                            {user.licenseAssignments && user.licenseAssignments.length > 0 ? (
-                                                <span 
-                                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 cursor-help"
-                                                    title={user.licenseAssignments.map((la: any) => la.license?.name?.replace('Microsoft 365 ', '')).join('\n')}
-                                                >
-                                                    {user.licenseAssignments.length} {user.licenseAssignments.length === 1 ? 'License' : 'Licenses'}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 italic">None</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Role</p>
-                                        <p className={`font-medium px-2 py-0.5 rounded-full text-xs ${user.role === 'Admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : user.role === 'Manager' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>{user.role}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Status</p>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isInactive ? 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'}`}>
-                                            {user.status || 'Active'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center space-x-1 flex-shrink-0 mt-3 sm:mt-0" onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                        onClick={() => handleOpenModal(user)}
-                                        className="p-2 text-slate-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600"
-                                        title="Edit User"
-                                    >
-                                        {ICONS.edit}
-                                    </button>
-
-                                    {!isSelf && !isInactive && (
-                                        <button
-                                            onClick={() => setConfirmAction({ type: 'deactivate', userId: user.id, userName: user.name })}
-                                            className="p-2 text-slate-500 rounded-full hover:bg-orange-100 dark:hover:bg-slate-700 hover:text-orange-600"
-                                            title="Deactivate Account"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                                        </button>
-                                    )}
-
-                                    {!isSelf && isInactive && (
-                                        <button
-                                            onClick={() => setConfirmAction({ type: 'reactivate', userId: user.id, userName: user.name })}
-                                            className="p-2 text-slate-500 rounded-full hover:bg-green-100 dark:hover:bg-slate-700 hover:text-green-600"
-                                            title="Reactivate Account"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        </button>
-                                    )}
-
-                                    {!isSelf && (
-                                        <button
-                                            onClick={() => setConfirmAction({ type: 'delete', userId: user.id, userName: user.name })}
-                                            className="p-2 text-slate-500 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-brand-600"
-                                            title="Permanently Delete"
-                                        >
-                                            {ICONS.delete}
-                                        </button>
-                                    )}
-                                </div>
+                    <div className="space-y-2">
+                        {processedUsers.length === 0 && (
+                            <div className="text-center py-16 text-slate-400 dark:text-slate-500">
+                                <p className="text-base font-medium">No users found</p>
+                                <p className="text-sm mt-1">Try adjusting your search or filters.</p>
                             </div>
-                        );
-                    })}
-                </div>
+                        )}
+                        {processedUsers.map(user => {
+                            const isSelf = user.id === loggedInUser?.id;
+                            const isInactive = user.status === 'Inactive';
+                            const assignedAsset = assets.find(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === user.id) || a.assignedTo === user.id || a.userId === user.id);
+                            const isDesk = assignedAsset?.category?.toLowerCase() === 'desktop' || assignedAsset?.assetId?.includes('-DES-');
+                            const isUsingOwnLaptop = user.laptopStatus === 'Uses Own Laptop' || user.laptopStatus === 'Using own laptop';
+                            const initials = user.name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || '?';
+
+                            return (
+                                <div
+                                    key={user.id}
+                                    onClick={() => setSelectedUserId(user.id)}
+                                    className={`bg-white dark:bg-slate-900 rounded-xl border cursor-pointer group transition-all hover:border-avana-gray dark:hover:border-slate-600 hover:shadow-sm ${isInactive ? 'border-slate-100 dark:border-slate-800 opacity-60' : 'border-slate-200 dark:border-slate-800'}`}
+                                >
+                                    <div className="flex items-center gap-3 p-3 sm:p-4">
+                                        {/* Avatar */}
+                                        {user.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full flex-shrink-0 object-cover border border-slate-200 dark:border-slate-700" />
+                                        ) : (
+                                            <div className="h-10 w-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm bg-avana-dark text-white">
+                                                {initials}
+                                            </div>
+                                        )}
+
+                                        {/* Main info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">{user.name}</p>
+                                                {isSelf && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
+                                                {user.accountType && user.accountType !== 'Employee' && (
+                                                    <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-semibold">{user.accountType}</span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                                {user.employeeId && <span className="font-medium text-slate-600 dark:text-slate-300 mr-1">[{user.employeeId}]</span>}
+                                                {user.email}
+                                                {user.department?.name && <span className="mx-1">·</span>}
+                                                {user.department?.name}
+                                            </p>
+                                            {/* Device + license strip */}
+                                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                {assignedAsset ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded-full">
+                                                        {isDesk ? '🖥️' : '💻'} {assignedAsset.assetId || assignedAsset.name}
+                                                    </span>
+                                                ) : isUsingOwnLaptop ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full">BYOD</span>
+                                                ) : user.laptopStatus === 'Details Not Collected' ? (
+                                                    <span className="inline-flex items-center text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-0.5 rounded-full">⚠ Details Pending</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center text-[10px] text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">No Device</span>
+                                                )}
+                                                {user.licenseAssignments && user.licenseAssignments.length > 0 && (
+                                                    <span className="text-[10px] text-slate-500 dark:text-slate-400" title={user.licenseAssignments.map((la: any) => la.license?.name?.replace('Microsoft 365 ', '')).join(', ')}>
+                                                        📧 {user.licenseAssignments.length} {user.licenseAssignments.length === 1 ? 'License' : 'Licenses'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Right: role + status + actions */}
+                                        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                                            <div className="hidden sm:flex flex-col items-end gap-1">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role === 'Admin' ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300' : user.role === 'Manager' ? 'bg-avana-beige/60 text-avana-olive dark:bg-slate-700 dark:text-avana-beige' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                    {user.role}
+                                                </span>
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isInactive ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                                    {isInactive ? 'Inactive' : 'Active'}
+                                                </span>
+                                            </div>
+                                            <UserActionMenu
+                                                user={user}
+                                                isSelf={isSelf}
+                                                isInactive={isInactive}
+                                                onEdit={() => handleOpenModal(user)}
+                                                onDeactivate={() => setConfirmAction({ type: 'deactivate', userId: user.id, userName: user.name })}
+                                                onReactivate={() => setConfirmAction({ type: 'reactivate', userId: user.id, userName: user.name })}
+                                                onDelete={() => setConfirmAction({ type: 'delete', userId: user.id, userName: user.name })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 ) : (
                     <UserHierarchy 
                         users={users}
