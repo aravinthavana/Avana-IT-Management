@@ -95,6 +95,7 @@ model Asset {
   name              String
   category          String
   status            String    @default("In Stock")
+  condition         String?   @default("Good")
   
   // Logical assignee tracking (can be User, Department, or Branch)
   assigneeId        Int?

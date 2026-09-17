@@ -81,7 +81,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
         { label: isDesktop ? 'Power Supply' : 'Power Adapter', value: specs.chargerAdapter || specs.powerSupply || (isDesktop ? 'Included' : undefined) },
         ...(!isDesktop && specs.battery ? [{ label: 'Battery Status', value: specs.battery }] : []),
         { label: 'Installed Software', value: specs.software },
-        { label: 'Device Condition', value: laptop.condition || 'Good' },
+        { label: 'Physical Condition', value: laptop.condition || 'Good' },
     ].filter(item => item.value);
 
     // Pair specs into 2 columns for a compact, balanced layout
@@ -154,8 +154,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                         <tr>
                             <td className="py-1 px-2.5 font-semibold text-slate-600">Issuing Entity:</td>
                             <td className="py-1 px-2.5 text-slate-800">{companyCode} — {currentCompany.name.replace(' Pvt. Ltd.', '')}</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Quantity Issued:</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-900">1 Unit ({deviceType})</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Issued Condition:</td>
+                            <td className="py-1 px-2.5 font-bold text-slate-900">{laptop.condition || 'Good'} (1 Unit)</td>
                         </tr>
                     </tbody>
                 </table>
@@ -206,7 +206,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
             {/* ── 6. Acknowledgment & Dual Signature Block ── */}
             <footer className="pt-2 border-t-2 border-slate-900 text-[8.5pt]">
                 <p className="text-[8pt] text-slate-700 mb-2 italic">
-                    "I, the undersigned, hereby acknowledge receipt of the {deviceType.toLowerCase()} detailed above in complete and satisfactory working condition, and agree to abide by all the terms, security guidelines, and policies specified herein."
+                    "I, the undersigned, hereby acknowledge receipt of the {deviceType.toLowerCase()} detailed above in {laptop.condition ? `${laptop.condition} working condition` : 'complete and satisfactory working condition'}, and agree to abide by all the terms, security guidelines, and policies specified herein."
                 </p>
                 <div className="flex justify-between items-end gap-6">
                     {/* Left: Employee Signature */}

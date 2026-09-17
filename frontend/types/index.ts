@@ -134,6 +134,7 @@ export interface Asset {
     warrantyYears?: number | string;
     warrantyEndDate?: string;
     remarks?: string;
+    condition?: string;
     specs?: AssetSpecs;
 }
 

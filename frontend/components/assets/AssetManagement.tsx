@@ -44,6 +44,7 @@ const AssetManagement: React.FC = () => {
 
     const filterableAssetFields: Record<string, string> = {
         status: 'Status',
+        condition: 'Condition',
         company: 'Company',
         category: 'Category',
         location: 'Location',
@@ -427,8 +428,21 @@ const AssetManagement: React.FC = () => {
         return <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${styles[status] || ''}`}>{status}</span>;
     };
 
+    const getConditionChip = (condition?: string) => {
+        if (!condition) return null;
+        const styles: { [key: string]: string } = {
+            'Brand New':              'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800',
+            'Excellent':              'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800',
+            'Good':                   'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800',
+            'Fair':                   'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800',
+            'Minor Damage':           'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800',
+            'Damaged / Under Repair': 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800',
+        };
+        return <span className={`px-2 py-0.5 inline-flex text-[10px] leading-4 font-semibold rounded-full border ${styles[condition] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>{condition}</span>;
+    };
+
     const handleExportCSV = () => {
-        const headers = ['Asset ID', 'Name', 'Category', 'Status', 'Brand', 'Model', 'Serial Number', 'Location'];
+        const headers = ['Asset ID', 'Name', 'Category', 'Status', 'Condition', 'Brand', 'Model', 'Serial Number', 'Location'];
         const csvRows = [headers.join(',')];
         
         processedAssets.forEach(asset => {
@@ -437,6 +451,7 @@ const AssetManagement: React.FC = () => {
                 `"${asset.name || ''}"`,
                 asset.category || '',
                 asset.status || '',
+                asset.condition || 'Good',
                 asset.brand || '',
                 asset.model || '',
                 `"${asset.serialNumber || ''}"`,
@@ -553,9 +568,10 @@ const AssetManagement: React.FC = () => {
                                         {ASSET_ICONS[asset.category] || ASSET_ICONS.default}
                                     </div>
                                     <div className="truncate flex-1">
-                                        <div className="flex items-center gap-2 mb-0.5">
+                                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                                             <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{asset.name}</p>
                                             {getStatusChip(asset.status)}
+                                            {getConditionChip(asset.condition)}
                                         </div>
                                         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
                                             <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">{asset.assetId}</span>

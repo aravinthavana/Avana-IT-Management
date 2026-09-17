@@ -1332,6 +1332,7 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
                         assigneeId: targetUser.id,
                         assigneeType: 'User',
                         status: 'Pending Handover',
+                        condition: assetCondition || asset.condition || 'Good',
                         location: targetUser.location || (targetUser.branch ? targetUser.branch.name : null) || 'Remote / Field'
                     }
                 });
@@ -1446,6 +1447,7 @@ app.post('/api/offboarding/process', authenticateToken, requireAdmin, async (req
                         assigneeId: null,
                         assigneeType: null,
                         status: destinationStatus,
+                        condition: condition || 'Good',
                         location: 'In Stock',
                         remarks: assetReturn.remarks || null
                     }
@@ -1611,6 +1613,7 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
                 location: effectiveLocation,
                 company: assetCompany,
                 status: finalStatus,
+                condition: condition || 'Good',
                 specs: data.specs ? (typeof data.specs === 'string' ? data.specs : JSON.stringify(data.specs)) : null,
                 userId: newUserId // Ensure relation is set
             }
@@ -1624,6 +1627,7 @@ app.post('/api/assets', authenticateToken, requireAdmin, async (req, res) => {
                 assetId: asset.id,
                 userId: actionUserId,
                 event: 'Asset Created',
+                condition: condition || 'Good',
                 details: `Asset '${asset.name}' with ID '${asset.assetId}' was created.`
             }
         });
@@ -1783,6 +1787,7 @@ app.put('/api/assets/:id', authenticateToken, requireAdmin, async (req, res) => 
                 location: effectiveLocation,
                 company: updatedCompany,
                 status: finalStatus,
+                condition: condition !== undefined ? (condition || 'Good') : (existingAsset.condition || 'Good'),
                 specs: assetUpdateData.specs ? (typeof assetUpdateData.specs === 'string' ? assetUpdateData.specs : JSON.stringify(assetUpdateData.specs)) : null,
                 userId: newUserId 
             }

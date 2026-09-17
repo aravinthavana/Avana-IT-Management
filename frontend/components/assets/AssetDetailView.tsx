@@ -35,6 +35,15 @@ const STATUS_STYLES: Record<string, string> = {
     'Disposed':                   'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
 };
 
+const CONDITION_STYLES: Record<string, string> = {
+    'Brand New':              'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    'Excellent':              'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    'Good':                   'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+    'Fair':                   'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Minor Damage':           'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    'Damaged / Under Repair': 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
+};
+
 // Status dot colours for the change-status dropdown
 const STATUS_DOT: Record<string, string> = {
     'In Stock':                   'bg-emerald-500',
@@ -173,6 +182,36 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
         }
     };
 
+    const [isConditionMenuOpen, setIsConditionMenuOpen] = React.useState(false);
+    const [isChangingCondition, setIsChangingCondition] = React.useState(false);
+
+    const handleChangeCondition = async (newCondition: string) => {
+        setIsConditionMenuOpen(false);
+        setIsChangingCondition(true);
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    ...asset,
+                    condition: newCondition,
+                    specs: asset.specs ? (typeof asset.specs === 'string' ? asset.specs : JSON.stringify(asset.specs)) : null
+                })
+            });
+            if (!res.ok) throw new Error('Failed to update condition');
+            const updated = await res.json();
+            setAssets(assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            setHistoryRefreshKey(prev => prev + 1);
+            fetchAssetHistory();
+            setNotification({ message: `Condition changed to "${newCondition}"`, type: 'success' });
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        } finally {
+            setIsChangingCondition(false);
+        }
+    };
+
     const handleAssign = () => {
         setSelectedAssetId(null);
         navigate('assets', { editingAssetId: asset.id });
@@ -291,6 +330,42 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                             <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full ${STATUS_STYLES[asset.status] || 'bg-slate-100 text-slate-600'}`}>
                                 {asset.status}
                             </span>
+                        } />
+                        <DetailItem label="Physical Condition" value={
+                            <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full border ${CONDITION_STYLES[asset.condition || 'Good'] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                                    {asset.condition || 'Good'}
+                                </span>
+                                {user?.role !== 'User' && (
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsConditionMenuOpen(prev => !prev)}
+                                            disabled={isChangingCondition}
+                                            className="text-xs text-brand-600 dark:text-red-400 hover:underline font-semibold ml-1 cursor-pointer"
+                                            title="Update Condition"
+                                        >
+                                            {isChangingCondition ? 'Updating...' : 'Change'}
+                                        </button>
+                                        {isConditionMenuOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-20" onClick={() => setIsConditionMenuOpen(false)} />
+                                                <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-30 py-1 text-xs overflow-hidden">
+                                                    {['Brand New', 'Excellent', 'Good', 'Fair', 'Minor Damage', 'Damaged / Under Repair'].map(cond => (
+                                                        <button
+                                                            key={cond}
+                                                            onClick={() => handleChangeCondition(cond)}
+                                                            className={`w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between ${asset.condition === cond ? 'font-bold text-brand-600 dark:text-red-400 bg-slate-50 dark:bg-slate-700/50' : 'text-slate-700 dark:text-slate-300'}`}
+                                                        >
+                                                            <span>{cond}</span>
+                                                            {asset.condition === cond && <span>✓</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         } />
                         <DetailItem label="Assigned To" value={
                             <div className="flex items-center gap-2">

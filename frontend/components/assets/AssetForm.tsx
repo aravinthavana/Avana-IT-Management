@@ -82,7 +82,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     const [isSubmitting, setIsSubmitting] = useState(false);
     const initialFormState: any = {
         id: 0, assetId: '', assetCode: '', name: '', category: 'Laptop', brand: '', model: '', serialNumber: '', location: '', company: 'AMD',
-        status: 'Available', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
+        status: 'Available', condition: 'Good', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
         warrantyType: 'Years', warrantyYears: '', warrantyStartDate: '', warrantyEndDate: '',
         specs: { os: '', storage: '', ram: '', processor: '', color: '', chargerAdapter: '', graphics: '', memoryTechnology: '', battery: '', dimensions: '', audio: '', displaySize: '', itemWeight: '', software: '' }
     };
@@ -131,6 +131,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 setFormData({
                     ...initialFormState,
                     ...asset,
+                    condition: asset.condition || 'Good',
                     specs: fullSpecs,
                     assigneeId: asset.assigneeId || '',
                     serialNumber: ''
@@ -139,7 +140,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 setQuantity(1);
                 setSerialNumbers([{ value: asset.serialNumber || (asset.specs as any)?.serviceTag || '', error: undefined }]);
             } else { // Creating a brand new, empty asset
-                setFormData({ ...initialFormState, category: assetType === 'Device' ? 'Laptop' : '' });
+                setFormData({ ...initialFormState, category: assetType === 'Device' ? 'Laptop' : '', condition: 'Brand New' });
                 setIsOtherDeviceType(false);
                 setCustomDeviceType('');
                 setCustomFields([]);
@@ -395,6 +396,14 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
                             <input type="text" value={formData.status} className="mt-1 block w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm" readOnly />
                         </div>
+                        <FormSelect label="Physical Condition" name="condition" value={formData.condition || 'Good'} onChange={handleChange} required>
+                            <option value="Brand New">Brand New</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Minor Damage">Minor Damage</option>
+                            <option value="Damaged / Under Repair">Damaged / Under Repair</option>
+                        </FormSelect>
                          <FormSelect label="Assign To (Type)" name="assigneeType" value={formData.assigneeType ?? ''} onChange={handleChange}>
                             <option value="">Unassigned</option>
                             <option value="User">User</option>
