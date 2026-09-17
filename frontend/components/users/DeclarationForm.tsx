@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { User, Asset } from '../../types';
 
-// This is a global variable from the script loaded in index.html
+// Global QRious variable
 declare var QRious: any;
 
 interface DeclarationFormProps {
@@ -17,13 +17,13 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
         if (qrCodeRef.current && laptop.assetId) {
             const canvas = qrCodeRef.current;
             const iframeWindow = canvas.ownerDocument.defaultView as any;
+            const QRLib = (iframeWindow && iframeWindow.QRious) || (window as any).QRious;
 
-            // Check if QRious is available on the iframe's window
-            if (iframeWindow && iframeWindow.QRious) {
-                new iframeWindow.QRious({
+            if (QRLib) {
+                new QRLib({
                     element: canvas,
                     value: laptop.assetId,
-                    size: 100, // Reduced size for better visibility
+                    size: 72,
                     level: 'H'
                 });
             }
@@ -31,15 +31,30 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
     }, [laptop.assetId]);
     
     const companyDetails = {
-        AMD: { name: 'Avana Medical Devices Pvt. Ltd.', address: ['No. 91, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032,', 'Tamil Nadu, India.'], phone: '+91 44 4233 1061 / 62 / 63', cin: 'U74999TN2009PTC071443' },
-        ASSP: { name: 'Avana Surgical Systems Pvt. Ltd.', address: ['No.91, 2nd Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai – 600 032,', 'Tamil Nadu, India.'], phone: '+91 44 2233 1061 / 62 / 63', cin: 'U74999TN2009PTC071443' },
-        ATS: { name: 'Avana Technology Services Pvt. Ltd.', address: ['No.91, Ground Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai 600032,', 'Tamil Nadu, India'], phone: '+91 44 2233 1061/62/63', cin: '' }
+        AMD: { 
+            name: 'Avana Medical Devices Pvt. Ltd.', 
+            address: ['No. 91, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'], 
+            phone: '+91 44 4233 1061 / 62 / 63', 
+            cin: 'U74999TN2009PTC071443' 
+        },
+        ASSP: { 
+            name: 'Avana Surgical Systems Pvt. Ltd.', 
+            address: ['No. 91, 2nd Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai – 600 032, Tamil Nadu, India.'], 
+            phone: '+91 44 2233 1061 / 62 / 63', 
+            cin: 'U74999TN2009PTC071443' 
+        },
+        ATS: { 
+            name: 'Avana Technology Services Pvt. Ltd.', 
+            address: ['No. 91, Ground Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'], 
+            phone: '+91 44 2233 1061 / 62 / 63', 
+            cin: '' 
+        }
     };
 
     const companyCode = (laptop.company || laptop.assetId?.split('-')[0] || 'AMD').toUpperCase();
     const currentCompany = companyDetails[companyCode as keyof typeof companyDetails] || companyDetails.AMD;
 
-    // specs may be stored as a JSON string in SQLite — safely parse it
+    // specs parsing
     const specs: Record<string, any> = (() => {
         if (!laptop.specs) return {};
         if (typeof laptop.specs === 'string') {
@@ -51,105 +66,187 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
     const isDesktop = laptop.category?.toLowerCase() === 'desktop' || laptop.assetId?.includes('-DES-');
     const deviceType = isDesktop ? 'Desktop' : 'Laptop';
 
-    const technicalDetails = [
-        { label: `${deviceType} Brand`, value: laptop.brand }, { label: 'Model Number', value: laptop.model },
-        { label: `${deviceType} Color`, value: specs.color }, { label: 'Serial Number', value: laptop.serialNumber },
-        { label: isDesktop ? 'Power Supply / Cable' : 'Charger Adapter', value: specs.chargerAdapter || specs.powerSupply || (isDesktop ? 'Standard Power Cord Included' : undefined) }, 
+    // Technical specifications list
+    const rawTechnicalDetails = [
+        { label: `${deviceType} Brand`, value: laptop.brand },
+        { label: 'Model Number', value: laptop.model },
+        { label: 'Serial Number', value: laptop.serialNumber },
+        { label: `${deviceType} Color`, value: specs.color },
         { label: 'Processor', value: specs.processor },
-        { label: 'Graphics', value: specs.graphics }, { label: 'Storage', value: specs.storage },
-        { label: 'Memory Technology', value: specs.memoryTechnology }, 
-        ...(!isDesktop && specs.battery ? [{ label: 'Battery', value: specs.battery }] : []),
-        { label: 'Dimensions', value: specs.dimensions }, { label: 'Audio', value: specs.audio },
-        { label: isDesktop ? 'Monitor / Display Size' : 'Display Size', value: specs.displaySize }, 
+        { label: 'Memory (RAM)', value: specs.memoryTechnology || specs.ram },
+        { label: 'Storage', value: specs.storage },
+        { label: 'Graphics', value: specs.graphics },
+        { label: isDesktop ? 'Monitor / Display' : 'Display Size', value: specs.displaySize },
         { label: 'Operating System', value: specs.os },
-        { label: 'Item Weight', value: specs.itemWeight }, { label: 'Software', value: specs.software },
+        { label: isDesktop ? 'Power Supply' : 'Power Adapter', value: specs.chargerAdapter || specs.powerSupply || (isDesktop ? 'Included' : undefined) },
+        ...(!isDesktop && specs.battery ? [{ label: 'Battery Status', value: specs.battery }] : []),
+        { label: 'Installed Software', value: specs.software },
+        { label: 'Device Condition', value: laptop.condition || 'Good' },
     ].filter(item => item.value);
-    
+
+    // Pair specs into 2 columns for a compact, balanced layout
+    const pairedSpecs: Array<[{ label: string; value: any }, { label: string; value: any } | null]> = [];
+    for (let i = 0; i < rawTechnicalDetails.length; i += 2) {
+        pairedSpecs.push([rawTechnicalDetails[i], rawTechnicalDetails[i + 1] || null]);
+    }
+
+    const deptName = typeof user.department === 'object' ? user.department?.name : (user.department || 'N/A');
+    const branchLocation = user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A';
+
     return (
-        <div className="bg-white p-8 font-sans leading-normal text-gray-800 flex flex-col h-full" style={{ fontSize: '10pt' }}>
-            <header className="flex justify-between items-start pb-4 border-b-2 border-black">
-                <div className="text-xs">
-                    <h1 className="font-bold text-base">{currentCompany.name}</h1>
-                    {currentCompany.address.map((line, i) => <p key={i}>{line}</p>)}
-                    <p>Phone: {currentCompany.phone}</p>
-                    {currentCompany.cin && <p>CIN No. : {currentCompany.cin}</p>}
+        <div className="bg-white p-7 font-sans text-slate-800 flex flex-col justify-between" style={{ minHeight: '100%', fontSize: '9pt', lineHeight: '1.4' }}>
+            {/* ── 1. Compact Executive Header ── */}
+            <header className="flex justify-between items-center pb-2.5 border-b-2 border-slate-900 mb-2.5">
+                <div className="text-[8.5pt] leading-tight">
+                    <h1 className="font-bold text-sm text-slate-900 tracking-tight">{currentCompany.name}</h1>
+                    {currentCompany.address.map((line, i) => (
+                        <p key={i} className="text-slate-600">{line}</p>
+                    ))}
+                    <p className="text-slate-600">
+                        Phone: {currentCompany.phone}
+                        {currentCompany.cin && <span className="ml-2 font-mono">CIN: {currentCompany.cin}</span>}
+                    </p>
                 </div>
-                <div className="text-right flex flex-col items-end">
-                     <img src="/logo.png" alt="Avana Logo" className="w-64 object-contain" />
+                <div className="flex-shrink-0 ml-4">
+                    <img 
+                        src="/logo.png" 
+                        alt="Avana Logo" 
+                        className="h-10 w-auto max-w-[125px] object-contain" 
+                    />
                 </div>
             </header>
-            
-            <main className="flex-grow">
-                <h2 className="text-center font-bold uppercase tracking-wider underline text-base my-4">Declaration Cum Undertaking</h2>
 
-                <div className="mb-4 text-sm">
-                    <p className="font-bold">To: {user.name}</p>
-                    <p>Dept: {typeof user.department === 'object' ? user.department?.name : (user.department || 'N/A')}</p>
-                    <p>Mob No: {user.mobile || 'N/A'}</p> 
-                </div>
+            {/* ── 2. Document Title ── */}
+            <div className="text-center my-1.5">
+                <h2 className="font-bold uppercase tracking-wider text-[11pt] text-slate-900 inline-block border-b-2 border-slate-900 pb-0.5">
+                    Declaration Cum Undertaking
+                </h2>
+                <p className="text-[8pt] text-slate-500 uppercase tracking-widest mt-0.5">
+                    IT Asset Handover & Acceptable Usage Policy
+                </p>
+            </div>
 
-                <table className="w-full mb-4 text-sm">
+            {/* ── 3. Employee & Allocation Details Table ── */}
+            <div className="mb-2.5">
+                <table className="w-full border-collapse border border-slate-300 text-[8.5pt]">
                     <tbody>
-                        <tr className="border-t border-b border-gray-400">
-                            <td className="py-1 pr-4 whitespace-nowrap"><strong className="font-semibold">Date:</strong> {today}</td>
-                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">{deviceType} Asset ID:</strong> {laptop.assetId}</td>
-                            <td className="py-1 px-4 whitespace-nowrap"><strong className="font-semibold">Company:</strong> {companyCode}</td>
-                            <td className="py-1 pl-4 whitespace-nowrap"><strong className="font-semibold">Working Location:</strong> {user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A'}</td>
+                        <tr className="border-b border-slate-200 bg-slate-50">
+                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Employee Name:</td>
+                            <td className="py-1 px-2.5 font-bold text-slate-900 w-[32%]">{user.name}</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Date of Handover:</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-900 w-[32%]">{today}</td>
+                        </tr>
+                        <tr className="border-b border-slate-200">
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Employee ID / Dept:</td>
+                            <td className="py-1 px-2.5 text-slate-800">
+                                {user.employeeId && <span className="font-mono font-semibold mr-1">[{user.employeeId}]</span>}
+                                {deptName}
+                            </td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Contact Number:</td>
+                            <td className="py-1 px-2.5 text-slate-800">{user.mobile || 'N/A'}</td>
+                        </tr>
+                        <tr className="border-b border-slate-200 bg-slate-50">
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">{deviceType} Asset ID:</td>
+                            <td className="py-1 px-2.5 font-mono font-bold text-slate-900">{laptop.assetId}</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Work Location:</td>
+                            <td className="py-1 px-2.5 text-slate-800">{branchLocation}</td>
+                        </tr>
+                        <tr>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Issuing Entity:</td>
+                            <td className="py-1 px-2.5 text-slate-800">{companyCode} — {currentCompany.name.replace(' Pvt. Ltd.', '')}</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600">Quantity Issued:</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-900">1 Unit ({deviceType})</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
 
-                <table className="w-full border-collapse text-left mb-4 text-sm">
-                    <thead className="border-b-2 border-black">
-                        <tr>
-                            <th className="p-1 font-bold w-12 text-center">S.No</th>
-                            <th className="p-1 font-bold">Specification</th>
-                            <th className="p-1 font-bold">Details</th>
-                            <th className="p-1 font-bold w-12 text-center">Qty</th>
-                        </tr>
-                    </thead>
-                    <tbody className="align-top">
-                        {technicalDetails.map((item, index) => (
-                            <tr key={index} className="border-b border-gray-300">
-                                <td className="p-1 text-center">{index + 1}</td>
-                                <td className="p-1 font-semibold">{item.label}</td>
-                                <td className="p-1">{item.value}</td>
-                                {index === 0 && <td className="p-1 text-center" rowSpan={technicalDetails.length}>1</td>}
+            {/* ── 4. Technical Specifications Table (Balanced 2-Column Paired Layout) ── */}
+            <div className="mb-2.5">
+                <div className="flex justify-between items-center bg-slate-800 text-white px-2.5 py-1 rounded-t">
+                    <span className="font-bold text-[8.5pt] uppercase tracking-wider">Technical Specifications & Hardware Details</span>
+                    <span className="text-[7.5pt] opacity-80">Serial No: <strong className="font-mono">{laptop.serialNumber || 'N/A'}</strong></span>
+                </div>
+                <table className="w-full border-collapse border border-slate-300 text-[8pt]">
+                    <tbody>
+                        {pairedSpecs.map(([col1, col2], index) => (
+                            <tr key={index} className={`border-b border-slate-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}`}>
+                                <td className="py-1 px-2 font-semibold text-slate-600 w-[18%]">{col1.label}:</td>
+                                <td className="py-1 px-2 text-slate-900 font-medium w-[32%] border-r border-slate-200">{col1.value || '—'}</td>
+                                {col2 ? (
+                                    <>
+                                        <td className="py-1 px-2 font-semibold text-slate-600 w-[18%]">{col2.label}:</td>
+                                        <td className="py-1 px-2 text-slate-900 font-medium w-[32%]">{col2.value || '—'}</td>
+                                    </>
+                                ) : (
+                                    <td colSpan={2} className="py-1 px-2 text-slate-400 italic">—</td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
 
-                <div className="text-xs space-y-2">
-                    <p className="font-bold underline">The {deviceType.toLowerCase()} has been issued with the below terms and conditions:</p>
-                    <ul className="list-decimal list-inside space-y-1 pl-2">
-                        <li>The {deviceType.toLowerCase()} issued is for solely official purpose.</li>
-                        <li>The employee shall be fully accountable for theft, loss or damage of the property.</li>
-                        <li>Any additional software / hardware required by employee (before or after taking handover) should be clearly communicated through mail to the Company and get the approval.</li>
-                        <li>Management is at the sole discretion on approving such requests.</li>
-                        <li>In case of any malfunction, employees are required to report the same to the Company.</li>
-                        <li>Employees may not take the {deviceType.toLowerCase()} for repair to any external agency or vendor at any point of time.</li>
-                        <li>The {deviceType.toLowerCase()} should be returned to the Company in case of leaving the organization.</li>
-                        <li>The employee shall be liable to replace or pay an equivalent amount to the organization, in case of theft, loss or damage to the property.</li>
-                        <li>The organization retains the right to deduct the same from the salary in case of such an event.</li>
-                    </ul>
-                </div>
-            </main>
-            
-            <footer className="pt-4 text-sm border-t-2 border-black">
-                <p className="mb-8">
-                    I, the undersigned, acknowledge receipt of the asset detailed above and agree to the terms and conditions.
+            {/* ── 5. Terms and Conditions ── */}
+            <div className="mb-2.5 p-2 bg-slate-50 rounded border border-slate-200 text-[7.8pt] leading-tight">
+                <p className="font-bold text-slate-900 mb-1 uppercase tracking-wide text-[8pt]">
+                    Terms & Conditions of Asset Allocation:
                 </p>
-                <div className="flex justify-between items-end">
-                    <div className="space-y-4">
-                        <p>Signature: <span className="inline-block w-56 border-b border-black align-bottom"></span></p>
-                        <p>Name: <span className="inline-block w-56 border-b border-black align-bottom pl-2">{user.name}</span></p>
-                        <p>Date: <span className="inline-block w-56 border-b border-black align-bottom"></span></p>
-                        <p>Location: <span className="inline-block w-56 border-b border-black align-bottom"></span></p>
+                <ol className="list-decimal list-inside space-y-0.5 text-slate-700 pl-0.5">
+                    <li>The {deviceType.toLowerCase()} issued is solely for official and authorized company business purposes.</li>
+                    <li>The employee shall be fully accountable for the safe custody, theft, loss, or accidental damage of the property.</li>
+                    <li>Any additional software or hardware required must be communicated via email and approved by the IT Department.</li>
+                    <li>In case of any hardware or software malfunction, the employee is required to immediately report it to the IT team.</li>
+                    <li>Employees may not hand over or take the {deviceType.toLowerCase()} for repair to any external vendor or unauthorized agency.</li>
+                    <li>The {deviceType.toLowerCase()} must be promptly returned to the Company in good working condition upon exit or transfer.</li>
+                    <li>The employee shall be liable to replace or reimburse the company in the event of theft, loss, or willful damage.</li>
+                </ol>
+            </div>
+
+            {/* ── 6. Acknowledgment & Dual Signature Block ── */}
+            <footer className="pt-2 border-t-2 border-slate-900 text-[8.5pt]">
+                <p className="text-[8pt] text-slate-700 mb-2 italic">
+                    "I, the undersigned, hereby acknowledge receipt of the {deviceType.toLowerCase()} detailed above in complete and satisfactory working condition, and agree to abide by all the terms, security guidelines, and policies specified herein."
+                </p>
+                <div className="flex justify-between items-end gap-6">
+                    {/* Left: Employee Signature */}
+                    <div className="flex-1">
+                        <p className="font-bold text-[8.5pt] text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-0.5 mb-1.5">
+                            Employee Acknowledgment
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[8pt]">
+                            <div>
+                                <span className="text-slate-500 block text-[7.5pt]">Signature:</span>
+                                <div className="h-5 border-b border-slate-400 w-full"></div>
+                            </div>
+                            <div>
+                                <span className="text-slate-500 block text-[7.5pt]">Employee Name:</span>
+                                <p className="font-bold text-slate-900 pt-0.5 truncate">{user.name}</p>
+                            </div>
+                            <div>
+                                <span className="text-slate-500 block text-[7.5pt]">Date:</span>
+                                <p className="font-medium text-slate-800 pt-0.5">{today}</p>
+                            </div>
+                            <div>
+                                <span className="text-slate-500 block text-[7.5pt]">Place / Branch:</span>
+                                <p className="font-medium text-slate-800 pt-0.5">{branchLocation}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-center flex-shrink-0">
-                        <canvas ref={qrCodeRef}></canvas>
-                        <p className="text-xs font-mono mt-1">{laptop.assetId}</p>
+
+                    {/* Right: IT Authorization & QR Code */}
+                    <div className="flex items-end gap-3 flex-shrink-0 pl-4 border-l border-slate-200">
+                        <div className="text-right text-[8pt]">
+                            <p className="font-bold text-[8.5pt] text-slate-900 uppercase tracking-wider mb-1">
+                                Authorized Signatory
+                            </p>
+                            <div className="h-5 border-b border-slate-400 w-32 ml-auto mb-1"></div>
+                            <p className="text-[7.5pt] text-slate-500">IT Department / Avana</p>
+                        </div>
+                        <div className="text-center flex-shrink-0 bg-white p-1 rounded border border-slate-200 shadow-sm">
+                            <canvas ref={qrCodeRef} style={{ width: '64px', height: '64px', display: 'block' }}></canvas>
+                            <p className="text-[7pt] font-mono text-slate-700 font-bold mt-0.5">{laptop.assetId}</p>
+                        </div>
                     </div>
                 </div>
             </footer>
@@ -157,4 +254,4 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
     );
 };
 
-export default DeclarationForm;
+export default DeclarationForm;
