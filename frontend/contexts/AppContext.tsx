@@ -132,11 +132,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             ]);
 
             if (usersRes.ok) setUsers(await usersRes.json());
-            if (historyRes.ok) setAssetHistory(await historyRes.json());
+            const rawHistory = historyRes.ok ? await historyRes.json() : [];
+            if (historyRes.ok) setAssetHistory(rawHistory);
             if (assetsRes.ok) {
                 const rawAssets = await assetsRes.json();
+                const historyConditionMap = new Map<number, string>();
+                for (const h of rawHistory) {
+                    if (h.assetId && h.condition && !historyConditionMap.has(h.assetId)) {
+                        historyConditionMap.set(h.assetId, h.condition);
+                    }
+                }
                 setAssets(rawAssets.map((a: any) => ({
                     ...a,
+                    condition: a.condition || historyConditionMap.get(a.id) || 'Good',
                     specs: typeof a.specs === 'string' ? (() => { 
                         try { 
                             const parsed = JSON.parse(a.specs); 

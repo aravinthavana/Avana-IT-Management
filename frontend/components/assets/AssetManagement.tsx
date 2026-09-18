@@ -111,7 +111,12 @@ const AssetManagement: React.FC = () => {
                 if (!res.ok) throw new Error((await res.json()).error);
                 const updated = await res.json();
                 
-                setAssets(assets.map(a => a.id === editingAsset.id ? { ...updated, specs: typeof updated.specs === 'string' ? (() => { try { const p = JSON.parse(updated.specs); return typeof p === 'string' ? JSON.parse(p) : p; } catch { return {}; } })() : updated.specs } : a));
+                setAssets(assets.map(a => a.id === editingAsset.id ? { 
+                    ...a, 
+                    ...updated, 
+                    condition: updated.condition || updatedAssetData.condition, 
+                    specs: typeof updated.specs === 'string' ? (() => { try { const p = JSON.parse(updated.specs); return typeof p === 'string' ? JSON.parse(p) : p; } catch { return {}; } })() : (updated.specs || a.specs) 
+                } : a));
                 fetchAssetHistory();
                 setNotification({ message: `Asset "${updatedAssetData.name}" updated successfully.`, type: 'success' });
             } else {
@@ -397,7 +402,12 @@ const AssetManagement: React.FC = () => {
             });
             if (!res.ok) throw new Error('Failed to unassign asset');
             const updated = await res.json();
-            setAssets(prev => prev.map(a => a.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            setAssets(prev => prev.map(a => a.id === assetToUnassign.id ? { 
+                ...a, 
+                ...updated, 
+                condition: updated.condition || updatedAssetData.condition, 
+                specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : (updated.specs || a.specs) 
+            } : a));
             fetchAssetHistory();
             setNotification({ message: `Successfully unassigned ${assetToUnassign.name}.`, type: 'success' });
         } catch (err: any) {

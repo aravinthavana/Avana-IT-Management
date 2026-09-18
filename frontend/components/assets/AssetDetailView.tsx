@@ -201,7 +201,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
             });
             if (!res.ok) throw new Error('Failed to update condition');
             const updated = await res.json();
-            setAssets(assets.map(a => a.id === asset.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : a));
+            setAssets(assets.map(a => a.id === asset.id ? { ...a, ...updated, condition: updated.condition || newCondition, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : (updated.specs || a.specs) } : a));
             setHistoryRefreshKey(prev => prev + 1);
             fetchAssetHistory();
             setNotification({ message: `Condition changed to "${newCondition}"`, type: 'success' });

@@ -5,7 +5,7 @@ import DeclarationForm from '../users/DeclarationForm';
 import { ICONS } from '../../constants';
 
 export default function DeclarationFormPreview() {
-    const { users, assets, previewTarget, setPreviewTarget } = useAppContext();
+    const { users, assets, assetHistory, previewTarget, setPreviewTarget } = useAppContext();
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
@@ -15,8 +15,14 @@ export default function DeclarationFormPreview() {
     const targetAssetId = previewTarget.assetId;
 
     // Resolve the asset: either by targetAssetId or by finding the device assigned to user
-    const laptop = (targetAssetId ? assets.find(a => a.id === targetAssetId) : null)
+    const rawLaptop = (targetAssetId ? assets.find(a => a.id === targetAssetId) : null)
         || (targetUserId ? assets.find(a => ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === targetUserId) || a.assignedTo === targetUserId)) : null);
+
+    const latestHistoryCondition = rawLaptop ? assetHistory?.find(h => h.assetId === rawLaptop.id && h.condition)?.condition : undefined;
+    const laptop = rawLaptop ? {
+        ...rawLaptop,
+        condition: rawLaptop.condition || latestHistoryCondition || 'Good'
+    } : null;
 
     // Resolve the user: either by targetUserId or from laptop's assignee
     const user = (targetUserId ? users.find(u => u.id === targetUserId) : null)
