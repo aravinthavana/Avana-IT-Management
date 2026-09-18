@@ -6,7 +6,7 @@ import OnboardingWizardModal from './OnboardingWizardModal';
 import OffboardingWizardModal from './OffboardingWizardModal';
 
 const OnboardingManagement: React.FC = () => {
-    const { users, assets, setSelectedUserId, setPreviewTarget, navigate } = useAppContext();
+    const { users, assets, licenses, setSelectedUserId, setPreviewTarget, navigate } = useAppContext();
     const [activeTab, setActiveTab] = useState<'onboarding' | 'offboarding' | 'logistics'>('onboarding');
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'In Progress' | 'Completed'>('All');
@@ -54,7 +54,10 @@ const OnboardingManagement: React.FC = () => {
 
         // 2. License
         total++;
-        if (u.m365LicenseAssigned) score++;
+        const hasLicense = u.m365LicenseAssigned || 
+            licenses.some(l => l.assignments?.some(a => a.userId === u.id)) || 
+            (u.licenseAssignments && u.licenseAssignments.length > 0);
+        if (hasLicense) score++;
 
         // 3. Hardware Allocation decision
         total++;
@@ -292,15 +295,55 @@ const OnboardingManagement: React.FC = () => {
                                                  </td>
 
                                                  <td className="px-4 py-3.5">
-                                                     {u.m365AccountCreated ? (
-                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                                             ✓ Ready
-                                                         </span>
-                                                     ) : (
-                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                                                             Pending
-                                                         </span>
-                                                     )}
+                                                     {(() => {
+                                                         const userLicenses = licenses.filter(l => l.assignments?.some(a => a.userId === u.id));
+                                                         return (
+                                                             <div className="flex flex-col gap-1">
+                                                                 <div className="flex items-center gap-1.5 flex-wrap">
+                                                                     {u.m365AccountCreated ? (
+                                                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                                             ✓ M365 Acct
+                                                                         </span>
+                                                                     ) : (
+                                                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                                                             No M365 Acct
+                                                                         </span>
+                                                                     )}
+                                                                 </div>
+                                                                 {userLicenses.length > 0 ? (
+                                                                     <div className="flex flex-wrap gap-1">
+                                                                         {userLicenses.map(lic => {
+                                                                             const isStandard = lic.name.toLowerCase().includes('standard');
+                                                                             const isBasic = lic.name.toLowerCase().includes('basic');
+                                                                             const isExchange = lic.name.toLowerCase().includes('exchange');
+                                                                             const isZoho = lic.name.toLowerCase().includes('zoho');
+                                                                             const badgeColor = isStandard
+                                                                                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                                                                 : isBasic
+                                                                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                                                                                 : isExchange
+                                                                                 ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                                                                                 : isZoho
+                                                                                 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                                                                 : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+
+                                                                             return (
+                                                                                 <span 
+                                                                                     key={lic.id} 
+                                                                                     title={lic.name}
+                                                                                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border truncate max-w-[160px] ${badgeColor}`}
+                                                                                 >
+                                                                                     {lic.name.replace('Microsoft 365 ', 'M365 ').replace(' Enterprise Plan', '')}
+                                                                                 </span>
+                                                                             );
+                                                                         })}
+                                                                     </div>
+                                                                 ) : (
+                                                                     <span className="text-[10px] text-slate-400 italic">No License</span>
+                                                                 )}
+                                                             </div>
+                                                         );
+                                                     })()}
                                                  </td>
 
                                                  <td className="px-4 py-3.5">

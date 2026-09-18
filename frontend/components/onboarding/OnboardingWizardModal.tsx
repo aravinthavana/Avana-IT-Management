@@ -24,7 +24,7 @@ const STEPS = [
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, onClose, initialUser, onSuccess }) => {
-    const { users, setUsers, assets, setAssets, departments, branches, licenses, setLicenses, getHeaders, setNotification, fetchAssetHistory } = useAppContext();
+    const { users, setUsers, assets, setAssets, departments, branches, licenses, setLicenses, getHeaders, setNotification, fetchAssetHistory, fetchAllData } = useAppContext();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -365,28 +365,35 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                 fetchAssetHistory();
             }
 
-            // If license was assigned, update license local state
-            if (licenseOption === 'assign' && selectedLicenseIds.length > 0) {
-                setLicenses(licenses.map(l => {
-                    if (selectedLicenseIds.includes(l.id)) {
-                        const alreadyInAssignments = l.assignments?.some(a => a.userId === updatedUser.id);
-                        if (!alreadyInAssignments) {
-                            return {
-                                ...l,
-                                assignedSeats: (l.assignedSeats || 0) + 1,
-                                assignments: [...(l.assignments || []), { id: Date.now() + l.id, licenseId: l.id, userId: updatedUser.id, assignedDate: new Date().toISOString() }]
-                            };
-                        }
-                    }
-                    return l;
-                }));
-            }
+            // Synchronize licenses local state
+            const effectiveLicenseIds = licenseOption === 'assign' ? selectedLicenseIds : [];
+            setLicenses(licenses.map(l => {
+                const isSelected = effectiveLicenseIds.includes(l.id);
+                const isAssigned = l.assignments?.some(a => a.userId === updatedUser.id);
+
+                if (isSelected && !isAssigned) {
+                    return {
+                        ...l,
+                        assignedSeats: (l.assignedSeats || 0) + 1,
+                        assignments: [...(l.assignments || []), { id: Date.now() + l.id, licenseId: l.id, userId: updatedUser.id, assignedDate: new Date().toISOString() }]
+                    };
+                } else if (!isSelected && isAssigned) {
+                    const filtered = l.assignments?.filter(a => a.userId !== updatedUser.id) || [];
+                    return {
+                        ...l,
+                        assignedSeats: Math.max(0, (l.assignedSeats || 1) - 1),
+                        assignments: filtered
+                    };
+                }
+                return l;
+            }));
 
             if (status === 'Completed') {
                 setNotification({ message: `Onboarding completed successfully for ${updatedUser.name}!`, type: 'success' });
             } else {
                 setNotification({ message: `Onboarding progress saved for ${updatedUser.name}! You can resume anytime from the dashboard.`, type: 'success' });
             }
+            if (fetchAllData) fetchAllData();
             if (onSuccess) onSuccess(updatedUser);
             onClose();
         } catch (err: any) {

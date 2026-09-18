@@ -1296,28 +1296,46 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
         const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) }, include: { branch: true } });
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-        // 1. Assign M365 License(s) if requested (single or multiple)
+        // 1. Synchronize License(s) if provided
         let licenseAssignedFlag = targetUser.m365LicenseAssigned;
-        const licenseIdsToAssign: number[] = Array.isArray(assignLicenseIds)
-            ? assignLicenseIds.map(Number).filter(n => !isNaN(n) && n > 0)
-            : (assignLicenseId && !isNaN(Number(assignLicenseId)) ? [Number(assignLicenseId)] : []);
+        if (assignLicenseIds !== undefined || assignLicenseId !== undefined) {
+            const requestedLicenseIds: number[] = Array.isArray(assignLicenseIds)
+                ? assignLicenseIds.map(Number).filter(n => !isNaN(n) && n > 0)
+                : (assignLicenseId && !isNaN(Number(assignLicenseId)) ? [Number(assignLicenseId)] : []);
 
-        for (const licenseId of licenseIdsToAssign) {
-            const license = await prisma.license.findUnique({
-                where: { id: licenseId },
-                include: { assignments: true }
+            // Remove any licenses currently assigned to this user that are not in requestedLicenseIds
+            await prisma.licenseAssignment.deleteMany({
+                where: {
+                    userId: targetUser.id,
+                    licenseId: { notIn: requestedLicenseIds }
+                }
             });
-            if (license) {
-                const alreadyAssigned = license.assignments.some(a => a.userId === targetUser.id);
-                if (!alreadyAssigned && license.assignments.length < license.seats) {
-                    await prisma.licenseAssignment.create({
-                        data: { licenseId, userId: targetUser.id }
-                    });
-                    licenseAssignedFlag = true;
-                } else if (alreadyAssigned) {
-                    licenseAssignedFlag = true;
+
+            // Assign newly requested licenses if not already assigned
+            for (const licenseId of requestedLicenseIds) {
+                const license = await prisma.license.findUnique({
+                    where: { id: licenseId },
+                    include: { assignments: true }
+                });
+                if (license) {
+                    const alreadyAssigned = license.assignments.some(a => a.userId === targetUser.id);
+                    if (!alreadyAssigned && license.assignments.length < license.seats) {
+                        await prisma.licenseAssignment.create({
+                            data: { licenseId, userId: targetUser.id }
+                        });
+                    }
                 }
             }
+
+            // Determine if user holds any Microsoft 365 or Exchange license
+            const currentAssignments = await prisma.licenseAssignment.findMany({
+                where: { userId: targetUser.id },
+                include: { license: true }
+            });
+            licenseAssignedFlag = currentAssignments.some(a => 
+                a.license.name.toLowerCase().includes('microsoft') || 
+                a.license.name.toLowerCase().includes('exchange')
+            );
         }
 
         // 2. Assign Asset if requested
@@ -1372,7 +1390,7 @@ app.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (req
                 onboardingCompletedDate: onboardingStatus === 'Completed' ? new Date() : (onboardingStatus === 'In Progress' ? null : targetUser.onboardingCompletedDate),
                 onboardingStep: onboardingStatus === 'Completed' ? 8 : (onboardingStep ? Number(onboardingStep) : (targetUser.onboardingStep || 1))
             },
-            include: { department: true, branch: true, manager: true }
+            include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
         });
 
         const { password: _, ...sanitized } = updatedUser;
@@ -1509,12 +1527,13 @@ app.post('/api/offboarding/process', authenticateToken, requireAdmin, async (req
                 deviceWiped: Boolean(deviceWiped),
                 dataBackedUp: Boolean(dataBackedUp),
                 m365LicenseRevoked: Boolean(revokeAllLicenses || targetUser.m365LicenseRevoked),
+                m365LicenseAssigned: revokeAllLicenses ? false : targetUser.m365LicenseAssigned,
                 m365AccountDisabled: Boolean(disableM365 || targetUser.m365AccountDisabled),
                 status: deactivateUser ? 'Inactive' : targetUser.status,
                 offboardingStatus: 'Completed',
                 offboardingCompletedDate: new Date()
             },
-            include: { department: true, branch: true, manager: true }
+            include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
         });
 
         const { password: _, ...sanitized } = updatedUser;
