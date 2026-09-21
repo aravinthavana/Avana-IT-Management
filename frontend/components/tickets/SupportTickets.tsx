@@ -1,15 +1,51 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
-import { SupportTicket, TicketComment, TicketAttachment } from '../../types';
+import { SupportTicket, TicketComment, TicketAttachment, KnowledgeBaseArticle } from '../../types';
 import { useMsal } from "@azure/msal-react";
 import { syncIncomingEmailReplies } from '../../utils/graphMail';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
 
+// Standardized Ticket ID Formatter
+export const formatTicketId = (id: number) => `#TKT-${String(id).padStart(4, '0')}`;
+
+// 1-Click Canned Responses for Solo IT Administrator
+const CANNED_RESPONSES = [
+    {
+        title: '🔄 Restart & Recheck',
+        text: 'Please perform a full restart of your laptop, ensure you are connected to the network, and test again to see if the issue persists.'
+    },
+    {
+        title: '🏢 Bring to IT Desk',
+        text: 'Kindly bring your device to the IT Support Room for a physical hardware diagnostic check and inspection.'
+    },
+    {
+        title: '🔑 Password / MFA Reset',
+        text: 'Your account credentials / MFA authentication token have been reset. Please follow the instructions sent to your registered mobile number / email.'
+    },
+    {
+        title: '🛠️ Warranty Service Logged',
+        text: 'Hardware defect has been confirmed. An official warranty service call has been registered with the manufacturer (Dell/Lenovo). We will update you once the technician is scheduled.'
+    },
+    {
+        title: '📦 Standby Device Ready',
+        text: 'A temporary standby laptop / peripheral has been prepared and allocated for you while your primary device undergoes repairs.'
+    },
+    {
+        title: '✅ Configuration Complete',
+        text: 'The requested software installation / configuration update has been completed. Please test and confirm if everything works as expected on your end.'
+    },
+    {
+        title: '⏳ Waiting on Details',
+        text: 'We require additional information to proceed with troubleshooting. Could you please reply with a screenshot or photo of the exact error message?'
+    }
+];
+
 const SupportTickets: React.FC = () => {
-    const { tickets, setTickets, getHeaders, setNotification, assets, navigate, users } = useAppContext();
+    const { tickets, setTickets, getHeaders, setNotification, assets, navigate, users, kbArticles = [] } = useAppContext();
     const { user } = useAuth();
     const { instance } = useMsal();
     
@@ -34,6 +70,9 @@ const SupportTickets: React.FC = () => {
     // Delete Ticket State
     const [deletingTicketId, setDeletingTicketId] = useState<number | null>(null);
     const [isDeletingTicket, setIsDeletingTicket] = useState(false);
+
+    // KB Article Preview Modal for Self-Service Deflection
+    const [selectedKbPreview, setSelectedKbPreview] = useState<KnowledgeBaseArticle | null>(null);
 
     // Attachments State
     const [ticketAttachments, setTicketAttachments] = useState<TicketAttachment[]>([]);
@@ -72,6 +111,15 @@ const SupportTickets: React.FC = () => {
     // Manager / Team detection
     const isManager = Boolean(user && users.some(u => u.managerId === user.id));
     const [teamViewTab, setTeamViewTab] = useState<'all' | 'my' | 'team'>('all');
+
+    // Multi-Dimension Filter States
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [priorityFilter, setPriorityFilter] = useState('All');
+    const [companyFilter, setCompanyFilter] = useState('All');
+
+    const hasActiveFilters = statusFilter !== 'All' || categoryFilter !== 'All' || priorityFilter !== 'All' || companyFilter !== 'All' || searchTerm.trim() !== '';
 
     // Fetch support contacts on mount
     useEffect(() => {
@@ -405,6 +453,37 @@ const SupportTickets: React.FC = () => {
         }
     };
 
+    const getCompanyBadge = (company?: string | null) => {
+        if (!company) return null;
+        const compUpper = company.toUpperCase();
+        if (compUpper.includes('MEDICAL') || compUpper.includes('AMD')) {
+            return (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800" title="Avana Medical Devices">
+                    AMD
+                </span>
+            );
+        }
+        if (compUpper.includes('SURGICAL') || compUpper.includes('ASSP')) {
+            return (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800" title="Avana Surgical System India">
+                    ASSP
+                </span>
+            );
+        }
+        if (compUpper.includes('TECHNOLOGY') || compUpper.includes('ATS')) {
+            return (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" title="Avana Technology Services">
+                    ATS
+                </span>
+            );
+        }
+        return (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {company.slice(0, 4)}
+            </span>
+        );
+    };
+
     const getTicketAging = (ticket: SupportTicket) => {
         if (ticket.status === 'Resolved' || ticket.status === 'Closed') {
             return null;
@@ -447,13 +526,22 @@ const SupportTickets: React.FC = () => {
     const resolvedCount = tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
 
     // Subordinate IDs for managers
-    const subordinateIds = users.filter(u => u.managerId === user?.id).map(u => u.id);
-    const subordinatesTicketsCount = tickets.filter(t => subordinateIds.includes(t.userId)).length;
+    const subordinateIds = useMemo(() => users.filter(u => u.managerId === user?.id).map(u => u.id), [users, user?.id]);
+    const subordinatesTicketsCount = useMemo(() => tickets.filter(t => subordinateIds.includes(t.userId)).length, [tickets, subordinateIds]);
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All');
+    // Live Knowledge Base Suggestions for Ticket Subject (Deflection)
+    const matchingKbArticles = useMemo(() => {
+        const term = formData.subject.trim().toLowerCase();
+        if (term.length < 3 || !kbArticles || kbArticles.length === 0) return [];
+        return kbArticles.filter(a => 
+            a.title.toLowerCase().includes(term) ||
+            a.category.toLowerCase().includes(term) ||
+            (a.content && a.content.toLowerCase().includes(term))
+        ).slice(0, 3);
+    }, [formData.subject, kbArticles]);
 
-    const filteredTickets = React.useMemo(() => {
+    // Filtered Tickets Computation
+    const filteredTickets = useMemo(() => {
         return tickets.filter(t => {
             // Team view tab filter
             if (user?.role !== 'Admin') {
@@ -463,27 +551,53 @@ const SupportTickets: React.FC = () => {
                 if (t.userId !== user?.id && t.assignedToId !== user?.id) return false;
             }
 
-            const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (t.user?.name && t.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (t.resolutionNotes && t.resolutionNotes.toLowerCase().includes(searchTerm.toLowerCase()));
+            // Text search (matches subject, category, user name, root cause, ID)
+            if (searchTerm.trim()) {
+                const s = searchTerm.toLowerCase().trim();
+                const rawNumeric = s.replace(/^#?tkt-?/i, '');
+                const formattedId = formatTicketId(t.id).toLowerCase();
+                const matchesSearch = 
+                    t.subject.toLowerCase().includes(s) ||
+                    t.category.toLowerCase().includes(s) ||
+                    (t.user?.name && t.user.name.toLowerCase().includes(s)) ||
+                    (t.resolutionNotes && t.resolutionNotes.toLowerCase().includes(s)) ||
+                    String(t.id) === rawNumeric ||
+                    formattedId.includes(s);
+                if (!matchesSearch) return false;
+            }
             
-            let matchesStatus = true;
+            // Status filter
             if (statusFilter === 'Waiting') {
-                matchesStatus = t.status === 'Waiting on User' || t.status === 'Waiting on Vendor';
+                if (t.status !== 'Waiting on User' && t.status !== 'Waiting on Vendor') return false;
             } else if (statusFilter === 'Stale') {
-                if (t.status === 'Resolved' || t.status === 'Closed') matchesStatus = false;
-                else {
-                    const diffDays = (new Date().getTime() - new Date(t.updatedAt || t.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-                    matchesStatus = diffDays >= 7;
-                }
+                if (t.status === 'Resolved' || t.status === 'Closed') return false;
+                const diffDays = (new Date().getTime() - new Date(t.updatedAt || t.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+                if (diffDays < 7) return false;
             } else if (statusFilter !== 'All') {
-                matchesStatus = t.status === statusFilter;
+                if (t.status !== statusFilter) return false;
             }
 
-            return matchesSearch && matchesStatus;
+            // Category filter
+            if (categoryFilter !== 'All' && t.category !== categoryFilter) {
+                return false;
+            }
+
+            // Priority filter
+            if (priorityFilter !== 'All' && t.priority !== priorityFilter) {
+                return false;
+            }
+
+            // Company filter
+            if (companyFilter !== 'All') {
+                const comp = (t.user?.company || '').toUpperCase();
+                if (!comp.includes(companyFilter)) {
+                    return false;
+                }
+            }
+
+            return true;
         });
-    }, [tickets, searchTerm, statusFilter, teamViewTab, user, subordinateIds]);
+    }, [tickets, searchTerm, statusFilter, categoryFilter, priorityFilter, companyFilter, teamViewTab, user, subordinateIds]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -637,34 +751,101 @@ const SupportTickets: React.FC = () => {
                 </div>
             )}
 
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="relative flex-1 w-full max-w-md">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                        {ICONS.search}
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Search tickets by subject, category, user, or root cause..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
-                    />
+            {/* Search and Multi-Dimension Filters */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div className="relative flex-1 w-full max-w-md">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            {ICONS.search}
+                        </span>
+                        <input
+                            type="text"
+                            placeholder="Search by subject, category, user, root cause, or #TKT-0042..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
+                        />
+                    </div>
+
+                    <div className="flex gap-1.5 flex-wrap w-full sm:w-auto items-center">
+                        {['All', 'Open', 'In Progress', 'Waiting', 'Stale', 'Resolved', 'Closed'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    statusFilter === status
+                                        ? 'bg-brand-600 text-white shadow-sm'
+                                        : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex gap-2 flex-wrap w-full sm:w-auto">
-                    {['All', 'Open', 'In Progress', 'Waiting', 'Stale', 'Resolved', 'Closed'].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                statusFilter === status
-                                    ? 'bg-brand-600 text-white shadow-sm'
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                            }`}
+
+                {/* Dropdown Filters Row */}
+                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+                    <span className="font-black text-slate-400 uppercase tracking-widest text-[10px]">
+                        Filters:
+                    </span>
+
+                    {/* Category Filter */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-slate-500 font-medium">Category:</span>
+                        <select
+                            value={categoryFilter}
+                            onChange={e => setCategoryFilter(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
                         >
-                            {status}
+                            <option value="All">All Categories</option>
+                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Priority Filter */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-slate-500 font-medium">Priority:</span>
+                        <select
+                            value={priorityFilter}
+                            onChange={e => setPriorityFilter(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                        >
+                            <option value="All">All Priorities</option>
+                            {priorities.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Company Filter */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-slate-500 font-medium">Company:</span>
+                        <select
+                            value={companyFilter}
+                            onChange={e => setCompanyFilter(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                        >
+                            <option value="All">All Companies</option>
+                            <option value="AMD">AMD (Medical Devices)</option>
+                            <option value="ASSP">ASSP (Surgical System)</option>
+                            <option value="ATS">ATS (Technology Services)</option>
+                        </select>
+                    </div>
+
+                    {/* Reset Filters */}
+                    {hasActiveFilters && (
+                        <button 
+                            onClick={() => {
+                                setStatusFilter('All');
+                                setCategoryFilter('All');
+                                setPriorityFilter('All');
+                                setCompanyFilter('All');
+                                setSearchTerm('');
+                            }}
+                            className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950/40 rounded-lg transition-all ml-auto"
+                        >
+                            ✕ Reset Filters
                         </button>
-                    ))}
+                    )}
                 </div>
             </div>
 
@@ -678,7 +859,7 @@ const SupportTickets: React.FC = () => {
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status & Aging</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Priority</th>
                                 {(user?.role === 'Admin' || isManager) && (
-                                    <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">User / Dept</th>
+                                    <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Employee & Company</th>
                                 )}
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Assigned IT</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
@@ -691,18 +872,21 @@ const SupportTickets: React.FC = () => {
                                     <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-slate-800 dark:text-white">{ticket.subject}</p>
+                                                <span className="font-mono text-xs font-black text-brand-600 dark:text-red-400">
+                                                    {formatTicketId(ticket.id)}
+                                                </span>
+                                                <p className="font-bold text-slate-800 dark:text-white truncate max-w-xs">{ticket.subject}</p>
                                                 {ticket.attachments && parseAttachments(ticket.attachments).length > 0 && (
                                                     <span className="text-xs text-slate-400" title="Has attachments">📎</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                    #{ticket.id} &bull; {ticket.category} &bull; {new Date(ticket.createdAt).toLocaleDateString()}
+                                                    {ticket.category} &bull; {new Date(ticket.createdAt).toLocaleDateString()}
                                                 </span>
                                                 {ticket.resolutionNotes && (
                                                     <span className="text-[10px] bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 font-bold px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800" title="Has resolution summary">
-                                                        ✓ Root Cause
+                                                        ✓ Root Cause Logged
                                                     </span>
                                                 )}
                                             </div>
@@ -727,7 +911,10 @@ const SupportTickets: React.FC = () => {
                                         </td>
                                         {(user?.role === 'Admin' || isManager) && (
                                             <td className="px-6 py-4">
-                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{ticket.user?.name || 'Unknown'}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{ticket.user?.name || 'Unknown'}</p>
+                                                    {getCompanyBadge(ticket.user?.company)}
+                                                </div>
                                                 <p className="text-xs text-slate-400">
                                                     {(ticket.user as any)?.department?.name || ticket.user?.email || 'Employee'}
                                                 </p>
@@ -777,7 +964,7 @@ const SupportTickets: React.FC = () => {
                 </div>
             </div>
 
-            {/* New Ticket Modal */}
+            {/* New Ticket Modal with Live Knowledge Base Deflection */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
@@ -807,7 +994,7 @@ const SupportTickets: React.FC = () => {
                                                 <option value="">Self ({user?.name || 'IT Admin'})</option>
                                                 {users.filter(u => u.status === 'Active' && u.id !== user?.id).map(u => (
                                                     <option key={u.id} value={u.id}>
-                                                        {u.name} ({u.email || u.employeeId || 'Employee'})
+                                                        {u.name} ({u.company || 'Avana'}) &bull; {u.email || u.employeeId || 'Employee'}
                                                     </option>
                                                 ))}
                                             </select>
@@ -843,9 +1030,46 @@ const SupportTickets: React.FC = () => {
                                         value={formData.subject} 
                                         onChange={e => setFormData({ ...formData, subject: e.target.value })} 
                                         className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none placeholder:text-slate-400" 
-                                        placeholder="Brief summary of the issue..." 
+                                        placeholder="Brief summary of the issue (e.g. Outlook crashing, VPN error)..." 
                                     />
                                 </div>
+
+                                {/* Instant Self-Service Knowledge Base Deflection Box */}
+                                {matchingKbArticles.length > 0 && (
+                                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 space-y-2.5 animate-fade-in">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base">💡</span>
+                                            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                                Instant Self-Service Solutions ({matchingKbArticles.length})
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-amber-900/80 dark:text-amber-200/80">
+                                            These verified guides might fix your problem immediately without waiting:
+                                        </p>
+                                        <div className="flex flex-col gap-1.5 pt-1">
+                                            {matchingKbArticles.map(article => (
+                                                <button
+                                                    key={article.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedKbPreview(article)}
+                                                    className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/90 rounded-xl border border-amber-200/60 dark:border-amber-800/40 text-left hover:border-amber-400 hover:shadow-sm transition-all group"
+                                                >
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <span className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-brand-600 dark:group-hover:text-red-400">
+                                                            📄 {article.title}
+                                                        </span>
+                                                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded font-medium">
+                                                            {article.category}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs font-bold text-brand-600 dark:text-red-400 ml-2 shrink-0 group-hover:underline">
+                                                        Read Guide &rarr;
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -972,6 +1196,57 @@ const SupportTickets: React.FC = () => {
                 </div>
             )}
 
+            {/* KB Article Quick Self-Service Reader Modal */}
+            {selectedKbPreview && (
+                <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[85vh] flex flex-col">
+                        <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-brand-600 dark:text-red-400">
+                                    Knowledge Base &bull; {selectedKbPreview.category}
+                                </span>
+                                <h3 className="text-lg font-black text-slate-800 dark:text-white">{selectedKbPreview.title}</h3>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedKbPreview(null)} 
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl"
+                            >
+                                {ICONS.close}
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto space-y-4">
+                            <div 
+                                className="prose dark:prose-invert max-w-none text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedKbPreview.content) }}
+                            />
+                        </div>
+                        <div className="px-8 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 flex justify-between items-center shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedKbPreview(null)}
+                                className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                            >
+                                &larr; Continue Submitting Ticket
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedKbPreview(null);
+                                    setIsModalOpen(false);
+                                    setNotification({
+                                        message: 'Glad the Knowledge Base solved your problem! Ticket creation cancelled.',
+                                        type: 'success'
+                                    });
+                                }}
+                                className="px-4 py-2 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 hover:bg-teal-700 transition-all"
+                            >
+                                ✓ This Solved My Problem! (Close Request)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Ticket Detail & Discussion Modal */}
             {selectedTicket && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
@@ -979,8 +1254,13 @@ const SupportTickets: React.FC = () => {
                         {/* Header */}
                         <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
                             <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-mono text-xs font-black text-brand-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/50">
+                                        {formatTicketId(selectedTicket.id)}
+                                    </span>
+                                    {getCompanyBadge(selectedTicket.user?.company)}
+                                </div>
                                 <h3 className="text-xl font-black text-slate-800 dark:text-white">{selectedTicket.subject}</h3>
-                                <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Ticket #{selectedTicket.id}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 {user?.role === 'Admin' && (
@@ -1249,8 +1529,33 @@ const SupportTickets: React.FC = () => {
                                     <div ref={commentsEndRef} />
                                 </div>
 
-                                {/* Comment Form */}
+                                {/* Comment Form with 1-Click Quick Replies Bar */}
                                 <form onSubmit={handleAddComment} className="space-y-3">
+                                    {/* 1-Click Quick Canned Responses Bar (Visible to Admins) */}
+                                    {user?.role === 'Admin' && (
+                                        <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider flex items-center gap-1">
+                                                    ⚡ 1-Click IT Quick Replies
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">Clicking inserts response into message</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                {CANNED_RESPONSES.map((item, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        type="button"
+                                                        onClick={() => setNewComment(item.text)}
+                                                        className="text-[11px] font-bold px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shadow-2xs"
+                                                        title={item.text}
+                                                    >
+                                                        {item.title}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Admin-only Internal Note toggle */}
                                     {user?.role === 'Admin' && (
                                         <div className="flex items-center justify-between px-1">
@@ -1276,7 +1581,7 @@ const SupportTickets: React.FC = () => {
                                             type="text"
                                             value={newComment}
                                             onChange={e => setNewComment(e.target.value)}
-                                            placeholder={isInternalComment ? "Add a private IT note (only visible to admins)..." : "Add a reply to the ticket..."}
+                                            placeholder={isInternalComment ? "Add a private IT note (only visible to admins)..." : "Add a reply to the ticket or use a quick reply above..."}
                                             className={`flex-1 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none transition-colors ${
                                                 isInternalComment
                                                     ? 'bg-amber-50/70 dark:bg-amber-950/20 border-2 border-amber-400 focus:border-amber-500'
@@ -1367,7 +1672,9 @@ const SupportTickets: React.FC = () => {
                     <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in flex flex-col">
                         <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white">Resolve Ticket #{resolvingTicketId}</h3>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white">
+                                    Resolve {formatTicketId(resolvingTicketId)}
+                                </h3>
                                 <p className="text-xs text-slate-400 mt-0.5">Capture root cause & solution for employee</p>
                             </div>
                             <button 
@@ -1424,7 +1731,9 @@ const SupportTickets: React.FC = () => {
                             {ICONS.delete}
                         </div>
                         <div className="text-center space-y-1.5">
-                            <h3 className="text-lg font-black text-slate-800 dark:text-white">Delete Ticket #{deletingTicketId}?</h3>
+                            <h3 className="text-lg font-black text-slate-800 dark:text-white">
+                                Delete {formatTicketId(deletingTicketId)}?
+                            </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                                 Are you sure you want to delete this ticket? All discussion messages, internal notes, and attachments will be permanently removed. This action cannot be undone.
                             </p>

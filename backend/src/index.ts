@@ -2450,6 +2450,7 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
                     id: true, 
                     name: true, 
                     email: true, 
+                    company: true,
                     department: { select: { name: true } },
                     managerId: true
                 } 
@@ -2521,7 +2522,7 @@ app.post('/api/tickets', authenticateToken, async (req, res) => {
                 attachments: attachmentsStr
             },
             include: { 
-                user: { select: { id: true, name: true, email: true, department: { select: { name: true } } } }, 
+                user: { select: { id: true, name: true, email: true, company: true, department: { select: { name: true } } } }, 
                 assignedTo: { select: { id: true, name: true, email: true } },
                 asset: true 
             }
@@ -2605,7 +2606,7 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
             where: { id: Number(id) },
             data: updateData,
             include: { 
-                user: { select: { id: true, name: true, email: true, department: { select: { name: true } } } }, 
+                user: { select: { id: true, name: true, email: true, company: true, department: { select: { name: true } } } }, 
                 assignedTo: { select: { id: true, name: true, email: true } },
                 asset: true 
             }
