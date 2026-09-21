@@ -64,7 +64,8 @@ model User {
   licenseAssignments LicenseAssignment[]
   assetRequests AssetRequest[] @relation("UserRequests")
   managedRequests AssetRequest[] @relation("ManagerRequests")
-  tickets      SupportTicket[]
+  tickets         SupportTicket[] @relation("UserTickets")
+  assignedTickets SupportTicket[] @relation("AssignedTickets")
   kbArticles   KnowledgeBase[]
   handovers    HandoverLog[]
   selfAudits   SelfAudit[]
@@ -237,27 +238,32 @@ model AssetRequest {
 }
 
 model SupportTicket {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation("UserTickets", fields: [userId], references: [id])
   
-  subject     String
-  category    String   // Hardware, Software, Email, Network, Account, Other
-  priority    String   @default("Medium") // Low, Medium, High, Urgent
-  status      String   @default("Open")   // Open, In Progress, Resolved, Closed
-  description String
-  attachments String?  // JSON Array: [{ url, name, size, type }]
+  assignedToId    Int?
+  assignedTo      User?    @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolutionNotes String?
   
-  assetId     Int?
-  asset       Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  subject         String
+  category        String   // Hardware, Software, Email, Network, Account, Other
+  priority        String   @default("Medium") // Low, Medium, High, Urgent
+  status          String   @default("Open")   // Open, In Progress, Waiting on User, Waiting on Vendor, Resolved, Closed
+  description     String
+  attachments     String?  // JSON Array: [{ url, name, size, type }]
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  resolvedAt  DateTime?
+  assetId         Int?
+  asset           Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  resolvedAt      DateTime?
 
-  comments    TicketComment[]
+  comments        TicketComment[]
 
   @@index([userId])
+  @@index([assignedToId])
   @@index([status])
   @@index([assetId])
 }
@@ -272,6 +278,7 @@ model TicketComment {
   attachments    String?       // JSON Array: [{ url, name, size, type }]
   source         String        @default("Portal") // "Portal" | "Email"
   emailMessageId String?       @unique
+  isInternal     Boolean       @default(false)
   createdAt      DateTime      @default(now())
 
   @@index([ticketId])

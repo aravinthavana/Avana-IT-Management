@@ -270,10 +270,13 @@ export interface SupportTicket {
     id: number;
     userId: number;
     user?: User;
+    assignedToId?: number | null;
+    assignedTo?: User | null;
+    resolutionNotes?: string | null;
     subject: string;
     category: string;
     priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-    status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+    status: 'Open' | 'In Progress' | 'Waiting on User' | 'Waiting on Vendor' | 'Resolved' | 'Closed';
     description: string;
     attachments?: TicketAttachment[] | string;
     assetId?: number;
@@ -293,6 +296,7 @@ export interface TicketComment {
     attachments?: TicketAttachment[] | string;
     source?: 'Portal' | 'Email';
     emailMessageId?: string;
+    isInternal?: boolean;
     createdAt: string;
 }
 
