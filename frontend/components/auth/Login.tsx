@@ -62,7 +62,22 @@ const Login: React.FC = () => {
                 credentials: 'include'
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            let data: any = {};
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Backend deployment is updating on Render. If you just deployed, please wait 1-2 minutes for Render to finish building.');
+                    }
+                    if (response.status === 502 || response.status === 503) {
+                        throw new Error('Backend server is spinning up. Please wait 30 seconds and try again.');
+                    }
+                    throw new Error(`Server returned ${response.status}. Please try again shortly.`);
+                }
+            }
 
             if (!response.ok) {
                 if (response.status === 429 && data.retryAfter) {
@@ -102,7 +117,19 @@ const Login: React.FC = () => {
                 credentials: 'include'
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            let data: any = {};
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Backend deployment is updating on Render. Please wait 1-2 minutes and try again.');
+                    }
+                    throw new Error(`Server returned ${response.status}. Please try again.`);
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(data.error || 'Invalid verification code.');
@@ -180,7 +207,16 @@ const Login: React.FC = () => {
                 credentials: 'include'
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            let data: any = {};
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}. Please try again.`);
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(data.error || 'Login failed');
