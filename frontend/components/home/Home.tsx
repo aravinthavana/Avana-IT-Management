@@ -15,9 +15,10 @@ import PendingHandovers from '../handovers/PendingHandovers';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Home: React.FC = () => {
-    const { assets, users, navigate, setAssetFilters, setSelectedAssetId, tickets, assetRequests } = useAppContext();
+    const { assets, users, navigate, setAssetFilters, setSelectedAssetId, tickets, assetRequests, selfAudits } = useAppContext();
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [auditTargetAsset, setAuditTargetAsset] = useState<any>(null);
+    const [auditTargetRecord, setAuditTargetRecord] = useState<any>(null);
     const { user } = useAuth();
 
     const stats = useMemo(() => ({
@@ -33,6 +34,11 @@ const Home: React.FC = () => {
         return assets.filter(a => a.assigneeType === 'User' && a.assigneeId === user.id);
     }, [assets, user]);
 
+    const myPendingAudits = useMemo(() => {
+        if (!user) return [];
+        return selfAudits.filter(a => a.userId === user.id && a.status === 'Requested');
+    }, [selfAudits, user]);
+
     // USER VIEW
     if (user?.role === 'User') {
         const myRequests = assetRequests.filter(r => r.userId === user.id).slice(0, 3);
@@ -40,6 +46,63 @@ const Home: React.FC = () => {
         return (
             <div className="space-y-8 animate-fade-in">
                 <PendingHandovers />
+
+                {/* Targeted Self-Audit Alert Banner (Only appears for employees specifically assigned an audit by IT Admin) */}
+                {myPendingAudits.length > 0 && (
+                    <div className="bg-gradient-to-r from-amber-500/10 via-amber-50 dark:via-amber-950/20 to-orange-500/10 border-2 border-amber-400 dark:border-amber-500/50 rounded-3xl p-6 shadow-md relative overflow-hidden animate-fade-in">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div className="flex items-start gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30 text-2xl">
+                                    📷
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white">
+                                            Action Required
+                                        </span>
+                                        {myPendingAudits[0].dueDate && (
+                                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                                Due: {new Date(myPendingAudits[0].dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+                                        IT Equipment Self-Audit Assigned
+                                    </h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+                                        IT Administration has requested an equipment verification for your assigned device{myPendingAudits.length > 1 ? 's' : ''} ({myPendingAudits.map(a => a.asset?.name || 'Device').join(', ')}). Please verify your hardware status, check key components, and submit a photo.
+                                    </p>
+                                    {myPendingAudits[0].adminRemarks && (
+                                        <div className="mt-2 text-xs text-amber-800 dark:text-amber-200/90 font-medium italic bg-amber-100/60 dark:bg-amber-900/30 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800/40 inline-flex items-center gap-1.5">
+                                            <span>💬 Note from IT:</span> &ldquo;{myPendingAudits[0].adminRemarks}&rdquo;
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
+                                {myPendingAudits.map((audit) => {
+                                    const targetAsset = myAssets.find(a => a.id === audit.assetId) || audit.asset;
+                                    return (
+                                        <button
+                                            key={audit.id}
+                                            onClick={() => {
+                                                if (targetAsset) {
+                                                    setAuditTargetAsset(targetAsset);
+                                                    setAuditTargetRecord(audit);
+                                                    setIsAuditModalOpen(true);
+                                                }
+                                            }}
+                                            className="px-6 py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-sm rounded-2xl shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            📷 Complete Audit: {targetAsset?.name || 'Asset'}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Hero / Welcome Section */}
                 <div className="bg-gradient-to-br from-avana-dark via-slate-900 to-brand-800 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
@@ -73,31 +136,52 @@ const Home: React.FC = () => {
                             </div>
                             {myAssets.length > 0 ? (
                                 <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                                    {myAssets.map(asset => (
-                                        <div key={asset.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
-                                            <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                                                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:scale-110 transition-transform shadow-inner">
-                                                    {ICONS.assets}
+                                    {myAssets.map(asset => {
+                                        const pendingAudit = myPendingAudits.find(a => a.assetId === asset.id);
+                                        return (
+                                            <div key={asset.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
+                                                <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                                                    <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:scale-110 transition-transform shadow-inner">
+                                                        {ICONS.assets}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="font-bold text-slate-900 dark:text-white text-lg">{asset.name}</h4>
+                                                            {pendingAudit && (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white animate-pulse">
+                                                                    Audit Due
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{asset.category} • <span className="font-mono text-xs">{asset.assetId}</span></p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 className="font-bold text-slate-900 dark:text-white text-lg">{asset.name}</h4>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{asset.category} • <span className="font-mono text-xs">{asset.assetId}</span></p>
+                                                <div className="flex items-center gap-4 w-full sm:w-auto">
+                                                    <div className="flex-1 text-right sm:block hidden">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                                        <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs font-bold">In Use</span>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => { 
+                                                            setAuditTargetAsset(asset); 
+                                                            setAuditTargetRecord(pendingAudit || null);
+                                                            setIsAuditModalOpen(true); 
+                                                        }} 
+                                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm flex items-center gap-2 ${
+                                                            pendingAudit
+                                                                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/30 animate-pulse'
+                                                                : 'bg-green-600 hover:bg-green-700 text-white shadow-green-600/20'
+                                                        }`}
+                                                    >
+                                                        📷 {pendingAudit ? 'Audit Due' : 'Self Audit'}
+                                                    </button>
+                                                    <button onClick={() => setSelectedAssetId(asset.id)} className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">
+                                                        View Details
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 w-full sm:w-auto">
-                                                <div className="flex-1 text-right sm:block hidden">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                                                    <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs font-bold">In Use</span>
-                                                </div>
-                                                <button onClick={() => { setAuditTargetAsset(asset); setIsAuditModalOpen(true); }} className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all active:scale-95 shadow-sm flex items-center gap-2">
-                                                    📷 Self Audit
-                                                </button>
-                                                <button onClick={() => setSelectedAssetId(asset.id)} className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">
-                                                    View Details
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="p-16 text-center">
@@ -168,7 +252,18 @@ const Home: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                {auditTargetAsset && <SelfAuditModal isOpen={isAuditModalOpen} onClose={() => { setIsAuditModalOpen(false); setAuditTargetAsset(null); }} asset={auditTargetAsset} />}
+                {auditTargetAsset && (
+                    <SelfAuditModal 
+                        isOpen={isAuditModalOpen} 
+                        onClose={() => { 
+                            setIsAuditModalOpen(false); 
+                            setAuditTargetAsset(null); 
+                            setAuditTargetRecord(null);
+                        }} 
+                        asset={auditTargetAsset}
+                        auditRecord={auditTargetRecord}
+                    />
+                )}
             </div>
         );
     }

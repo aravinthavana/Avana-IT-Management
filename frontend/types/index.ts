@@ -147,6 +147,7 @@ export interface Asset {
     remarks?: string;
     condition?: string;
     specs?: AssetSpecs;
+    lastAuditedAt?: string;
 }
 
 export interface AssetHistory {
@@ -322,14 +323,38 @@ export interface KnowledgeBaseArticle {
     updatedAt: string;
 }
 
+export interface HardwareChecks {
+    screenOk?: boolean;
+    keyboardOk?: boolean;
+    batteryOk?: boolean;
+    chargerOk?: boolean;
+    bodyOk?: boolean;
+    [key: string]: boolean | undefined;
+}
+
 export interface SelfAudit {
     id: number;
     assetId: number;
     userId: number;
-    scannedAssetId?: string;
-    imageUrl?: string;
-    remarks?: string;
-    status: 'Pending Review' | 'Approved' | 'Rejected';
+    requestedById?: number | null;
+    requestedBy?: User | null;
+    requestedAt?: string | null;
+    dueDate?: string | null;
+    submittedAt?: string | null;
+    reviewedById?: number | null;
+    reviewedBy?: User | null;
+    reviewedAt?: string | null;
+    scannedAssetId?: string | null;
+    imageUrl?: string | null;
+    remarks?: string | null;
+    userRemarks?: string | null;
+    adminRemarks?: string | null;
+    rejectionReason?: string | null;
+    location?: 'Head Office' | 'Remote / WFH' | 'Branch / Plant' | 'Client Site' | string | null;
+    condition?: 'Good' | 'Minor Scratches' | 'Damaged' | 'Needs IT Attention' | string | null;
+    hardwareChecks?: string | HardwareChecks | null;
+    ticketId?: number | null;
+    status: 'Requested' | 'Pending Review' | 'Approved' | 'Rejected' | string;
     auditDate: string;
     asset?: Asset;
     user?: User;
