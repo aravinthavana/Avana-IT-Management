@@ -62,41 +62,41 @@ const Home: React.FC = () => {
 
                 {/* Targeted Self-Audit Alert Banner (Only appears for employees specifically assigned an audit by IT Admin) */}
                 {myPendingAudits.length > 0 && (
-                    <div className="bg-gradient-to-r from-amber-500/10 via-amber-50 dark:via-amber-950/20 to-orange-500/10 border-2 border-amber-400 dark:border-amber-500/50 rounded-3xl p-6 shadow-md relative overflow-hidden animate-fade-in">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                            <div className="flex items-start gap-4">
-                                <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30 text-2xl">
+                    <div className="bg-gradient-to-r from-amber-500/10 via-amber-50 dark:via-amber-950/20 to-orange-500/10 border-2 border-amber-400 dark:border-amber-500/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md relative overflow-hidden animate-fade-in">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+                            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30 text-xl sm:text-2xl">
                                     📷
                                 </div>
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white">
+                                <div className="space-y-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                        <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white">
                                             Action Required
                                         </span>
                                         {myPendingAudits[0].dueDate && (
-                                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                            <span className="text-[11px] sm:text-xs font-bold text-amber-900 dark:text-amber-200">
                                                 Due: {new Date(myPendingAudits[0].dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+                                    <h3 className="text-base sm:text-xl font-black text-slate-900 dark:text-white leading-tight">
                                         IT Equipment Self-Audit Assigned
                                     </h3>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
                                         IT Administration has requested an equipment verification for your assigned device{myPendingAudits.length > 1 ? 's' : ''} ({myPendingAudits.map(a => a.asset?.name || 'Device').join(', ')}). Please verify your hardware status, check key components, and submit a photo.
                                     </p>
                                     {myPendingAudits[0].adminRemarks && (
-                                        <div className="mt-2 text-xs text-amber-800 dark:text-amber-200/90 font-medium italic bg-amber-100/60 dark:bg-amber-900/30 px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800/40 inline-flex items-center gap-1.5">
+                                        <div className="mt-2 text-[11px] sm:text-xs text-amber-800 dark:text-amber-200/90 font-medium italic bg-amber-100/60 dark:bg-amber-900/30 px-2.5 sm:px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800/40 inline-flex items-center gap-1.5">
                                             <span>💬 Note from IT:</span> &ldquo;{myPendingAudits[0].adminRemarks}&rdquo;
                                         </div>
                                     )}
-                                    <div className="mt-2.5 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-xs text-blue-900 dark:text-blue-200 font-medium w-fit">
-                                        <span className="text-sm">📱</span>
+                                    <div className="mt-2.5 flex items-start sm:items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-[11px] sm:text-xs text-blue-900 dark:text-blue-200 font-medium w-full sm:w-fit">
+                                        <span className="text-sm shrink-0">📱</span>
                                         <span><strong>Camera Required:</strong> We recommend opening this portal on your <strong>mobile phone browser</strong> to easily snap photos.</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
+                            <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                                 {myPendingAudits.map((audit) => {
                                     const targetAsset = myAssets.find(a => a.id === audit.assetId) || audit.asset;
                                     return (
@@ -107,7 +107,7 @@ const Home: React.FC = () => {
                                                     handleStartAuditFlow(targetAsset, audit);
                                                 }
                                             }}
-                                            className="px-6 py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-sm rounded-2xl shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
+                                            className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
                                         >
                                             📷 Complete Audit: {targetAsset?.name || 'Asset'}
                                         </button>
