@@ -233,6 +233,9 @@ async function sendTicketEmail(options: {
   </div>
   <div class="cta">
     <a href="${ticketUrl}" class="btn">&#128172; View &amp; Reply in Portal</a>
+    <p style="font-size: 12px; color: #64748b; margin-top: 14px; margin-bottom: 0; line-height: 1.4;">
+      Please do not reply directly to this email. Replies to this address are not monitored.<br/>To reply or attach screenshots/files, click the button above to respond in the IT Portal.
+    </p>
   </div>
   <div class="footer">
     Avana IT Management &bull; Ticket ${trackingTag}
@@ -280,14 +283,6 @@ async function sendTicketEmail(options: {
                                 }
                             }
                         ],
-                        replyTo: options.senderEmail ? [
-                            {
-                                emailAddress: {
-                                    address: options.senderEmail,
-                                    name: options.senderName
-                                }
-                            }
-                        ] : undefined,
                         internetMessageHeaders
                     },
                     saveToSentItems: "false"
@@ -354,7 +349,7 @@ async function sendTicketEmail(options: {
                 await transporter.sendMail({
                     from: `"${options.senderName} via IT Support" <${fromMail}>`,
                     to: `"${options.toName}" <${options.toEmail}>`,
-                    replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
+                    replyTo: fromMail,
                     subject,
                     html: htmlContent,
                     headers: {
@@ -376,7 +371,7 @@ async function sendTicketEmail(options: {
                     await transporter.sendMail({
                         from: `"${options.senderName} via IT Support" <${smtpUser}>`,
                         to: `"${options.toName}" <${options.toEmail}>`,
-                        replyTo: options.senderEmail ? `"${options.senderName}" <${options.senderEmail}>` : fromMail,
+                        replyTo: smtpUser,
                         subject,
                         html: htmlContent,
                         headers: {
@@ -2699,7 +2694,7 @@ app.get('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
         const comments = await prisma.ticketComment.findMany({
             where: whereClause,
             include: {
-                user: { select: { id: true, name: true, role: true, avatar: true } }
+                user: { select: { id: true, name: true, email: true, role: true, avatar: true } }
             },
             orderBy: { createdAt: 'asc' }
         });
@@ -2750,7 +2745,7 @@ app.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
                 isInternal: internalFlag
             },
             include: {
-                user: { select: { id: true, name: true, role: true, avatar: true } }
+                user: { select: { id: true, name: true, email: true, role: true, avatar: true } }
             }
         });
 

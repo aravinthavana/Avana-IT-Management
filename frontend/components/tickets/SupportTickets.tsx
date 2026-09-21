@@ -3,8 +3,6 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { SupportTicket, TicketComment, TicketAttachment, KnowledgeBaseArticle } from '../../types';
-import { useMsal } from "@azure/msal-react";
-import { syncIncomingEmailReplies } from '../../utils/graphMail';
 import { sanitizeHtml } from '../../utils/sanitize';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
@@ -47,7 +45,6 @@ const CANNED_RESPONSES = [
 const SupportTickets: React.FC = () => {
     const { tickets, setTickets, getHeaders, setNotification, assets, navigate, users, kbArticles = [] } = useAppContext();
     const { user } = useAuth();
-    const { instance } = useMsal();
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -57,7 +54,6 @@ const SupportTickets: React.FC = () => {
     const [loadingComments, setLoadingComments] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [submittingTicket, setSubmittingTicket] = useState(false);
-    const [isSyncingReplies, setIsSyncingReplies] = useState(false);
 
     // Support Admin Contacts
     const [supportAdmins, setSupportAdmins] = useState<Array<{ id: number; name: string; email: string }>>([]);
@@ -157,43 +153,18 @@ const SupportTickets: React.FC = () => {
         }
     }, [getHeaders]);
 
-    const handleSyncReplies = useCallback(async (ticketId: number, isManual = false) => {
-        setIsSyncingReplies(true);
-        try {
-            const count = await syncIncomingEmailReplies(instance, ticketId, getHeaders, (newComment) => {
-                setComments(prev => {
-                    if (prev.some(c => c.id === newComment.id || (newComment.emailMessageId && c.emailMessageId === newComment.emailMessageId))) {
-                        return prev;
-                    }
-                    return [...prev, newComment];
-                });
-            }, isManual);
-            if (count > 0) {
-                setNotification({ message: `Synced ${count} new reply from Outlook!`, type: 'success' });
-            } else if (isManual) {
-                setNotification({ message: 'No new replies found.', type: 'info' });
-            }
-        } catch (e) {
-            console.warn('Sync replies failed:', e);
-        } finally {
-            setIsSyncingReplies(false);
-        }
-    }, [instance, getHeaders, setNotification]);
-
     useEffect(() => {
         if (selectedTicket) {
             fetchComments(selectedTicket.id);
             setCommentAttachments([]);
             setIsInternalComment(false);
-            // Auto-check for any Outlook replies for this ticket (passive, no popups)
-            handleSyncReplies(selectedTicket.id, false);
         } else {
             setComments([]);
             setNewComment('');
             setCommentAttachments([]);
             setIsInternalComment(false);
         }
-    }, [selectedTicket?.id, fetchComments, handleSyncReplies]);
+    }, [selectedTicket?.id, fetchComments]);
 
     // Auto-poll comments every 10 seconds while a ticket is open
     useEffect(() => {
@@ -606,7 +577,7 @@ const SupportTickets: React.FC = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Support Tickets</h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        Submit and track IT technical support requests with 2-way Outlook email sync and live resolution tracking.
+                        Submit and track IT technical support requests and live resolution tracking.
                     </p>
                 </div>
                 <button 
@@ -1429,15 +1400,6 @@ const SupportTickets: React.FC = () => {
                                     <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
                                         💬 Discussion & Activity ({comments.length})
                                     </h4>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSyncReplies(selectedTicket.id, true)}
-                                        disabled={isSyncingReplies}
-                                        className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-red-400 flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/40 rounded-lg transition-all"
-                                    >
-                                        <span className={isSyncingReplies ? 'animate-spin' : ''}>🔄</span>
-                                        {isSyncingReplies ? 'Syncing Outlook...' : 'Check Outlook Replies'}
-                                    </button>
                                 </div>
 
                                 {/* Comments list */}
@@ -1449,23 +1411,27 @@ const SupportTickets: React.FC = () => {
                                     )}
                                     {!loadingComments && comments.length === 0 && (
                                         <p className="text-xs text-center text-slate-400 font-medium italic py-4">
-                                            No comments yet. Start the discussion below or reply directly from Outlook.
+                                            No comments yet. Start the discussion below.
                                         </p>
                                     )}
                                     {comments.map(c => {
                                         const isAuthorAdmin = c.user?.role === 'Admin';
-                                        const isMe = c.user?.email === user?.email;
+                                        const isMe = Boolean(
+                                            user && (
+                                                c.userId === user.id || 
+                                                c.user?.id === user.id || 
+                                                (c.user?.email && user?.email && c.user.email.toLowerCase() === user.email.toLowerCase())
+                                            )
+                                        );
                                         const commentAtts = parseAttachments(c.attachments);
                                         const isInternal = c.isInternal;
                                         
                                         return (
-                                            <div key={c.id} className={`flex flex-col ${isMe && !isInternal ? 'items-end' : 'items-start'}`}>
-                                                <div className="flex items-center gap-2 mb-1 px-1">
-                                                    {!isMe && (
-                                                        <span className="font-bold text-[10px] text-slate-500 uppercase tracking-wide">
-                                                            {c.user?.name || 'User'}
-                                                        </span>
-                                                    )}
+                                            <div key={c.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                                <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                    <span className={`font-bold text-[10px] uppercase tracking-wide ${isMe ? 'text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                        {isMe ? 'You' : (c.user?.name || 'User')}
+                                                    </span>
                                                     {isAuthorAdmin && (
                                                         <span className="px-1.5 py-0.5 bg-red-100 text-brand-600 dark:bg-red-950/60 dark:text-red-400 rounded text-[9px] font-black uppercase">
                                                             IT Admin
@@ -1476,22 +1442,17 @@ const SupportTickets: React.FC = () => {
                                                             🔒 Internal IT Note
                                                         </span>
                                                     )}
-                                                    {c.source === 'Email' && (
-                                                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 rounded text-[9px] font-bold">
-                                                            Via Outlook
-                                                        </span>
-                                                    )}
                                                     <span className="text-[9px] font-medium text-slate-400">
                                                         {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                                 
-                                                <div className={`p-3.5 rounded-2xl max-w-[85%] sm:max-w-[75%] shadow-sm ${
+                                                <div className={`p-3.5 rounded-2xl max-w-[85%] sm:max-w-[75%] shadow-sm text-left ${
                                                     isInternal
-                                                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-800 rounded-tl-sm'
+                                                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-800 ' + (isMe ? 'rounded-tr-xs' : 'rounded-tl-xs')
                                                         : isMe 
-                                                            ? 'bg-brand-600 text-white rounded-tr-sm' 
-                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-sm'
+                                                            ? 'bg-brand-600 text-white rounded-tr-xs shadow-brand-600/10' 
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-xs'
                                                 }`}>
                                                     <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
                                                         isInternal 
