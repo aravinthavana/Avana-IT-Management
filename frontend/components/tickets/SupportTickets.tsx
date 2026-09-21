@@ -381,7 +381,10 @@ const SupportTickets: React.FC = () => {
                 headers: getHeaders(),
                 credentials: 'include'
             });
-            if (!res.ok) throw new Error('Failed to delete ticket');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.error || `Failed to delete ticket (${res.status})`);
+            }
             setTickets(prev => prev.filter(t => t.id !== deletingTicketId));
             if (selectedTicket && selectedTicket.id === deletingTicketId) {
                 setSelectedTicket(null);

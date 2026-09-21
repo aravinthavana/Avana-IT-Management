@@ -3403,6 +3403,17 @@ app.delete('/api/tickets/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Ticket not found' });
         }
 
+        // Delete related comments first to ensure clean deletion regardless of DB-level cascade
+        await prisma.ticketComment.deleteMany({
+            where: { ticketId: Number(id) }
+        });
+
+        // Unlink any self-audits referencing this ticket
+        await prisma.selfAudit.updateMany({
+            where: { ticketId: Number(id) },
+            data: { ticketId: null }
+        });
+
         await prisma.supportTicket.delete({
             where: { id: Number(id) }
         });
