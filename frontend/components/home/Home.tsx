@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import SelfAuditModal from '../assets/SelfAuditModal';
+import AssetDeclarationModal from '../audits/AssetDeclarationModal';
 import { useAppContext } from '../../hooks/useAppContext';
 import Card from '../ui/Card';
 import { ICONS } from '../../constants';
@@ -19,7 +20,19 @@ const Home: React.FC = () => {
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [auditTargetAsset, setAuditTargetAsset] = useState<any>(null);
     const [auditTargetRecord, setAuditTargetRecord] = useState<any>(null);
+
+    // Pre-Audit Asset Declaration & Discovery Modal state
+    const [isDeclarationModalOpen, setIsDeclarationModalOpen] = useState(false);
+    const [declarationTargetAsset, setDeclarationTargetAsset] = useState<any>(null);
+    const [declarationTargetAudit, setDeclarationTargetAudit] = useState<any>(null);
+
     const { user } = useAuth();
+
+    const handleStartAuditFlow = (targetAsset: any, auditRecord?: any) => {
+        setDeclarationTargetAsset(targetAsset);
+        setDeclarationTargetAudit(auditRecord || null);
+        setIsDeclarationModalOpen(true);
+    };
 
     const stats = useMemo(() => ({
         totalAssets: assets.length,
@@ -87,9 +100,7 @@ const Home: React.FC = () => {
                                             key={audit.id}
                                             onClick={() => {
                                                 if (targetAsset) {
-                                                    setAuditTargetAsset(targetAsset);
-                                                    setAuditTargetRecord(audit);
-                                                    setIsAuditModalOpen(true);
+                                                    handleStartAuditFlow(targetAsset, audit);
                                                 }
                                             }}
                                             className="px-6 py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-sm rounded-2xl shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
@@ -162,11 +173,7 @@ const Home: React.FC = () => {
                                                         <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs font-bold">In Use</span>
                                                     </div>
                                                     <button 
-                                                        onClick={() => { 
-                                                            setAuditTargetAsset(asset); 
-                                                            setAuditTargetRecord(pendingAudit || null);
-                                                            setIsAuditModalOpen(true); 
-                                                        }} 
+                                                        onClick={() => handleStartAuditFlow(asset, pendingAudit)} 
                                                         className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm flex items-center gap-2 ${
                                                             pendingAudit
                                                                 ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/30 animate-pulse'
@@ -252,6 +259,26 @@ const Home: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                <AssetDeclarationModal
+                    isOpen={isDeclarationModalOpen}
+                    onClose={() => {
+                        setIsDeclarationModalOpen(false);
+                        setDeclarationTargetAsset(null);
+                        setDeclarationTargetAudit(null);
+                    }}
+                    userAssignedAssets={myAssets}
+                    targetAudit={declarationTargetAudit}
+                    targetAsset={declarationTargetAsset}
+                    onCompleted={(declarationId, shouldContinueToAudit, assetToAudit) => {
+                        setIsDeclarationModalOpen(false);
+                        if (shouldContinueToAudit && (assetToAudit || declarationTargetAsset)) {
+                            setAuditTargetAsset(assetToAudit || declarationTargetAsset);
+                            setAuditTargetRecord(declarationTargetAudit);
+                            setIsAuditModalOpen(true);
+                        }
+                    }}
+                />
+
                 {auditTargetAsset && (
                     <SelfAuditModal 
                         isOpen={isAuditModalOpen} 

@@ -368,3 +368,39 @@ export function normalizeCompanyCode(company?: string | null): string {
     if (upper.includes('MEDICAL') || upper.startsWith('AMD')) return 'AMD';
     return upper;
 }
+
+export interface DeclaredAssetItem {
+    id: string;
+    name: string;
+    category: string;
+    brand?: string;
+    serialNumber?: string;
+    condition?: 'Good' | 'Minor Scratches' | 'Damaged' | 'Needs IT Attention' | string;
+    location?: string;
+    imageUrl?: string;
+    isGhost?: boolean;
+    convertedAssetId?: number;
+    convertedAssetTag?: string;
+    convertedAt?: string;
+}
+
+export interface AssetDeclaration {
+    id: number;
+    userId: number;
+    user?: User;
+    hasAssets: boolean;
+    selectedTypes?: string;
+    declaredItems?: string;
+    systemRecordsOk: boolean;
+    discrepancyNotes?: string | null;
+    status: 'Pending Review' | 'Reconciled' | string;
+    reconciledById?: number | null;
+    reconciledBy?: User | null;
+    reconciledAt?: string | null;
+    adminRemarks?: string | null;
+    auditId?: number | null;
+    audit?: SelfAudit | null;
+    createdAt: string;
+    updatedAt: string;
+}
+

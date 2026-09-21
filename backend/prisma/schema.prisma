@@ -71,6 +71,8 @@ model User {
   selfAudits       SelfAudit[]     @relation("UserSelfAudits")
   requestedAudits  SelfAudit[]     @relation("AuditRequestedBy")
   reviewedAudits   SelfAudit[]     @relation("AuditReviewedBy")
+  declarations     AssetDeclaration[] @relation("UserDeclarations")
+  reconciledDeclarations AssetDeclaration[] @relation("DeclarationReconciledBy")
   ticketComments TicketComment[]
 
   @@index([departmentId])
@@ -358,6 +360,8 @@ model SelfAudit {
   // Optional escalation link to a SupportTicket
   ticketId         Int?
   
+  declarations     AssetDeclaration[] @relation("AuditDeclarations")
+  
   // Status lifecycle: "Requested" | "Pending Review" | "Approved" | "Rejected"
   status           String    @default("Pending Review")
   auditDate        DateTime  @default(now())
@@ -367,4 +371,34 @@ model SelfAudit {
   @@index([status])
   @@index([requestedById])
   @@index([reviewedById])
+}
+
+model AssetDeclaration {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  user             User      @relation("UserDeclarations", fields: [userId], references: [id], onDelete: Cascade)
+  
+  hasAssets        Boolean   // true = Yes, false = No
+  selectedTypes    String?   // JSON array: ["Laptop", "Monitor", ...]
+  declaredItems    String?   // JSON array: [{ id, name, category, brand, serialNumber, condition, location, imageUrl, isGhost, convertedAssetId }]
+  
+  systemRecordsOk  Boolean   // true = matches IT records, false = discrepancy
+  discrepancyNotes String?   // Employee's explanation of discrepancy
+  
+  status           String    @default("Pending Review") // "Pending Review", "Reconciled"
+  reconciledById   Int?
+  reconciledBy     User?     @relation("DeclarationReconciledBy", fields: [reconciledById], references: [id], onDelete: SetNull)
+  reconciledAt     DateTime?
+  adminRemarks     String?
+  
+  auditId          Int?
+  audit            SelfAudit? @relation("AuditDeclarations", fields: [auditId], references: [id], onDelete: SetNull)
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([auditId])
+  @@index([reconciledById])
 }
