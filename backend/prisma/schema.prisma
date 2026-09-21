@@ -128,6 +128,8 @@ model Asset {
   handovers         HandoverLog[]
   selfAudits        SelfAudit[]
   supportTickets    SupportTicket[]
+  requestsAsCurrent AssetRequest[] @relation("RequestCurrentAsset")
+  requestsAsAllocated AssetRequest[] @relation("RequestAllocatedAsset")
 
   @@index([userId])
   @@index([status])
@@ -217,24 +219,43 @@ model LicenseAssignment {
 }
 
 model AssetRequest {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  user         User     @relation("UserRequests", fields: [userId], references: [id])
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  user              User      @relation("UserRequests", fields: [userId], references: [id])
   
-  managerId    Int?
-  manager      User?    @relation("ManagerRequests", fields: [managerId], references: [id])
+  managerId         Int?
+  manager           User?     @relation("ManagerRequests", fields: [managerId], references: [id])
   
-  requestType  String   // e.g., "New Asset", "Replacement", "Upgrade"
-  category     String   // e.g., "Laptop", "Mouse", "Keyboard"
-  description  String?
-  status       String   @default("Pending Manager") // Pending Manager, Pending Admin, Approved, Rejected
+  requestType       String    // "New Asset", "Replacement", "Upgrade", "Repair"
+  category          String    // "Laptop", "Desktop", "Monitor", "Keyboard", "Mouse", "Headset", "Software License", "Other"
+  priority          String    @default("Medium") // "Low", "Medium", "High", "Urgent"
+  description       String?
   
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Existing asset if Replacement/Upgrade/Repair
+  currentAssetId    Int?
+  currentAsset      Asset?    @relation("RequestCurrentAsset", fields: [currentAssetId], references: [id], onDelete: SetNull)
+  
+  // Real allocated asset when Admin fulfills
+  allocatedAssetId  Int?
+  allocatedAsset    Asset?    @relation("RequestAllocatedAsset", fields: [allocatedAssetId], references: [id], onDelete: SetNull)
+  
+  status            String    @default("Pending Manager") // Pending Manager, Pending Admin, Approved, Fulfilled, Rejected by Manager, Rejected by Admin
+  rejectionReason   String?
+  managerRemarks    String?
+  adminRemarks      String?
+  
+  managerDecisionAt DateTime?
+  adminDecisionAt   DateTime?
+  fulfilledAt       DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([userId])
   @@index([status])
   @@index([managerId])
+  @@index([allocatedAssetId])
+  @@index([currentAssetId])
 }
 
 model SupportTicket {

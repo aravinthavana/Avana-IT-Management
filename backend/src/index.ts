@@ -403,6 +403,206 @@ async function sendTicketEmail(options: {
     return { success: false, error: lastError };
 }
 
+async function sendAssetRequestEmail(options: {
+    toEmail: string;
+    toName: string;
+    requestId: number;
+    requestType: string;
+    category: string;
+    priority?: string;
+    status: string;
+    actionTitle: string;
+    actionMessage: string;
+    actorName: string;
+    description?: string;
+    rejectionReason?: string;
+    allocatedAssetName?: string;
+    allocatedAssetSerial?: string;
+    remarks?: string;
+}): Promise<{ success: boolean; method?: string; error?: string }> {
+    const fromMail = process.env.SMTP_FROM || process.env.SMTP_USER || 'itsupport@avanamedical.com';
+    const portalUrl = process.env.FRONTEND_URL || 'https://avana-it-management.vercel.app';
+    const requestUrl = `${portalUrl}/requests`;
+    const trackingTag = `[AVANA-REQUEST #${options.requestId}]`;
+    const subject = `${trackingTag} ${options.actionTitle} - ${options.category} (${options.requestType})`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f8fafc;margin:0;padding:20px;color:#1e293b}
+  .container{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+  .header{background:#0f172a;color:#fff;padding:24px;text-align:left}
+  .badge{display:inline-block;background:#dc2626;color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:9999px;text-transform:uppercase;letter-spacing:.05em}
+  .status-badge{display:inline-block;background:#334155;color:#f8fafc;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-left:6px}
+  .title{font-size:20px;font-weight:800;margin:12px 0 4px 0;color:#fff}
+  .meta{font-size:12px;color:#94a3b8}
+  .content{padding:24px;line-height:1.6;font-size:14px;color:#334155}
+  .info-table{width:100%;border-collapse:collapse;margin:16px 0;background:#f8fafc;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0}
+  .info-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid #e2e8f0}
+  .info-table td.label{font-weight:700;color:#64748b;width:35%}
+  .message-box{background:#f1f5f9;border-left:4px solid #dc2626;padding:14px 16px;border-radius:8px;margin:16px 0;font-size:14px}
+  .rejection-box{background:#fef2f2;border-left:4px solid #ef4444;padding:14px 16px;border-radius:8px;margin:16px 0;font-size:14px;color:#991b1b}
+  .allocated-box{background:#f0fdf4;border-left:4px solid #16a34a;padding:14px 16px;border-radius:8px;margin:16px 0;font-size:14px;color:#166534}
+  .cta{text-align:center;padding:12px 0 20px}
+  .btn{display:inline-block;background:#0f172a;color:#fff !important;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px}
+  .footer{padding:12px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="badge">${options.requestType || 'Asset Request'}</span>
+    <span class="status-badge">${options.status}</span>
+    <div class="title">${options.actionTitle}</div>
+    <div class="meta">Request #REQ-${options.requestId.toString().padStart(4, '0')} &bull; Updated by: ${options.actorName}</div>
+  </div>
+  <div class="content">
+    <p>Hello <strong>${options.toName}</strong>,</p>
+    <p>${options.actionMessage}</p>
+
+    <table class="info-table">
+      <tr><td class="label">Request ID:</td><td><strong>REQ-${options.requestId.toString().padStart(4, '0')}</strong></td></tr>
+      <tr><td class="label">Category:</td><td>${options.category}</td></tr>
+      <tr><td class="label">Request Type:</td><td>${options.requestType}</td></tr>
+      <tr><td class="label">Priority:</td><td>${options.priority || 'Medium'}</td></tr>
+      <tr><td class="label">Current Status:</td><td><strong>${options.status}</strong></td></tr>
+    </table>
+
+    ${options.rejectionReason ? `
+      <div class="rejection-box">
+        <strong>Reason for Rejection:</strong><br/>
+        ${options.rejectionReason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+      </div>` : ''}
+
+    ${options.allocatedAssetName ? `
+      <div class="allocated-box">
+        <strong style="font-size:15px;">&#10004; Allocated Device:</strong><br/>
+        <strong>${options.allocatedAssetName}</strong><br/>
+        <span style="font-size:13px;">Serial Number: <code>${options.allocatedAssetSerial || 'N/A'}</code></span><br/>
+        <p style="margin:8px 0 0 0; font-size:12px;"><strong>Action Required:</strong> A digital handover form has been generated. Please log in to the IT Portal to inspect and digitally sign off on this asset.</p>
+      </div>` : ''}
+
+    ${options.description ? `
+      <p style="margin-bottom:4px; font-weight:600; font-size:13px; color:#64748b;">Original Request Description:</p>
+      <div class="message-box">${options.description.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
+
+    ${options.remarks ? `
+      <p style="margin-bottom:4px; font-weight:600; font-size:13px; color:#64748b;">Remarks:</p>
+      <div class="message-box">${options.remarks.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
+  </div>
+  <div class="cta">
+    <a href="${requestUrl}" class="btn">View Asset Request in Portal</a>
+    <p style="font-size: 12px; color: #64748b; margin-top: 14px; margin-bottom: 0;">
+      Replies to this automated notification are not monitored. Please use the IT Management portal.
+    </p>
+  </div>
+  <div class="footer">
+    Avana IT Management &bull; Asset Lifecycle Notification
+  </div>
+</div>
+</body>
+</html>`;
+
+    function recordLog(status: 'SUCCESS' | 'FAILED', method?: string, error?: string) {
+        if (status === 'SUCCESS') {
+            console.log(`[Email] Request #${options.requestId} notification sent via ${method || 'dispatcher'} to ${options.toEmail}`);
+        } else {
+            console.warn(`[Email] Request #${options.requestId} notification failed via ${method || 'dispatcher'} to ${options.toEmail}: ${error || 'Unknown error'}`);
+        }
+    }
+
+    // 1. Try Microsoft Graph API
+    const authResult = await getGraphAppToken();
+    if (authResult.token) {
+        try {
+            const sendViaGraph = async (sendAsMailbox: string) => {
+                const graphPayload = {
+                    message: {
+                        subject,
+                        body: {
+                            contentType: 'HTML',
+                            content: htmlContent
+                        },
+                        toRecipients: [
+                            {
+                                emailAddress: {
+                                    address: options.toEmail,
+                                    name: options.toName
+                                }
+                            }
+                        ]
+                    },
+                    saveToSentItems: "false"
+                };
+
+                return await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sendAsMailbox)}/sendMail`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authResult.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(graphPayload),
+                    signal: AbortSignal.timeout(10000)
+                });
+            };
+
+            let graphRes = await sendViaGraph(fromMail);
+            const adminFallback = process.env.SMTP_USER || 'aravinth@avanamedical.com';
+            if (!graphRes.ok && fromMail !== adminFallback) {
+                const retryRes = await sendViaGraph(adminFallback);
+                if (retryRes.ok || retryRes.status === 202) {
+                    graphRes = retryRes;
+                }
+            }
+
+            if (graphRes.ok || graphRes.status === 202) {
+                recordLog('SUCCESS', `Microsoft Graph API (${authResult.method})`);
+                return { success: true, method: `Microsoft Graph API (${authResult.method})` };
+            } else {
+                const errText = await graphRes.text();
+                recordLog('FAILED', `Microsoft Graph API (${authResult.method})`, errText);
+            }
+        } catch (graphErr: any) {
+            recordLog('FAILED', 'Microsoft Graph API', graphErr.message || graphErr);
+        }
+    }
+
+    // 2. Fallback to Nodemailer SMTP
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    if (smtpUser && smtpPass) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.office365.com',
+                port: 587,
+                secure: false,
+                requireTLS: true,
+                connectionTimeout: 4000,
+                greetingTimeout: 4000,
+                socketTimeout: 4000,
+                auth: { user: smtpUser, pass: smtpPass },
+                tls: { minVersion: 'TLSv1.2', rejectUnauthorized: false }
+            });
+
+            await transporter.sendMail({
+                from: `"Avana IT Asset Management" <${smtpUser}>`,
+                to: `"${options.toName}" <${options.toEmail}>`,
+                replyTo: smtpUser,
+                subject,
+                html: htmlContent
+            });
+            recordLog('SUCCESS', 'SMTP');
+            return { success: true, method: 'SMTP' };
+        } catch (smtpErr: any) {
+            recordLog('FAILED', 'SMTP', smtpErr.message || smtpErr);
+            return { success: false, error: smtpErr.message, method: 'SMTP' };
+        }
+    }
+
+    return { success: false, error: 'No valid email configuration available' };
+}
+
 // --- Zod Schemas for Validation ---
 
 const userSchema = z.object({
@@ -2354,25 +2554,80 @@ app.get('/api/requests', authenticateToken, async (req, res) => {
     try {
         // @ts-ignore
         const { role, id } = req.user;
+
+        // Check if current user has direct reports (making them a manager in practice)
+        const subordinates = await prisma.user.findMany({ where: { managerId: id }, select: { id: true } });
+        const hasSubordinates = subordinates.length > 0;
+
+        const requestInclude = {
+            user: { 
+                select: { 
+                    id: true, 
+                    name: true, 
+                    email: true, 
+                    company: true, 
+                    employeeId: true, 
+                    jobTitle: true,
+                    department: { select: { id: true, name: true } },
+                    branch: { select: { id: true, name: true } }
+                } 
+            },
+            manager: { 
+                select: { 
+                    id: true, 
+                    name: true, 
+                    email: true 
+                } 
+            },
+            allocatedAsset: {
+                select: {
+                    id: true,
+                    assetId: true,
+                    name: true,
+                    category: true,
+                    brand: true,
+                    model: true,
+                    serialNumber: true,
+                    status: true,
+                    company: true
+                }
+            },
+            currentAsset: {
+                select: {
+                    id: true,
+                    assetId: true,
+                    name: true,
+                    category: true,
+                    brand: true,
+                    model: true,
+                    serialNumber: true
+                }
+            }
+        };
+
         let requests;
 
         if (role === 'Admin') {
-            requests = await prisma.assetRequest.findMany({ include: { user: true, manager: true }, orderBy: { createdAt: 'desc' } });
-        } else if (role === 'Manager') {
+            requests = await prisma.assetRequest.findMany({ 
+                include: requestInclude, 
+                orderBy: { createdAt: 'desc' } 
+            });
+        } else if (role === 'Manager' || hasSubordinates) {
             requests = await prisma.assetRequest.findMany({
                 where: { OR: [{ managerId: id }, { userId: id }] },
-                include: { user: true, manager: true },
+                include: requestInclude,
                 orderBy: { createdAt: 'desc' }
             });
         } else {
             requests = await prisma.assetRequest.findMany({
                 where: { userId: id },
-                include: { user: true, manager: true },
+                include: requestInclude,
                 orderBy: { createdAt: 'desc' }
             });
         }
         res.json(requests);
     } catch (error) {
+        console.error('Failed to fetch asset requests:', error);
         res.status(500).json({ error: 'Failed to fetch asset requests' });
     }
 });
@@ -2381,21 +2636,82 @@ app.post('/api/requests', authenticateToken, async (req, res) => {
     try {
         // @ts-ignore
         const { id } = req.user;
-        const user = await prisma.user.findUnique({ where: { id } });
-        const { requestType, category, description } = req.body;
+        const user = await prisma.user.findUnique({ 
+            where: { id },
+            include: { manager: true }
+        });
+        const { requestType, category, description, priority, currentAssetId } = req.body;
         
+        const initialStatus = user?.managerId ? 'Pending Manager' : 'Pending Admin';
+
         const request = await prisma.assetRequest.create({
             data: { 
                 userId: id, 
-                managerId: user?.managerId, 
-                requestType, 
-                category, 
-                description, 
-                status: user?.managerId ? 'Pending Manager' : 'Pending Admin' 
+                managerId: user?.managerId || null, 
+                requestType: requestType || 'New Asset', 
+                category: category || 'Laptop', 
+                description: description || null, 
+                priority: priority || 'Medium',
+                currentAssetId: currentAssetId ? Number(currentAssetId) : null,
+                status: initialStatus 
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        company: true,
+                        employeeId: true,
+                        department: { select: { id: true, name: true } }
+                    }
+                },
+                manager: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                },
+                currentAsset: true
             }
         });
+
+        // Fire-and-forget email notification
+        if (user?.manager && user.manager.email) {
+            sendAssetRequestEmail({
+                toEmail: user.manager.email,
+                toName: user.manager.name,
+                requestId: request.id,
+                requestType: request.requestType,
+                category: request.category,
+                priority: request.priority,
+                status: initialStatus,
+                actionTitle: 'New Asset Request Requires Your Approval',
+                actionMessage: `${user.name} has submitted a new asset request requiring your review and approval.`,
+                actorName: user.name,
+                description: request.description || undefined
+            }).catch(e => console.error('[AssetRequest Email Error]', e));
+        } else {
+            const itAdminEmail = process.env.SMTP_USER || 'aravinth@avanamedical.com';
+            sendAssetRequestEmail({
+                toEmail: itAdminEmail,
+                toName: 'IT Administrator',
+                requestId: request.id,
+                requestType: request.requestType,
+                category: request.category,
+                priority: request.priority,
+                status: initialStatus,
+                actionTitle: 'New Asset Request (Direct IT Approval)',
+                actionMessage: `${user?.name} has submitted an asset request directly to IT.`,
+                actorName: user?.name || 'Employee',
+                description: request.description || undefined
+            }).catch(e => console.error('[AssetRequest Email Error]', e));
+        }
+
         res.status(201).json(request);
     } catch (error) {
+        console.error('Failed to create asset request:', error);
         res.status(500).json({ error: 'Failed to create asset request' });
     }
 });
@@ -2403,29 +2719,264 @@ app.post('/api/requests', authenticateToken, async (req, res) => {
 app.put('/api/requests/:id/status', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, rejectionReason, remarks } = req.body;
         // @ts-ignore
         const { role, id: requestingUserId } = req.user;
 
-        const existingRequest = await prisma.assetRequest.findUnique({ where: { id: Number(id) } });
+        const existingRequest = await prisma.assetRequest.findUnique({ 
+            where: { id: Number(id) },
+            include: {
+                user: true,
+                manager: true,
+                allocatedAsset: true,
+                currentAsset: true
+            }
+        });
         if (!existingRequest) return res.status(404).json({ error: 'Request not found.' });
 
-        if ((status === 'Pending Admin' || status === 'Rejected by Manager') && role !== 'Manager' && role !== 'Admin') {
-            return res.status(403).json({ error: 'Not authorized.' });
-        }
-        
-        if (role === 'Manager' && existingRequest.managerId !== requestingUserId) {
-            return res.status(403).json({ error: 'Not authorized to manage this request.' });
+        const isManagerOfReq = existingRequest.managerId === requestingUserId || role === 'Admin';
+
+        // Manager Approval / Rejection
+        if (status === 'Pending Admin' || status === 'Rejected by Manager') {
+            if (!isManagerOfReq) {
+                return res.status(403).json({ error: 'Not authorized to manage this request.' });
+            }
+
+            if (status === 'Rejected by Manager' && (!rejectionReason || !rejectionReason.trim())) {
+                return res.status(400).json({ error: 'A rejection reason is mandatory.' });
+            }
+
+            const updatedRequest = await prisma.assetRequest.update({ 
+                where: { id: Number(id) }, 
+                data: { 
+                    status,
+                    rejectionReason: status === 'Rejected by Manager' ? rejectionReason.trim() : null,
+                    managerRemarks: remarks || null,
+                    managerDecisionAt: new Date()
+                },
+                include: {
+                    user: { select: { id: true, name: true, email: true, company: true, department: true, employeeId: true } },
+                    manager: { select: { id: true, name: true, email: true } },
+                    allocatedAsset: true,
+                    currentAsset: true
+                }
+            });
+
+            // Trigger email notification
+            if (status === 'Pending Admin') {
+                const itAdminEmail = process.env.SMTP_USER || 'aravinth@avanamedical.com';
+                sendAssetRequestEmail({
+                    toEmail: itAdminEmail,
+                    toName: 'IT Administrator',
+                    requestId: updatedRequest.id,
+                    requestType: updatedRequest.requestType,
+                    category: updatedRequest.category,
+                    priority: updatedRequest.priority,
+                    status: updatedRequest.status,
+                    actionTitle: 'Asset Request Approved by Manager',
+                    actionMessage: `${existingRequest.manager?.name || 'Manager'} has approved ${existingRequest.user.name}'s request for ${updatedRequest.category}. It is now awaiting IT Admin allocation/approval.`,
+                    actorName: existingRequest.manager?.name || 'Manager',
+                    remarks: remarks || undefined
+                }).catch(e => console.error('[Manager Approve Email Error]', e));
+            } else {
+                if (existingRequest.user && existingRequest.user.email) {
+                    sendAssetRequestEmail({
+                        toEmail: existingRequest.user.email,
+                        toName: existingRequest.user.name,
+                        requestId: updatedRequest.id,
+                        requestType: updatedRequest.requestType,
+                        category: updatedRequest.category,
+                        priority: updatedRequest.priority,
+                        status: updatedRequest.status,
+                        actionTitle: 'Asset Request Rejected by Manager',
+                        actionMessage: `Your asset request has been rejected by your manager.`,
+                        actorName: existingRequest.manager?.name || 'Manager',
+                        rejectionReason: rejectionReason.trim(),
+                        remarks: remarks || undefined
+                    }).catch(e => console.error('[Manager Reject Email Error]', e));
+                }
+            }
+
+            return res.json(updatedRequest);
         }
 
-        if ((status === 'Approved' || status === 'Rejected by Admin') && role !== 'Admin') {
-            return res.status(403).json({ error: 'Only admins can give final approval.' });
+        // Admin Approval / Rejection
+        if (status === 'Approved' || status === 'Rejected by Admin') {
+            if (role !== 'Admin') {
+                return res.status(403).json({ error: 'Only IT admins can provide final IT approval or rejection.' });
+            }
+
+            if (status === 'Rejected by Admin' && (!rejectionReason || !rejectionReason.trim())) {
+                return res.status(400).json({ error: 'A rejection reason is mandatory.' });
+            }
+
+            const updatedRequest = await prisma.assetRequest.update({ 
+                where: { id: Number(id) }, 
+                data: { 
+                    status,
+                    rejectionReason: status === 'Rejected by Admin' ? rejectionReason.trim() : null,
+                    adminRemarks: remarks || null,
+                    adminDecisionAt: new Date()
+                },
+                include: {
+                    user: { select: { id: true, name: true, email: true, company: true, department: true, employeeId: true } },
+                    manager: { select: { id: true, name: true, email: true } },
+                    allocatedAsset: true,
+                    currentAsset: true
+                }
+            });
+
+            if (existingRequest.user && existingRequest.user.email) {
+                sendAssetRequestEmail({
+                    toEmail: existingRequest.user.email,
+                    toName: existingRequest.user.name,
+                    requestId: updatedRequest.id,
+                    requestType: updatedRequest.requestType,
+                    category: updatedRequest.category,
+                    priority: updatedRequest.priority,
+                    status: updatedRequest.status,
+                    actionTitle: status === 'Approved' ? 'Asset Request Approved by IT Admin' : 'Asset Request Rejected by IT Admin',
+                    actionMessage: status === 'Approved' 
+                        ? `Your asset request has been approved by IT Administration. Device allocation will be processed shortly.`
+                        : `Your asset request has been rejected by IT Administration.`,
+                    actorName: 'IT Administrator',
+                    rejectionReason: status === 'Rejected by Admin' ? rejectionReason.trim() : undefined,
+                    remarks: remarks || undefined
+                }).catch(e => console.error('[Admin Decision Email Error]', e));
+            }
+
+            return res.json(updatedRequest);
         }
 
-        const request = await prisma.assetRequest.update({ where: { id: Number(id) }, data: { status } });
-        res.json(request);
+        return res.status(400).json({ error: 'Invalid status provided.' });
     } catch (error) {
+        console.error('Failed to update asset request status:', error);
         res.status(500).json({ error: 'Failed to update asset request status' });
+    }
+});
+
+// Admin-only: Allocate inventory asset to fulfill request
+app.post('/api/requests/:id/allocate', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assetId, adminRemarks } = req.body;
+        // @ts-ignore
+        const { id: requestingUserId } = req.user;
+
+        if (!assetId) {
+            return res.status(400).json({ error: 'Asset ID is required for allocation.' });
+        }
+
+        const request = await prisma.assetRequest.findUnique({
+            where: { id: Number(id) },
+            include: { user: true, manager: true }
+        });
+
+        if (!request) {
+            return res.status(404).json({ error: 'Asset request not found.' });
+        }
+
+        if (request.status === 'Fulfilled') {
+            return res.status(400).json({ error: 'This request has already been fulfilled.' });
+        }
+
+        const asset = await prisma.asset.findUnique({
+            where: { id: Number(assetId) }
+        });
+
+        if (!asset) {
+            return res.status(404).json({ error: 'Selected asset not found in inventory.' });
+        }
+
+        if (asset.status !== 'In Stock' && asset.status !== 'Available') {
+            return res.status(400).json({ error: `Asset "${asset.name}" (${asset.assetId}) is currently "${asset.status}" and cannot be allocated.` });
+        }
+
+        // Atomic transaction:
+        // 1. Mark Asset as 'In Use', assigned to request.userId
+        // 2. Insert AssetHistory log
+        // 3. Create HandoverLog in 'Pending' status
+        // 4. Update AssetRequest with allocatedAssetId and 'Fulfilled' status
+        const [updatedAsset, history, handover, updatedRequest] = await prisma.$transaction([
+            prisma.asset.update({
+                where: { id: asset.id },
+                data: {
+                    status: 'In Use',
+                    userId: request.userId,
+                    assigneeId: request.userId,
+                    assigneeType: 'User'
+                }
+            }),
+            prisma.assetHistory.create({
+                data: {
+                    assetId: asset.id,
+                    userId: requestingUserId,
+                    event: 'Asset Allocated',
+                    details: `Allocated to ${request.user.name} via Asset Request #REQ-${request.id.toString().padStart(4, '0')}.${adminRemarks ? ` Remarks: ${adminRemarks}` : ''}`,
+                    condition: asset.condition || 'Good'
+                }
+            }),
+            prisma.handoverLog.create({
+                data: {
+                    assetId: asset.id,
+                    userId: request.userId,
+                    status: 'Pending',
+                    condition: asset.condition || 'Good',
+                    handoverDate: new Date()
+                }
+            }),
+            prisma.assetRequest.update({
+                where: { id: Number(id) },
+                data: {
+                    allocatedAssetId: asset.id,
+                    status: 'Fulfilled',
+                    adminRemarks: adminRemarks || null,
+                    adminDecisionAt: request.adminDecisionAt || new Date(),
+                    fulfilledAt: new Date()
+                },
+                include: {
+                    user: { 
+                        select: { 
+                            id: true, 
+                            name: true, 
+                            email: true, 
+                            company: true, 
+                            employeeId: true,
+                            jobTitle: true,
+                            department: { select: { id: true, name: true } },
+                            branch: { select: { id: true, name: true } }
+                        } 
+                    },
+                    manager: { select: { id: true, name: true, email: true } },
+                    allocatedAsset: true,
+                    currentAsset: true
+                }
+            })
+        ]);
+
+        // Send fulfillment & handover email notification to requester
+        if (request.user && request.user.email) {
+            sendAssetRequestEmail({
+                toEmail: request.user.email,
+                toName: request.user.name,
+                requestId: request.id,
+                requestType: request.requestType,
+                category: request.category,
+                priority: request.priority,
+                status: 'Fulfilled',
+                actionTitle: 'Asset Allocated & Ready for Handover',
+                actionMessage: `Your requested asset has been allocated by IT Administration. A digital handover record has been generated for you to inspect and sign.`,
+                actorName: 'IT Administrator',
+                allocatedAssetName: `${asset.name} (${asset.category})`,
+                allocatedAssetSerial: asset.serialNumber || 'N/A',
+                remarks: adminRemarks
+            }).catch(e => console.error('[Allocate Email Error]', e));
+        }
+
+        res.json(updatedRequest);
+    } catch (error) {
+        console.error('Failed to allocate asset:', error);
+        res.status(500).json({ error: 'Failed to allocate asset' });
     }
 });
 
