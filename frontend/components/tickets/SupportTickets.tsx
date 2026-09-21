@@ -104,7 +104,8 @@ const SupportTickets: React.FC = () => {
         'Open', 'In Progress', 'Waiting on User', 'Waiting on Vendor', 'Resolved', 'Closed'
     ];
 
-    // Manager / Team detection
+    // Admin & Manager / Team detection
+    const isAdmin = user?.role === 'Admin';
     const isManager = Boolean(user && users.some(u => u.managerId === user.id));
     const [teamViewTab, setTeamViewTab] = useState<'all' | 'my' | 'team'>('all');
 
@@ -115,7 +116,7 @@ const SupportTickets: React.FC = () => {
     const [priorityFilter, setPriorityFilter] = useState('All');
     const [companyFilter, setCompanyFilter] = useState('All');
 
-    const hasActiveFilters = statusFilter !== 'All' || categoryFilter !== 'All' || priorityFilter !== 'All' || companyFilter !== 'All' || searchTerm.trim() !== '';
+    const hasActiveFilters = statusFilter !== 'All' || categoryFilter !== 'All' || priorityFilter !== 'All' || (isAdmin && companyFilter !== 'All') || searchTerm.trim() !== '';
 
     // Fetch support contacts on mount
     useEffect(() => {
@@ -489,6 +490,7 @@ const SupportTickets: React.FC = () => {
     const activeTicketsCount = tickets.filter(t => t.status === 'Open' || t.status === 'In Progress' || t.status === 'Waiting on User' || t.status === 'Waiting on Vendor').length;
     const inProgressCount = tickets.filter(t => t.status === 'In Progress').length;
     const waitingCount = tickets.filter(t => t.status === 'Waiting on User' || t.status === 'Waiting on Vendor').length;
+    const waitingOnUserCount = tickets.filter(t => t.status === 'Waiting on User').length;
     const staleCount = tickets.filter(t => {
         if (t.status === 'Resolved' || t.status === 'Closed') return false;
         const diffDays = (new Date().getTime() - new Date(t.updatedAt || t.createdAt).getTime()) / (1000 * 60 * 60 * 24);
@@ -540,10 +542,16 @@ const SupportTickets: React.FC = () => {
             // Status filter
             if (statusFilter === 'Waiting') {
                 if (t.status !== 'Waiting on User' && t.status !== 'Waiting on Vendor') return false;
+            } else if (statusFilter === 'Waiting on User') {
+                if (t.status !== 'Waiting on User') return false;
+            } else if (statusFilter === 'Active') {
+                if (t.status === 'Resolved' || t.status === 'Closed') return false;
             } else if (statusFilter === 'Stale') {
                 if (t.status === 'Resolved' || t.status === 'Closed') return false;
                 const diffDays = (new Date().getTime() - new Date(t.updatedAt || t.createdAt).getTime()) / (1000 * 60 * 60 * 24);
                 if (diffDays < 7) return false;
+            } else if (statusFilter === 'Resolved') {
+                if (t.status !== 'Resolved' && t.status !== 'Closed') return false;
             } else if (statusFilter !== 'All') {
                 if (t.status !== statusFilter) return false;
             }
@@ -558,8 +566,8 @@ const SupportTickets: React.FC = () => {
                 return false;
             }
 
-            // Company filter
-            if (companyFilter !== 'All') {
+            // Company filter (Admin only)
+            if (isAdmin && companyFilter !== 'All') {
                 const comp = (t.user?.company || '').toUpperCase();
                 if (!comp.includes(companyFilter)) {
                     return false;
@@ -568,7 +576,7 @@ const SupportTickets: React.FC = () => {
 
             return true;
         });
-    }, [tickets, searchTerm, statusFilter, categoryFilter, priorityFilter, companyFilter, teamViewTab, user, subordinateIds]);
+    }, [tickets, searchTerm, statusFilter, categoryFilter, priorityFilter, companyFilter, teamViewTab, user, subordinateIds, isAdmin]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -577,7 +585,9 @@ const SupportTickets: React.FC = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Support Tickets</h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        Submit and track IT technical support requests and live resolution tracking.
+                        {isAdmin 
+                            ? 'Helpdesk operations console: track, assign, and resolve IT technical support requests.' 
+                            : 'Submit and track your IT technical support requests and view live resolution updates.'}
                     </p>
                 </div>
                 <button 
@@ -589,75 +599,127 @@ const SupportTickets: React.FC = () => {
             </div>
 
             {/* KPI Summary Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-                <div 
-                    onClick={() => setStatusFilter('All')} 
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        statusFilter === 'All' 
-                            ? 'bg-brand-50 border-brand-300 dark:bg-red-950/20 dark:border-brand-600/50 shadow-sm ring-2 ring-brand-500/20' 
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                >
-                    <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Total Active</p>
-                    <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{activeTicketsCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">In queue / open</p>
-                </div>
-
-                <div 
-                    onClick={() => setStatusFilter('In Progress')} 
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        statusFilter === 'In Progress' 
-                            ? 'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700 shadow-sm ring-2 ring-blue-500/20' 
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                >
-                    <p className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">In Progress</p>
-                    <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{inProgressCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Being worked on</p>
-                </div>
-
-                <div 
-                    onClick={() => setStatusFilter('Waiting')} 
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        statusFilter === 'Waiting' 
-                            ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm ring-2 ring-amber-500/20' 
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                >
-                    <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Waiting</p>
-                    <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{waitingCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">User / Vendor ball</p>
-                </div>
-
-                <div 
-                    onClick={() => setStatusFilter('Stale')} 
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        statusFilter === 'Stale' 
-                            ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700 shadow-sm ring-2 ring-red-500/20' 
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">Stale (7d+)</p>
-                        {staleCount > 0 && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+            {isAdmin ? (
+                /* Admin: 5-Card Helpdesk Operations Triage Bar */
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+                    <div 
+                        onClick={() => setStatusFilter('All')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'All' 
+                                ? 'bg-brand-50 border-brand-300 dark:bg-red-950/20 dark:border-brand-600/50 shadow-sm ring-2 ring-brand-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Total Active</p>
+                        <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{activeTicketsCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">In queue / open</p>
                     </div>
-                    <p className="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{staleCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Needs attention</p>
-                </div>
 
-                <div 
-                    onClick={() => setStatusFilter('Resolved')} 
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        statusFilter === 'Resolved' 
-                            ? 'bg-teal-50 border-teal-300 dark:bg-teal-950/30 dark:border-teal-700 shadow-sm ring-2 ring-teal-500/20' 
-                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                >
-                    <p className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Resolved</p>
-                    <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">{resolvedCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Completed tickets</p>
+                    <div 
+                        onClick={() => setStatusFilter('In Progress')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'In Progress' 
+                                ? 'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700 shadow-sm ring-2 ring-blue-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">In Progress</p>
+                        <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{inProgressCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Being worked on</p>
+                    </div>
+
+                    <div 
+                        onClick={() => setStatusFilter('Waiting')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Waiting' 
+                                ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm ring-2 ring-amber-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Waiting</p>
+                        <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{waitingCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">User / Vendor ball</p>
+                    </div>
+
+                    <div 
+                        onClick={() => setStatusFilter('Stale')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Stale' 
+                                ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700 shadow-sm ring-2 ring-red-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">Stale (7d+)</p>
+                            {staleCount > 0 && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+                        </div>
+                        <p className="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{staleCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Needs attention</p>
+                    </div>
+
+                    <div 
+                        onClick={() => setStatusFilter('Resolved')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Resolved' 
+                                ? 'bg-teal-50 border-teal-300 dark:bg-teal-950/30 dark:border-teal-700 shadow-sm ring-2 ring-teal-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Resolved</p>
+                        <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">{resolvedCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Completed tickets</p>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                /* Regular Employee: Simplified 3-Card Summary */
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div 
+                        onClick={() => setStatusFilter(statusFilter === 'Active' ? 'All' : 'Active')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Active' 
+                                ? 'bg-brand-50 border-brand-300 dark:bg-red-950/20 dark:border-brand-600/50 shadow-sm ring-2 ring-brand-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Active Requests</p>
+                        <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{activeTicketsCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Under review &amp; in progress with IT</p>
+                    </div>
+
+                    <div 
+                        onClick={() => setStatusFilter(statusFilter === 'Waiting on User' ? 'All' : 'Waiting on User')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Waiting on User' 
+                                ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm ring-2 ring-amber-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Awaiting Your Reply</p>
+                            {waitingOnUserCount > 0 && (
+                                <span className="px-2 py-0.5 bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 text-[10px] font-black rounded-full border border-amber-300 dark:border-amber-800 animate-pulse">
+                                    Action Needed
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{waitingOnUserCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">IT technician requested additional info</p>
+                    </div>
+
+                    <div 
+                        onClick={() => setStatusFilter(statusFilter === 'Resolved' ? 'All' : 'Resolved')} 
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            statusFilter === 'Resolved' 
+                                ? 'bg-teal-50 border-teal-300 dark:bg-teal-950/30 dark:border-teal-700 shadow-sm ring-2 ring-teal-500/20' 
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                        <p className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Resolved Requests</p>
+                        <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">{resolvedCount}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Successfully solved by IT</p>
+                    </div>
+                </div>
+            )}
 
             {/* Manager / Scope Tabs */}
             {(user?.role === 'Admin' || isManager) && (
@@ -731,7 +793,7 @@ const SupportTickets: React.FC = () => {
                         </span>
                         <input
                             type="text"
-                            placeholder="Search by subject, category, user, root cause, or #TKT-0042..."
+                            placeholder={isAdmin ? "Search by subject, category, user, root cause, or #TKT-0042..." : "Search your tickets by subject, category, or #TKT-0042..."}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
@@ -739,17 +801,38 @@ const SupportTickets: React.FC = () => {
                     </div>
 
                     <div className="flex gap-1.5 flex-wrap w-full sm:w-auto items-center">
-                        {['All', 'Open', 'In Progress', 'Waiting', 'Stale', 'Resolved', 'Closed'].map(status => (
+                        {(isAdmin 
+                            ? [
+                                { id: 'All', label: 'All' },
+                                { id: 'Open', label: 'Open' },
+                                { id: 'In Progress', label: 'In Progress' },
+                                { id: 'Waiting', label: 'Waiting' },
+                                { id: 'Stale', label: 'Stale' },
+                                { id: 'Resolved', label: 'Resolved' },
+                                { id: 'Closed', label: 'Closed' },
+                              ]
+                            : [
+                                { id: 'All', label: 'All My Requests' },
+                                { id: 'Active', label: 'Active' },
+                                { id: 'Waiting on User', label: 'Needs My Reply' },
+                                { id: 'Resolved', label: 'Resolved' },
+                              ]
+                        ).map(item => (
                             <button
-                                key={status}
-                                onClick={() => setStatusFilter(status)}
+                                key={item.id}
+                                onClick={() => setStatusFilter(item.id)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                    statusFilter === status
+                                    statusFilter === item.id
                                         ? 'bg-brand-600 text-white shadow-sm'
                                         : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
                                 }`}
                             >
-                                {status}
+                                {item.label}
+                                {!isAdmin && item.id === 'Waiting on User' && waitingOnUserCount > 0 && (
+                                    <span className="ml-1.5 px-1.5 py-0.2 bg-amber-500 text-white text-[10px] rounded-full">
+                                        {waitingOnUserCount}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </div>
@@ -787,20 +870,22 @@ const SupportTickets: React.FC = () => {
                         </select>
                     </div>
 
-                    {/* Company Filter */}
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-slate-500 font-medium">Company:</span>
-                        <select
-                            value={companyFilter}
-                            onChange={e => setCompanyFilter(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
-                        >
-                            <option value="All">All Companies</option>
-                            <option value="AMD">AMD (Medical Devices)</option>
-                            <option value="ASSP">ASSP (Surgical System)</option>
-                            <option value="ATS">ATS (Technology Services)</option>
-                        </select>
-                    </div>
+                    {/* Company Filter - Only visible to Admins managing multiple group companies */}
+                    {isAdmin && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-slate-500 font-medium">Company:</span>
+                            <select
+                                value={companyFilter}
+                                onChange={e => setCompanyFilter(e.target.value)}
+                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                            >
+                                <option value="All">All Companies</option>
+                                <option value="AMD">AMD (Medical Devices)</option>
+                                <option value="ASSP">ASSP (Surgical System)</option>
+                                <option value="ATS">ATS (Technology Services)</option>
+                            </select>
+                        </div>
+                    )}
 
                     {/* Reset Filters */}
                     {hasActiveFilters && (
@@ -827,12 +912,16 @@ const SupportTickets: React.FC = () => {
                         <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
                             <tr>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Ticket</th>
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status & Aging</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">
+                                    {isAdmin ? 'Status & Aging' : 'Status'}
+                                </th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Priority</th>
                                 {(user?.role === 'Admin' || isManager) && (
                                     <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Employee & Company</th>
                                 )}
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Assigned IT</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">
+                                    {isAdmin ? 'Assigned IT' : 'IT Technician'}
+                                </th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
@@ -867,7 +956,7 @@ const SupportTickets: React.FC = () => {
                                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${getStatusColor(ticket.status)}`}>
                                                     {ticket.status}
                                                 </span>
-                                                {aging && (
+                                                {isAdmin && aging && (
                                                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${aging.color}`} title="Last activity aging">
                                                         <span className={`w-1.5 h-1.5 rounded-full ${aging.dot}`}></span>
                                                         {aging.label}
