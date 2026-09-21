@@ -24,14 +24,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
         return assets.filter(a => a.userId === user.id || (a.assigneeType === 'User' && a.assigneeId === user.id));
     }, [assets, user]);
 
-    // Live inventory stock indicator for the selected category
-    const inStockCount = useMemo(() => {
-        return assets.filter(a => 
-            (a.status === 'In Stock' || a.status === 'Available') && 
-            a.category.toLowerCase() === category.toLowerCase()
-        ).length;
-    }, [assets, category]);
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit({
@@ -96,20 +88,11 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                     </div>
                 </div>
 
-                {/* Category & Stock Indicator */}
+                {/* Asset Category */}
                 <div>
-                    <div className="flex justify-between items-center mb-1">
-                        <label htmlFor="category" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                            Asset Category
-                        </label>
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                            inStockCount > 0 
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' 
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                        }`}>
-                            {inStockCount > 0 ? `${inStockCount} ${category}(s) in stock` : `0 currently in stock`}
-                        </span>
-                    </div>
+                    <label htmlFor="category" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Asset Category
+                    </label>
                     <select 
                         id="category"
                         name="category"
