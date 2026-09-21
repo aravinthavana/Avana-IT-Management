@@ -797,6 +797,148 @@ async function sendSelfAuditEmail(options: {
     return { success: false, error: 'No valid email configuration available' };
 }
 
+// --- OTP Login Email Helper ---
+async function sendOtpEmail(options: {
+    toEmail: string;
+    toName: string;
+    otp: string;
+}): Promise<{ success: boolean; error?: string; method?: string }> {
+    const fromMail = process.env.SMTP_FROM || 'itsupport@avanamedical.com';
+    const subject = `Your Avana IT Portal Verification Code: ${options.otp}`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f8fafc;margin:0;padding:24px;color:#1e293b}
+  .container{max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+  .header{background:#0f172a;color:#ffffff;padding:28px 24px;text-align:center}
+  .badge{display:inline-block;background:#dc2626;color:#ffffff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:9999px;text-transform:uppercase;letter-spacing:.06em}
+  .title{font-size:22px;font-weight:800;margin:14px 0 0 0;color:#ffffff;letter-spacing:-0.02em}
+  .content{padding:28px 24px;line-height:1.6;font-size:14px;color:#334155}
+  .otp-box{background:#f1f5f9;border:2px dashed #cbd5e1;border-radius:12px;padding:20px;text-align:center;margin:24px 0}
+  .otp-code{font-size:36px;font-weight:900;letter-spacing:10px;color:#0f172a;font-family:Consolas,monaco,monospace}
+  .otp-label{font-size:12px;color:#64748b;font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .warning{font-size:12px;color:#64748b;background:#f8fafc;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:6px;margin:20px 0}
+  .footer{padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="badge">Security Authentication</span>
+    <div class="title">Avana IT Management</div>
+  </div>
+  <div class="content">
+    <p>Hello <strong>${options.toName}</strong>,</p>
+    <p>Use the 6-digit verification code below to sign in to your Avana IT Management workspace:</p>
+    <div class="otp-box">
+      <div class="otp-code">${options.otp}</div>
+      <div class="otp-label">One-Time Verification Code</div>
+    </div>
+    <div class="warning">
+      <strong>Security Notice:</strong> This code is valid for <strong>10 minutes</strong> and can only be used once. Never share this code with anyone. If you did not request this login, please contact IT Support immediately at <a href="mailto:itsupport@avanamedical.com" style="color:#dc2626;text-decoration:none;">itsupport@avanamedical.com</a>.
+    </div>
+  </div>
+  <div class="footer">
+    &copy; ${new Date().getFullYear()} Avana Group IT Operations &bull; Automated Security Dispatch
+  </div>
+</div>
+</body>
+</html>`;
+
+    // 1. Try Microsoft Graph API with app token
+    const authResult = await getGraphAppToken();
+    if (authResult.token) {
+        try {
+            const sendViaGraph = async (sendAsMailbox: string) => {
+                const graphPayload = {
+                    message: {
+                        subject,
+                        body: {
+                            contentType: 'HTML',
+                            content: htmlContent
+                        },
+                        toRecipients: [
+                            {
+                                emailAddress: {
+                                    address: options.toEmail,
+                                    name: options.toName
+                                }
+                            }
+                        ]
+                    },
+                    saveToSentItems: "false"
+                };
+
+                return await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sendAsMailbox)}/sendMail`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authResult.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(graphPayload),
+                    signal: AbortSignal.timeout(10000)
+                });
+            };
+
+            let graphRes = await sendViaGraph(fromMail);
+            const adminFallback = process.env.SMTP_USER || 'aravinth@avanamedical.com';
+            if (!graphRes.ok && fromMail !== adminFallback) {
+                console.warn(`[OTP Email] Sending as ${fromMail} failed (${graphRes.status}). Retrying as ${adminFallback}...`);
+                const retryRes = await sendViaGraph(adminFallback);
+                if (retryRes.ok || retryRes.status === 202) {
+                    graphRes = retryRes;
+                }
+            }
+
+            if (graphRes.ok || graphRes.status === 202) {
+                console.log(`[OTP Email] Successfully dispatched OTP code to ${options.toEmail} via Microsoft Graph API`);
+                return { success: true, method: `Microsoft Graph API (${authResult.method})` };
+            } else {
+                const errText = await graphRes.text();
+                console.warn(`[OTP Email] Graph sendMail failed (${graphRes.status}):`, errText);
+            }
+        } catch (graphErr: any) {
+            console.warn('[OTP Email] Graph API exception:', graphErr.message || graphErr);
+        }
+    }
+
+    // 2. Fallback to Nodemailer SMTP
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    if (smtpUser && smtpPass) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.office365.com',
+                port: 587,
+                secure: false,
+                requireTLS: true,
+                connectionTimeout: 4000,
+                greetingTimeout: 4000,
+                socketTimeout: 4000,
+                auth: { user: smtpUser, pass: smtpPass },
+                tls: { minVersion: 'TLSv1.2', rejectUnauthorized: false }
+            });
+
+            await transporter.sendMail({
+                from: `"Avana IT Security" <${smtpUser}>`,
+                to: `"${options.toName}" <${options.toEmail}>`,
+                replyTo: fromMail,
+                subject,
+                html: htmlContent
+            });
+            console.log(`[OTP Email] Dispatched OTP code to ${options.toEmail} via SMTP fallback`);
+            return { success: true, method: 'SMTP' };
+        } catch (smtpErr: any) {
+            console.error('[OTP Email] SMTP exception:', smtpErr.message || smtpErr);
+            return { success: false, error: smtpErr.message, method: 'SMTP' };
+        }
+    }
+
+    return { success: false, error: 'No email service available' };
+}
+
 // --- Zod Schemas for Validation ---
 
 const userSchema = z.object({
@@ -1131,6 +1273,189 @@ app.post('/api/logout', (req, res) => {
     });
     res.json({ success: true, message: 'Logged out successfully' });
 });
+
+// --- Email OTP Authentication Endpoints ---
+
+app.post('/api/auth/otp/send', async (req, res) => {
+    try {
+        const email = req.body.email?.toString().trim().toLowerCase();
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ error: 'A valid email address is required.' });
+        }
+
+        // Find user by email (case-insensitive)
+        const user = await prisma.user.findFirst({
+            where: { email: { equals: email, mode: 'insensitive' } }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                error: 'No account found with this email. Please verify the spelling or contact IT Support.'
+            });
+        }
+
+        if (user.status === 'Inactive') {
+            return res.status(403).json({
+                error: 'This account is deactivated. Please contact IT Support.'
+            });
+        }
+
+        // Rate limiting cooldown check (60 seconds)
+        const recentOtp = await prisma.loginOtp.findFirst({
+            where: {
+                email: user.email,
+                createdAt: { gt: new Date(Date.now() - 60 * 1000) }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (recentOtp) {
+            const secondsLeft = Math.max(1, Math.ceil((recentOtp.createdAt.getTime() + 60 * 1000 - Date.now()) / 1000));
+            return res.status(429).json({
+                error: `Please wait ${secondsLeft} seconds before requesting another code.`,
+                retryAfter: secondsLeft
+            });
+        }
+
+        // Generate 6-digit numeric OTP code
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = await bcrypt.hash(otpCode, 10);
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Clear any old OTP records for this email
+        await prisma.loginOtp.deleteMany({
+            where: { email: user.email }
+        });
+
+        // Store new hashed OTP
+        await prisma.loginOtp.create({
+            data: {
+                email: user.email,
+                otpHash,
+                attempts: 0,
+                expiresAt
+            }
+        });
+
+        // Dispatch OTP email in background
+        sendOtpEmail({
+            toEmail: user.email,
+            toName: user.name || 'Avana User',
+            otp: otpCode
+        }).catch(err => {
+            console.error(`[OTP Send] Failed to dispatch OTP to ${user.email}:`, err);
+        });
+
+        console.log(`[OTP Send] Generated and sent OTP for ${user.email}`);
+        res.json({
+            success: true,
+            message: `A 6-digit verification code has been sent to ${user.email}`,
+            email: user.email,
+            cooldownSeconds: 60
+        });
+    } catch (error: any) {
+        console.error('[OTP Send Error]:', error);
+        res.status(500).json({ error: 'Failed to generate verification code. Please try again.' });
+    }
+});
+
+app.post('/api/auth/otp/verify', async (req, res) => {
+    try {
+        const email = req.body.email?.toString().trim().toLowerCase();
+        const otp = req.body.otp?.toString().trim();
+
+        if (!email || !otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+            return res.status(400).json({ error: 'A valid email and 6-digit numeric code are required.' });
+        }
+
+        const user = await prisma.user.findFirst({
+            where: { email: { equals: email, mode: 'insensitive' } }
+        });
+
+        if (!user || user.status === 'Inactive') {
+            return res.status(401).json({ error: 'Account not found or deactivated.' });
+        }
+
+        // Retrieve valid, unexpired OTP record
+        const activeOtp = await prisma.loginOtp.findFirst({
+            where: {
+                email: user.email,
+                expiresAt: { gt: new Date() }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!activeOtp) {
+            return res.status(400).json({
+                error: 'Verification code has expired or was not requested. Please request a new code.'
+            });
+        }
+
+        // Enforce maximum 5 attempts
+        if (activeOtp.attempts >= 5) {
+            await prisma.loginOtp.delete({ where: { id: activeOtp.id } });
+            return res.status(429).json({
+                error: 'Too many incorrect attempts. This code has been invalidated. Please request a new code.'
+            });
+        }
+
+        const isMatch = await bcrypt.compare(otp, activeOtp.otpHash);
+        if (!isMatch) {
+            const nextAttempts = activeOtp.attempts + 1;
+            const remaining = 5 - nextAttempts;
+
+            if (remaining <= 0) {
+                await prisma.loginOtp.delete({ where: { id: activeOtp.id } });
+                return res.status(400).json({
+                    error: 'Invalid code. Maximum attempts reached. Please request a new code.'
+                });
+            }
+
+            await prisma.loginOtp.update({
+                where: { id: activeOtp.id },
+                data: { attempts: nextAttempts }
+            });
+
+            return res.status(400).json({
+                error: `Incorrect code. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`
+            });
+        }
+
+        // OTP is valid - delete it immediately (single-use)
+        await prisma.loginOtp.delete({ where: { id: activeOtp.id } });
+
+        // Issue auth cookie and CSRF token
+        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        const csrfToken = crypto.randomBytes(32).toString('hex');
+
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
+        res.cookie('XSRF-TOKEN', csrfToken, {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 8 * 60 * 60 * 1000
+        });
+
+        console.log(`[OTP Verify] Successfully verified and logged in ${user.email} (${user.role})`);
+        res.json({
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: user.status
+            }
+        });
+    } catch (error: any) {
+        console.error('[OTP Verify Error]:', error);
+        res.status(500).json({ error: 'Authentication verification failed. Please try again.' });
+    }
+});
+
 
 app.get('/api/users/me', authenticateToken, async (req, res) => {
     try {

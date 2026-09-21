@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'admin@avana.com';
+  const email = 'admin@avanamedical.com';
   const password = 'admin';
   const hashedPassword = await bcrypt.hash(password, 10);
 

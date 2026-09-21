@@ -402,3 +402,16 @@ model AssetDeclaration {
   @@index([auditId])
   @@index([reconciledById])
 }
+
+model LoginOtp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otpHash   String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+

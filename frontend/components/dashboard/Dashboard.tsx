@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
                                 {ICONS.info} Need Help?
                             </h4>
                             <p className="text-sm text-red-700/80 dark:text-red-300/80 mb-4">Contact IT support if you're having issues with your equipment.</p>
-                            <a href="mailto:it-support@avana.com" className="block w-full py-2 bg-white dark:bg-slate-800 text-brand-600 dark:text-red-400 rounded-lg text-center text-sm font-bold shadow-sm hover:shadow-md transition-all">
+                            <a href="mailto:itsupport@avanamedical.com" className="block w-full py-2 bg-white dark:bg-slate-800 text-brand-600 dark:text-red-400 rounded-lg text-center text-sm font-bold shadow-sm hover:shadow-md transition-all">
                                 Email IT Support
                             </a>
                         </div>

@@ -261,7 +261,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                     {/* Account Credentials */}
                     <SectionHeader title="Account Credentials" />
                     <FormInput label="Full Name *" type="text" name="uf_name" value={formData.name} onChange={handleChange} required placeholder="e.g. John Doe" />
-                    <FormInput label="Email Address *" type="email" name="uf_email" value={formData.email} onChange={handleChange} required placeholder="john@avana.com" />
+                    <FormInput label="Email Address *" type="email" name="uf_email" value={formData.email} onChange={handleChange} required placeholder="john@avanamedical.com" />
                     <div className="md:col-span-2">
                         <FormInput
                             label={user ? 'New Password (leave blank to keep current)' : 'Password *'}

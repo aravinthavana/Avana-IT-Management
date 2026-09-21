@@ -84,7 +84,7 @@ async function importData() {
             // Find or create user
             let user = await prisma.user.findFirst({ where: { name: userName } });
             if (!user) {
-                let email = userName.toLowerCase().replace(/[^a-z0-9]/g, '') + "@avana.com";
+                let email = userName.toLowerCase().replace(/[^a-z0-9]/g, '') + "@avanamedical.com";
                 user = await prisma.user.create({
                     data: {
                         name: userName,
