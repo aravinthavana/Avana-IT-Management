@@ -235,6 +235,14 @@ const SelfAuditModal: React.FC<SelfAuditModalProps> = ({ isOpen, onClose, asset,
                 {/* Step 1: Asset ID Verification & Location */}
                 {step === 1 && (
                     <div className="space-y-4">
+                        {/* Mobile Camera Tip */}
+                        <div className="p-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 border border-blue-200 dark:border-blue-800/50 rounded-xl flex items-center gap-3 text-xs text-blue-950 dark:text-blue-200">
+                            <span className="text-xl shrink-0">📱</span>
+                            <div className="leading-snug">
+                                <strong className="text-blue-700 dark:text-blue-300">Camera Required — Mobile Recommended:</strong> Because this audit requires capturing photos of your device and serial tag, we recommend opening this portal on your <strong>mobile phone browser</strong> to easily snap photos with your phone camera.
+                            </div>
+                        </div>
+
                         <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-200 dark:border-brand-900/50">
                                 <div className="w-6 h-6">{icon}</div>

@@ -382,15 +382,35 @@ const AssetDeclarationModal: React.FC<AssetDeclarationModalProps> = ({
 
                 {/* STEP 1: Possession Check */}
                 {step === 1 && (
-                    <div className="space-y-6 animate-fade-in">
-                        <div className="text-center max-w-md mx-auto">
-                            <div className="w-16 h-16 rounded-3xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+                    <div className="space-y-5 animate-fade-in">
+                        {/* Mobile Camera Recommendation Alert */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-300 dark:border-blue-700/60 flex items-start gap-3.5 shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 text-xl shadow-md shadow-blue-500/20">
+                                📱
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white">
+                                        Camera Required
+                                    </span>
+                                    <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
+                                        Use Mobile Device Recommended
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                                    As this self-audit involves taking photos of your devices and serial labels with a camera, <strong>we recommend opening this portal on your mobile smartphone browser</strong> for the easiest experience. You can also continue on your computer and upload photos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="text-center max-w-md mx-auto pt-2">
+                            <div className="w-14 h-14 rounded-3xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-2xl mx-auto mb-2.5 shadow-inner">
                                 💼
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                                 Do you currently have company IT assets in your possession?
                             </h3>
-                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2">
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5">
                                 We are verifying all equipment across Avana Group to ensure accurate records for every employee.
                             </p>
                         </div>

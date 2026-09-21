@@ -90,6 +90,10 @@ const Home: React.FC = () => {
                                             <span>💬 Note from IT:</span> &ldquo;{myPendingAudits[0].adminRemarks}&rdquo;
                                         </div>
                                     )}
+                                    <div className="mt-2.5 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-xs text-blue-900 dark:text-blue-200 font-medium w-fit">
+                                        <span className="text-sm">📱</span>
+                                        <span><strong>Camera Required:</strong> We recommend opening this portal on your <strong>mobile phone browser</strong> to easily snap photos.</span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
