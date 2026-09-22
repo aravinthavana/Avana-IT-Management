@@ -2,8 +2,15 @@ import React from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 
-const RecentAssetsTable: React.FC = () => {
-    const { assets, users, departments, branches } = useAppContext();
+import { Asset } from '../../types';
+
+interface RecentAssetsTableProps {
+    assets?: Asset[];
+}
+
+const RecentAssetsTable: React.FC<RecentAssetsTableProps> = ({ assets: propAssets }) => {
+    const { assets: contextAssets, users, departments, branches } = useAppContext();
+    const assets = propAssets || contextAssets;
     const recentAssets = [...assets].sort((a, b) => b.id - a.id).slice(0, 5);
     
     return (

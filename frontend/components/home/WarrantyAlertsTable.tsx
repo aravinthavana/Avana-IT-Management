@@ -3,8 +3,15 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { getWarrantyStatus } from '../../utils/assetUtils';
 import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 
-const WarrantyAlertsTable: React.FC = () => {
-    const { assets, users, departments, branches } = useAppContext();
+import { Asset } from '../../types';
+
+interface WarrantyAlertsTableProps {
+    assets?: Asset[];
+}
+
+const WarrantyAlertsTable: React.FC<WarrantyAlertsTableProps> = ({ assets: propAssets }) => {
+    const { assets: contextAssets, users, departments, branches } = useAppContext();
+    const assets = propAssets || contextAssets;
 
     const expiringAssets = assets
         .filter(asset => getWarrantyStatus(asset).label === 'Expiring Soon')

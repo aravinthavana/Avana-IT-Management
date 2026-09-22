@@ -7,7 +7,8 @@ import { ICONS } from '../../constants';
 import DoughnutChart from '../ui/DoughnutChart';
 import RecentAssetsTable from './RecentAssetsTable';
 import WarrantyAlertsTable from './WarrantyAlertsTable';
-import BarChart from './BarChart';
+import LocationAnalytics from './LocationAnalytics';
+import CompanyAnalyticsCard from './CompanyAnalyticsCard';
 import WarrantyStatusOverview from './WarrantyStatusOverview';
 import { WarrantyStatus } from '../../types';
 import ExpiringLicensesTable from '../dashboard/ExpiringLicensesTable';
@@ -33,14 +34,6 @@ const Home: React.FC = () => {
         setDeclarationTargetAudit(auditRecord || null);
         setIsDeclarationModalOpen(true);
     };
-
-    const stats = useMemo(() => ({
-        totalAssets: assets.length,
-        assignedAssets: assets.filter(a => a.status === 'Assigned').length,
-        inStockAssets: assets.filter(a => a.status === 'In Stock').length,
-        inRepairAssets: assets.filter(a => a.status === 'In Repair').length,
-        retiredAssets: assets.filter(a => a.status === 'Retired').length,
-    }), [assets]);
 
     const myAssets = useMemo(() => {
         if (!user) return [];
@@ -299,80 +292,301 @@ const Home: React.FC = () => {
         );
     }
 
-    const assetsByStatus = useMemo(() => assets.reduce((acc, asset) => {
+    const [selectedCompany, setSelectedCompany] = useState<string>('All');
+    const [alertsTab, setAlertsTab] = useState<'recent' | 'warranty' | 'licenses'>('recent');
+
+    const companyCounts = useMemo(() => {
+        return {
+            AMD: assets.filter(a => (a.company || '').toUpperCase() === 'AMD').length,
+            ASSP: assets.filter(a => (a.company || '').toUpperCase() === 'ASSP').length,
+            ATS: assets.filter(a => (a.company || '').toUpperCase() === 'ATS').length,
+        };
+    }, [assets]);
+
+    const activeAssets = useMemo(() => {
+        if (selectedCompany === 'All') return assets;
+        return assets.filter(a => (a.company || '').toUpperCase() === selectedCompany);
+    }, [assets, selectedCompany]);
+
+    const stats = useMemo(() => {
+        const total = activeAssets.length;
+        const assigned = activeAssets.filter(a => a.status === 'Assigned').length;
+        const inStock = activeAssets.filter(a => a.status === 'In Stock').length;
+        const inRepair = activeAssets.filter(a => a.status === 'In Repair' || a.status === 'Under Inspection').length;
+        const retired = activeAssets.filter(a => a.status === 'Retired').length;
+        const utilizationRate = total > 0 ? ((assigned / total) * 100).toFixed(0) : '0';
+
+        return {
+            totalAssets: total,
+            assignedAssets: assigned,
+            inStockAssets: inStock,
+            inRepairAssets: inRepair,
+            retiredAssets: retired,
+            utilizationRate
+        };
+    }, [activeAssets]);
+
+    const assetsByStatus = useMemo(() => activeAssets.reduce((acc, asset) => {
         acc[asset.status] = (acc[asset.status] || 0) + 1;
         return acc;
-    }, {} as { [key: string]: number }), [assets]);
+    }, {} as { [key: string]: number }), [activeAssets]);
     
-    const assetsByCategory = useMemo(() => assets.reduce((acc, asset) => {
+    const assetsByCategory = useMemo(() => activeAssets.reduce((acc, asset) => {
         acc[asset.category] = (acc[asset.category] || 0) + 1;
         return acc;
-    }, {} as { [key: string]: number }), [assets]);
-
-    const assetsByLocation = useMemo(() => assets.reduce((acc, asset) => {
-        if(asset.location) {
-            acc[asset.location] = (acc[asset.location] || 0) + 1;
-        }
-        return acc;
-    }, {} as { [key: string]: number }), [assets]);
+    }, {} as { [key: string]: number }), [activeAssets]);
     
     const handleFilterNavigation = (field: string, value: string) => {
-        setAssetFilters([{ id: Date.now(), field, value }]);
+        const filters: any[] = [];
+        if (selectedCompany !== 'All') {
+            filters.push({ id: Date.now(), field: 'company', value: selectedCompany });
+        }
+        if (value !== 'All') {
+            filters.push({ id: Date.now() + 1, field, value });
+        }
+        setAssetFilters(filters.length > 0 ? filters : [{ id: Date.now(), field: 'status', value: 'All' }]);
+        navigate('assets');
+    };
+
+    const handleNavigateToCompanyAssets = (companyCode: string) => {
+        setAssetFilters([{ id: Date.now(), field: 'company', value: companyCode }]);
         navigate('assets');
     };
 
     const handleWarrantyFilter = (status: any) => {
-        setAssetFilters([{ id: Date.now(), field: 'warrantyStatus', value: status }]);
+        const filters: any[] = [];
+        if (selectedCompany !== 'All') {
+            filters.push({ id: Date.now(), field: 'company', value: selectedCompany });
+        }
+        filters.push({ id: Date.now() + 1, field: 'warrantyStatus', value: status });
+        setAssetFilters(filters);
         navigate('assets');
-    }
+    };
     
     const chartColors1 = ['#2ecc71', '#3498db', '#f1c40f', '#95a5a6', '#e74c3c'];
     const chartColors2 = ['#1abc9c', '#e67e22', '#34495e', '#f39c12', '#c0392b', '#8e44ad', '#2980b9'];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-in">
             <PendingHandovers />
+
+            {/* Top Company Filter Bar & Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                <div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                        IT Asset &amp; Operations Dashboard
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Real-time hardware inventory, multi-company analytics, and fleet lifecycle tracking.
+                    </p>
+                </div>
+
+                {/* Company Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <button
+                        onClick={() => setSelectedCompany('All')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            selectedCompany === 'All'
+                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        All Companies ({assets.length})
+                    </button>
+                    <button
+                        onClick={() => setSelectedCompany('AMD')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            selectedCompany === 'AMD'
+                                ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-brand-400"></span>
+                        <span>AMD ({companyCounts.AMD})</span>
+                    </button>
+                    <button
+                        onClick={() => setSelectedCompany('ASSP')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            selectedCompany === 'ASSP'
+                                ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span>ASSP ({companyCounts.ASSP})</span>
+                    </button>
+                    <button
+                        onClick={() => setSelectedCompany('ATS')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            selectedCompany === 'ATS'
+                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                        <span>ATS ({companyCounts.ATS})</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Executive KPI Grid (Clean 5-column, no horizontal scroll) */}
             <section>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">At a Glance</h2>
-                 <div className="flex gap-6 pb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-x-auto">
-                    <div className="min-w-[240px] flex-shrink-0">
-                        <Card title="Total Assets" value={stats.totalAssets} icon={ICONS.assets} color="bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400" onClick={() => handleFilterNavigation('status', 'All')} />
-                    </div>
-                    <div className="min-w-[240px] flex-shrink-0">
-                       <Card title="Assigned" value={stats.assignedAssets} icon={ICONS.users} color="bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400" onClick={() => handleFilterNavigation('status', 'Assigned')} />
-                    </div>
-                    <div className="min-w-[240px] flex-shrink-0">
-                        <Card title="In Stock" value={stats.inStockAssets} icon={ICONS.qr} color="bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400" onClick={() => handleFilterNavigation('status', 'In Stock')} />
-                    </div>
-                    <div className="min-w-[240px] flex-shrink-0">
-                        <Card title="In Repair" value={stats.inRepairAssets} icon={ICONS.filter} color="bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400" onClick={() => handleFilterNavigation('status', 'In Repair')} />
-                    </div>
-                     <div className="min-w-[240px] flex-shrink-0">
-                        <Card title="Retired" value={stats.retiredAssets} icon={ICONS.delete} color="bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400" onClick={() => handleFilterNavigation('status', 'Retired')} />
-                    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
+                    <Card
+                        title={selectedCompany === 'All' ? 'Total Fleet' : `${selectedCompany} Fleet`}
+                        value={stats.totalAssets}
+                        icon={ICONS.assets}
+                        color="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50"
+                        onClick={() => handleFilterNavigation('status', 'All')}
+                    />
+                    <Card
+                        title="Assigned (In Use)"
+                        value={stats.assignedAssets}
+                        icon={ICONS.users}
+                        color="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50"
+                        onClick={() => handleFilterNavigation('status', 'Assigned')}
+                    />
+                    <Card
+                        title="In Stock (Available)"
+                        value={stats.inStockAssets}
+                        icon={ICONS.qr}
+                        color="bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-900/50"
+                        onClick={() => handleFilterNavigation('status', 'In Stock')}
+                    />
+                    <Card
+                        title="In Repair / Inspection"
+                        value={stats.inRepairAssets}
+                        icon={ICONS.filter}
+                        color="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50"
+                        onClick={() => handleFilterNavigation('status', 'In Repair')}
+                    />
+                    <Card
+                        title="Retired / Scrapped"
+                        value={stats.retiredAssets}
+                        icon={ICONS.delete}
+                        color="bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                        onClick={() => handleFilterNavigation('status', 'Retired')}
+                    />
                 </div>
             </section>
             
-            <section>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">Analytics</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    <DoughnutChart title="Assets by Status" data={assetsByStatus} colors={chartColors1} onItemClick={(status) => handleFilterNavigation('status', status)} />
-                    <BarChart title="Assets by Location" data={assetsByLocation} onItemClick={(location) => handleFilterNavigation('location', location)} />
-                    <WarrantyStatusOverview onStatusClick={handleWarrantyFilter} />
-                    <div className="lg:col-span-2 xl:col-span-3">
-                         <DoughnutChart title="Assets by Category" data={assetsByCategory} colors={chartColors2} onItemClick={(category) => handleFilterNavigation('category', category)} />
+            {/* Primary Analytics Grid: Company, Status, and Location */}
+            <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                            Fleet Analytics &amp; Demographics
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {selectedCompany === 'All' ? 'System-wide fleet metrics across Avana Group' : `Filtered exclusively for ${selectedCompany}`}
+                        </p>
                     </div>
+                    {selectedCompany !== 'All' && (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300">
+                            Viewing: {selectedCompany}
+                        </span>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 1. Multi-Company Analytics Card */}
+                    <CompanyAnalyticsCard
+                        assets={assets}
+                        selectedCompany={selectedCompany}
+                        onSelectCompany={setSelectedCompany}
+                        onNavigateToCompanyAssets={handleNavigateToCompanyAssets}
+                    />
+
+                    {/* 2. Assets by Lifecycle Status */}
+                    <DoughnutChart
+                        title="Assets by Status"
+                        data={assetsByStatus}
+                        colors={chartColors1}
+                        onItemClick={(status) => handleFilterNavigation('status', status)}
+                    />
+
+                    {/* 3. Assets by Location (Major Corporate Hubs + Clickable Other/Remote) */}
+                    <LocationAnalytics
+                        assets={activeAssets}
+                        onLocationClick={(location) => handleFilterNavigation('location', location)}
+                    />
+                </div>
+
+                {/* Secondary Row: Hardware Category & Warranty Health */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <DoughnutChart
+                        title="Assets by Category"
+                        data={assetsByCategory}
+                        colors={chartColors2}
+                        onItemClick={(category) => handleFilterNavigation('category', category)}
+                    />
+                    <WarrantyStatusOverview
+                        assets={activeAssets}
+                        onStatusClick={handleWarrantyFilter}
+                    />
                 </div>
             </section>
             
-            <section>
-                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">Activity & Alerts</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                     <RecentAssetsTable />
-                     <div className="space-y-8">
-                         <WarrantyAlertsTable />
-                         <ExpiringLicensesTable />
-                     </div>
+            {/* Tabbed Intelligence & Alerts Center */}
+            <section className="space-y-4">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    {/* Tab Navigation Header */}
+                    <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/70 dark:bg-slate-800/60">
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                Activity &amp; Fleet Intelligence
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Real-time additions, upcoming warranty cutoffs, and software subscriptions
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 dark:bg-slate-700 rounded-xl">
+                            <button
+                                onClick={() => setAlertsTab('recent')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    alertsTab === 'recent'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                                }`}
+                            >
+                                ⚡ Recent Assets
+                            </button>
+                            <button
+                                onClick={() => setAlertsTab('warranty')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    alertsTab === 'warranty'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                                }`}
+                            >
+                                🛡️ Warranty Alerts
+                            </button>
+                            <button
+                                onClick={() => setAlertsTab('licenses')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    alertsTab === 'licenses'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                                }`}
+                            >
+                                🔑 Subscriptions
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Tab Body */}
+                    <div className="p-4 sm:p-6">
+                        {alertsTab === 'recent' && (
+                            <RecentAssetsTable assets={activeAssets} />
+                        )}
+                        {alertsTab === 'warranty' && (
+                            <WarrantyAlertsTable assets={activeAssets} />
+                        )}
+                        {alertsTab === 'licenses' && (
+                            <ExpiringLicensesTable />
+                        )}
+                    </div>
                 </div>
             </section>
         </div>
