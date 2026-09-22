@@ -382,6 +382,8 @@ export interface DeclaredAssetItem {
     convertedAssetId?: number;
     convertedAssetTag?: string;
     convertedAt?: string;
+    reconciled?: boolean;
+    userAccessoryId?: number;
 }
 
 export interface AssetDeclaration {
@@ -403,4 +405,49 @@ export interface AssetDeclaration {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface AccessoryBatch {
+    id: number;
+    name: string;
+    category: string;
+    brand?: string | null;
+    model?: string | null;
+    quantityPurchased: number;
+    quantityAvailable: number;
+    purchaseDate: string;
+    warrantyMonths?: number | null;
+    warrantyEndDate?: string | null;
+    vendor?: string | null;
+    invoiceNumber?: string | null;
+    unitCost?: number | null;
+    purchaseRecordId?: number | null;
+    notes?: string | null;
+    createdAt: string;
+    updatedAt: string;
+    _count?: {
+        assignments: number;
+    };
+}
+
+export interface UserAccessory {
+    id: number;
+    userId: number;
+    user?: User;
+    batchId?: number | null;
+    batch?: AccessoryBatch | null;
+    category: string;
+    name: string;
+    brand?: string | null;
+    serialNumber?: string | null;
+    purchaseDate?: string | null;
+    warrantyEndDate?: string | null;
+    condition?: string | null;
+    assignedAt: string;
+    returnedAt?: string | null;
+    status: 'Assigned' | 'Returned' | string;
+    notes?: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
 

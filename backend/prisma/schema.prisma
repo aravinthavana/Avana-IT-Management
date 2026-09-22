@@ -74,6 +74,8 @@ model User {
   declarations     AssetDeclaration[] @relation("UserDeclarations")
   reconciledDeclarations AssetDeclaration[] @relation("DeclarationReconciledBy")
   ticketComments TicketComment[]
+  accessories  UserAccessory[]
+
 
   @@index([departmentId])
   @@index([branchId])
@@ -188,7 +190,9 @@ model PurchaseRecord {
   poAttachmentUrl        String?
   poAttachmentFilename   String?
   assets                 Asset[]
+  accessoryBatches       AccessoryBatch[]
 }
+
 
 model License {
   id             Int       @id @default(autoincrement())
@@ -414,4 +418,61 @@ model LoginOtp {
   @@index([email])
   @@index([expiresAt])
 }
+
+model AccessoryBatch {
+  id                Int       @id @default(autoincrement())
+  name              String    // e.g. "Dell Optical Mouse MS116"
+  category          String    // "Mouse", "Keyboard", "Headset", "Monitor", "Pen Drive", "Dock", "Bag", "Adapter", "Other"
+  brand             String?
+  model             String?
+  quantityPurchased Int
+  quantityAvailable Int
+  purchaseDate      DateTime
+  warrantyMonths    Int?      // e.g. 12 (1 yr), 24 (2 yrs), 36 (3 yrs)
+  warrantyEndDate   DateTime?
+  vendor            String?
+  invoiceNumber     String?
+  unitCost          Float?
+  
+  purchaseRecordId  Int?
+  purchaseRecord    PurchaseRecord? @relation(fields: [purchaseRecordId], references: [id], onDelete: SetNull)
+
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  assignments       UserAccessory[]
+
+  @@index([category])
+  @@index([purchaseDate])
+}
+
+model UserAccessory {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  batchId         Int?
+  batch           AccessoryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  category        String    // "Mouse", "Keyboard", "Headset", "Monitor", "Pen Drive", "Dock", "Bag", "Adapter", "Other"
+  name            String
+  brand           String?
+  serialNumber    String?
+  purchaseDate    DateTime?
+  warrantyEndDate DateTime?
+  condition       String?   @default("Good")
+  assignedAt      DateTime  @default(now())
+  returnedAt      DateTime?
+  status          String    @default("Assigned") // "Assigned", "Returned"
+  notes           String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([batchId])
+  @@index([status])
+}
+
 

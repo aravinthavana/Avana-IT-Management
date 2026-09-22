@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { SelfAudit, Asset, User, HardwareChecks, AssetDeclaration, DeclaredAssetItem } from '../../types';
+import { SelfAudit, Asset, User, HardwareChecks, AssetDeclaration, DeclaredAssetItem, AccessoryBatch } from '../../types';
 import { ICONS, ASSET_ICONS } from '../../constants';
 import AssignAuditModal from './AssignAuditModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -51,6 +51,35 @@ const SelfAuditsList: React.FC = () => {
     const [convertCompany, setConvertCompany] = useState('AMD');
     const [convertLocation, setConvertLocation] = useState('Head Office');
     const [isConverting, setIsConverting] = useState(false);
+
+    // Declared Accessory to Profile Reconciliation state
+    const [reconcileAccDeclaration, setReconcileAccDeclaration] = useState<AssetDeclaration | null>(null);
+    const [reconcileAccItem, setReconcileAccItem] = useState<DeclaredAssetItem | null>(null);
+    const [accessoryBatches, setAccessoryBatches] = useState<AccessoryBatch[]>([]);
+    const [selectedAccBatchId, setSelectedAccBatchId] = useState<number | ''>('');
+    const [accCategory, setAccCategory] = useState('Mouse');
+    const [accName, setAccName] = useState('');
+    const [accBrand, setAccBrand] = useState('');
+    const [accSerial, setAccSerial] = useState('');
+    const [accCondition, setAccCondition] = useState('Good');
+    const [accNotes, setAccNotes] = useState('');
+    const [isReconcilingAcc, setIsReconcilingAcc] = useState(false);
+    const [isBulkReconcilingId, setIsBulkReconcilingId] = useState<number | null>(null);
+
+    const fetchAccessoryBatches = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/accessories/batches`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAccessoryBatches(data);
+            }
+        } catch (err) {
+            console.error('Failed to load accessory batches:', err);
+        }
+    };
 
     const fetchDeclarations = async () => {
         setIsLoadingDeclarations(true);
@@ -392,6 +421,106 @@ const SelfAuditsList: React.FC = () => {
             fetchDeclarations();
         } catch (err: any) {
             setNotification({ message: err.message || 'Error reconciling declaration', type: 'error' });
+        }
+    };
+
+    const isPeripheralCategory = (category?: string) => {
+        if (!category) return true;
+        const cat = category.toLowerCase();
+        return !['laptop', 'desktop', 'macbook', 'imac', 'server', 'workstation'].includes(cat);
+    };
+
+    const handleOpenReconcileAccModal = (declaration: AssetDeclaration, item: DeclaredAssetItem) => {
+        setReconcileAccDeclaration(declaration);
+        setReconcileAccItem(item);
+        setAccCategory(item.category || 'Mouse');
+        setAccName(item.name || `${item.category || 'Peripheral'}`);
+        setAccBrand(item.brand || '');
+        setAccSerial(item.serialNumber || '');
+        setAccCondition(item.condition || 'Good');
+        setAccNotes('Reconciled from employee self-audit declaration.');
+        setSelectedAccBatchId('');
+        fetchAccessoryBatches();
+    };
+
+    const handleConfirmReconcileAcc = async () => {
+        if (!reconcileAccDeclaration || !reconcileAccItem) return;
+        setIsReconcilingAcc(true);
+        try {
+            const res = await fetch(`${API_URL}/api/asset-declarations/${reconcileAccDeclaration.id}/reconcile-accessories`, {
+                method: 'POST',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    items: [{
+                        itemId: reconcileAccItem.id,
+                        batchId: selectedAccBatchId ? Number(selectedAccBatchId) : undefined,
+                        category: accCategory,
+                        name: accName.trim(),
+                        brand: accBrand.trim() || undefined,
+                        serialNumber: accSerial.trim() || undefined,
+                        condition: accCondition,
+                        notes: accNotes.trim() || undefined
+                    }]
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to save accessory to profile.');
+            }
+
+            const data = await res.json();
+            setNotification({ 
+                message: data.message || `Added "${accName}" to ${reconcileAccDeclaration.user?.name}'s profile accessories!`, 
+                type: 'success' 
+            });
+            setReconcileAccDeclaration(null);
+            setReconcileAccItem(null);
+            fetchDeclarations();
+        } catch (error: any) {
+            setNotification({ message: error.message || 'Error saving accessory', type: 'error' });
+        } finally {
+            setIsReconcilingAcc(false);
+        }
+    };
+
+    const handleBulkReconcileAllPeripherals = async (declaration: AssetDeclaration, itemsToReconcile: DeclaredAssetItem[]) => {
+        if (itemsToReconcile.length === 0) return;
+        setIsBulkReconcilingId(declaration.id);
+        try {
+            const payloadItems = itemsToReconcile.map(i => ({
+                itemId: i.id,
+                category: i.category || 'Other',
+                name: i.name || `${i.category || 'Peripheral'}`,
+                brand: i.brand || undefined,
+                serialNumber: i.serialNumber || undefined,
+                condition: i.condition || 'Good',
+                notes: 'Quick bulk-reconciled from self-audit.'
+            }));
+
+            const res = await fetch(`${API_URL}/api/asset-declarations/${declaration.id}/reconcile-accessories`, {
+                method: 'POST',
+                headers: getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ items: payloadItems })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to bulk-reconcile accessories.');
+            }
+
+            const data = await res.json();
+            setNotification({ 
+                message: data.message || `Saved ${itemsToReconcile.length} accessories to ${declaration.user?.name}'s profile!`, 
+                type: 'success' 
+            });
+            fetchDeclarations();
+        } catch (error: any) {
+            setNotification({ message: error.message || 'Error bulk reconciling accessories', type: 'error' });
+        } finally {
+            setIsBulkReconcilingId(null);
         }
     };
 
@@ -1026,15 +1155,42 @@ const SelfAuditsList: React.FC = () => {
 
                                         {/* Declared Items List */}
                                         <div>
-                                            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                                Declared Equipment ({items.length} items)
-                                            </div>
+                                            {(() => {
+                                                const unreconciledPeripherals = items.filter(
+                                                    it => !it.convertedAssetId && !it.reconciled && !it.userAccessoryId && isPeripheralCategory(it.category)
+                                                );
+
+                                                return (
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                            Declared Equipment ({items.length} items)
+                                                        </div>
+                                                        {unreconciledPeripherals.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isBulkReconcilingId === dec.id}
+                                                                onClick={() => handleBulkReconcileAllPeripherals(dec, unreconciledPeripherals)}
+                                                                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
+                                                                title="Adds all declared accessories straight into employee profile without creating Asset IDs"
+                                                            >
+                                                                <span>🎧</span>
+                                                                <span>{isBulkReconcilingId === dec.id ? 'Saving...' : `Add All Peripherals to Profile (${unreconciledPeripherals.length})`}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                 {items.map((item) => (
                                                     <div
                                                         key={item.id}
                                                         className={`p-3 rounded-xl border text-xs flex flex-col justify-between ${
-                                                            item.isGhost && !item.convertedAssetId
+                                                            item.reconciled || item.userAccessoryId
+                                                                ? 'bg-blue-50/20 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900/40'
+                                                                : item.convertedAssetId
+                                                                ? 'bg-green-50/20 dark:bg-green-950/10 border-green-200 dark:border-green-900/40'
+                                                                : item.isGhost
                                                                 ? 'bg-purple-50/40 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800/40'
                                                                 : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
                                                         }`}
@@ -1044,13 +1200,17 @@ const SelfAuditsList: React.FC = () => {
                                                                 <span className="font-bold text-slate-900 dark:text-white">
                                                                     {item.name}
                                                                 </span>
-                                                                {item.isGhost && !item.convertedAssetId ? (
+                                                                {item.convertedAssetTag ? (
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-green-600 text-white shrink-0 flex items-center gap-1">
+                                                                        <span>🏷️</span> {item.convertedAssetTag}
+                                                                    </span>
+                                                                ) : (item.reconciled || item.userAccessoryId) ? (
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 shrink-0 flex items-center gap-1">
+                                                                        <span>🎧</span> Profile Accessory
+                                                                    </span>
+                                                                ) : item.isGhost ? (
                                                                     <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-purple-600 text-white shrink-0">
                                                                         Ghost Asset
-                                                                    </span>
-                                                                ) : item.convertedAssetTag ? (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-green-600 text-white shrink-0">
-                                                                        {item.convertedAssetTag}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0">
@@ -1067,7 +1227,7 @@ const SelfAuditsList: React.FC = () => {
                                                             </p>
                                                         </div>
 
-                                                        {/* Photo Proof thumbnail & 1-Click Register button */}
+                                                        {/* Photo Proof thumbnail & Actions */}
                                                         <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/60">
                                                             {item.imageUrl ? (
                                                                 <button
@@ -1076,21 +1236,60 @@ const SelfAuditsList: React.FC = () => {
                                                                     className="flex items-center gap-1.5 text-[11px] font-bold text-brand-600 hover:text-brand-700"
                                                                 >
                                                                     <img src={item.imageUrl} alt="Proof" className="w-6 h-6 rounded object-cover border border-slate-300" />
-                                                                    <span>View Photo Proof</span>
+                                                                    <span>Proof</span>
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-[10px] text-slate-400 italic">No photo attached</span>
+                                                                <span className="text-[10px] text-slate-400 italic">No photo</span>
                                                             )}
 
-                                                            {item.isGhost && !item.convertedAssetId && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleOpenConvertModal(dec, item)}
-                                                                    className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1 ml-auto"
-                                                                >
-                                                                    <span>✨ 1-Click Register</span>
-                                                                </button>
-                                                            )}
+                                                            <div className="flex items-center justify-end gap-1.5 ml-auto">
+                                                                {(item.reconciled || item.userAccessoryId) ? (
+                                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                                                        ✓ In Profile
+                                                                    </span>
+                                                                ) : item.convertedAssetId ? (
+                                                                    <span className="text-[11px] text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
+                                                                        ✓ Tagged
+                                                                    </span>
+                                                                ) : isPeripheralCategory(item.category) ? (
+                                                                    <>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenReconcileAccModal(dec, item)}
+                                                                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                                                            title="Record in employee profile checklist without generating an Asset Tag"
+                                                                        >
+                                                                            <span>🎧 Add to Profile</span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenConvertModal(dec, item)}
+                                                                            title="Only if this requires a physical barcode asset tag"
+                                                                            className="px-2 py-1 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 rounded-lg text-[10px] font-medium transition-all"
+                                                                        >
+                                                                            Tag ID
+                                                                        </button>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenConvertModal(dec, item)}
+                                                                            className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                                                        >
+                                                                            <span>✨ 1-Click Register</span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenReconcileAccModal(dec, item)}
+                                                                            title="Add as un-tagged accessory instead"
+                                                                            className="px-2 py-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 rounded-lg text-[10px] font-medium transition-all"
+                                                                        >
+                                                                            Profile
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1396,6 +1595,194 @@ const SelfAuditsList: React.FC = () => {
                                 className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-600/20 active:scale-95 transition-all flex items-center gap-1.5"
                             >
                                 {isConverting ? 'Registering...' : 'Confirm & Register into Inventory'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal for Adding Declared Peripheral to Profile Checklist (No Asset ID) */}
+            {reconcileAccDeclaration && reconcileAccItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-blue-50 dark:bg-blue-950/40">
+                            <div>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white">
+                                    Profile Peripheral Checklist
+                                </span>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                                    Add &ldquo;{reconcileAccItem.name}&rdquo; to {reconcileAccDeclaration.user?.name}&apos;s Profile
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Records peripheral directly onto employee profile without generating an Asset Tag.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                            {reconcileAccItem.imageUrl && (
+                                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-36 bg-black flex items-center justify-center">
+                                    <img src={reconcileAccItem.imageUrl} alt="Declared Photo Proof" className="max-h-36 object-contain" />
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Category <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={accCategory}
+                                        onChange={(e) => setAccCategory(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                    >
+                                        <option value="Mouse">Mouse</option>
+                                        <option value="Keyboard">Keyboard</option>
+                                        <option value="Headset">Headset / Headphones</option>
+                                        <option value="Monitor">Monitor</option>
+                                        <option value="Dock">Docking Station / Hub</option>
+                                        <option value="Storage">Pen Drive / Storage</option>
+                                        <option value="Webcam">Webcam</option>
+                                        <option value="Adapter">Charger / Adapter</option>
+                                        <option value="Cables">Cables / Dongle</option>
+                                        <option value="Other">Other Peripheral</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Item Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={accName}
+                                        onChange={(e) => setAccName(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        placeholder="e.g. Dell Optical Mouse"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Brand / Make
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={accBrand}
+                                        onChange={(e) => setAccBrand(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        placeholder="e.g. Logitech, Dell"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Serial Number (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={accSerial}
+                                        onChange={(e) => setAccSerial(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        placeholder="e.g. SN123456"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Optional Stock / Batch Link for Warranty */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                    <span>Link to Purchase Stock Batch (Optional)</span>
+                                    <span className="text-[10px] text-brand-600 dark:text-brand-400 font-normal">Auto-links Purchase Date & Warranty</span>
+                                </label>
+                                <select
+                                    value={selectedAccBatchId}
+                                    onChange={(e) => {
+                                        const val = e.target.value ? Number(e.target.value) : '';
+                                        setSelectedAccBatchId(val);
+                                        if (val) {
+                                            const b = accessoryBatches.find(x => x.id === val);
+                                            if (b) {
+                                                if (!accBrand && b.brand) setAccBrand(b.brand);
+                                                if (b.category) setAccCategory(b.category);
+                                            }
+                                        }
+                                    }}
+                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                >
+                                    <option value="">No Batch Link (Legacy / Existing Employee Item)</option>
+                                    {accessoryBatches.map(b => (
+                                        <option key={b.id} value={b.id}>
+                                            {b.name} ({b.category}) &bull; Stock: {b.quantityAvailable} left &bull; {b.warrantyMonths}m Warranty {b.invoiceNo ? `(Inv: ${b.invoiceNo})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                {selectedAccBatchId ? (
+                                    <p className="text-[11px] text-green-600 dark:text-green-400 mt-1 flex items-center gap-1 font-medium">
+                                        <span>🛡️</span> Purchase date & warranty tracking will be automatically linked from this stock batch!
+                                    </p>
+                                ) : (
+                                    <p className="text-[11px] text-slate-400 mt-1">
+                                        Item will be recorded in checklist without warranty tracking.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Condition
+                                    </label>
+                                    <select
+                                        value={accCondition}
+                                        onChange={(e) => setAccCondition(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                    >
+                                        <option value="Good">Good</option>
+                                        <option value="Minor Scratches">Minor Scratches</option>
+                                        <option value="Damaged">Damaged</option>
+                                        <option value="Needs IT Attention">Needs IT Attention</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        Remarks / Notes
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={accNotes}
+                                        onChange={(e) => setAccNotes(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        placeholder="Optional notes"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}
+                                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 rounded-xl"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isReconcilingAcc || !accName.trim()}
+                                onClick={handleConfirmReconcileAcc}
+                                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+                            >
+                                {isReconcilingAcc ? 'Saving...' : 'Save to Profile Accessories'}
                             </button>
                         </div>
                     </div>

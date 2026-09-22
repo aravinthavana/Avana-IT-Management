@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { Asset, User } from '../../types';
+import { Asset, User, UserAccessory } from '../../types';
 import { ICONS } from '../../constants';
 import AssignAssetModal from './AssignAssetModal';
 import UnassignAssetModal from './UnassignAssetModal';
 import OnboardingWizardModal from '../onboarding/OnboardingWizardModal';
 import OffboardingWizardModal from '../onboarding/OffboardingWizardModal';
+import IssueAccessoryModal from '../accessories/IssueAccessoryModal';
 
 interface UserDetailViewProps {
     userId: number;
     onBack: () => void;
 }
+
 
 const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const { users, setUsers, assets, setAssets, setNotification, setSelectedAssetId, setPreviewTarget, getHeaders, fetchAssetHistory } = useAppContext();
@@ -24,6 +26,63 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const [isOffboardingModalOpen, setIsOffboardingModalOpen] = useState(false);
     const [userAssetHistory, setUserAssetHistory] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [accessories, setAccessories] = useState<UserAccessory[]>([]);
+    const [isLoadingAccessories, setIsLoadingAccessories] = useState(false);
+    const [isIssueAccessoryModalOpen, setIsIssueAccessoryModalOpen] = useState(false);
+
+    const fetchUserAccessories = async () => {
+        setIsLoadingAccessories(true);
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAccessories(data);
+            }
+        } catch (err) {
+            console.error('Failed to load user accessories', err);
+        } finally {
+            setIsLoadingAccessories(false);
+        }
+    };
+
+    const handleReturnAccessory = async (accId: number) => {
+        if (!confirm('Mark this accessory as returned to IT inventory?')) return;
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories/${accId}`, {
+                method: 'PUT',
+                headers: {
+                    ...getHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ status: 'Returned' })
+            });
+            if (!res.ok) throw new Error('Failed to return accessory');
+            setNotification({ message: 'Accessory returned to IT inventory.', type: 'success' });
+            fetchUserAccessories();
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Error returning accessory', type: 'error' });
+        }
+    };
+
+    const handleDeleteAccessory = async (accId: number) => {
+        if (!confirm('Remove this accessory record from the user profile?')) return;
+        try {
+            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories/${accId}`, {
+                method: 'DELETE',
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Failed to remove accessory');
+            setNotification({ message: 'Accessory record removed.', type: 'success' });
+            fetchUserAccessories();
+        } catch (err: any) {
+            setNotification({ message: err.message || 'Error deleting accessory', type: 'error' });
+        }
+    };
 
     const fetchUserAssetHistory = async () => {
         setIsLoadingHistory(true);
@@ -46,8 +105,10 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     useEffect(() => {
         if (userId) {
             fetchUserAssetHistory();
+            fetchUserAccessories();
         }
     }, [userId]);
+
 
     if (!user) {
         if (users.length === 0) {
@@ -138,6 +199,15 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                 onConfirm={handleConfirmUnassign}
                 asset={assetToUnassign}
             />
+            {user && (
+                <IssueAccessoryModal
+                    isOpen={isIssueAccessoryModalOpen}
+                    onClose={() => setIsIssueAccessoryModalOpen(false)}
+                    user={user}
+                    onIssued={fetchUserAccessories}
+                />
+            )}
+
 
             {/* Sticky Header */}
             <div className="sticky top-16 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b border-slate-200 dark:border-slate-800">
@@ -610,8 +680,157 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
                 </div>
 
+                {/* Assigned Peripherals & Accessories (No Asset IDs, Tracked by Batch & Warranty) */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">🖱️</span>
+                                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                                    Assigned Peripherals &amp; Accessories ({accessories.filter(a => a.status === 'Assigned').length})
+                                </h3>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Low-cost peripherals (mouse, keyboard, headset, etc.) tracked with purchase warranty without generating individual Asset IDs
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsIssueAccessoryModalOpen(true)}
+                            className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0 self-start sm:self-auto"
+                        >
+                            {ICONS.add} Issue Accessory
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {isLoadingAccessories ? (
+                            <p className="text-xs text-slate-400 text-center py-6">Loading peripherals checklist...</p>
+                        ) : accessories.length > 0 ? (
+                            accessories.map(acc => {
+                                const isAssigned = acc.status === 'Assigned';
+                                const categoryIcon = 
+                                    acc.category === 'Mouse' ? '🖱️' :
+                                    acc.category === 'Keyboard' ? '⌨️' :
+                                    acc.category === 'Headset' ? '🎧' :
+                                    acc.category === 'Monitor' ? '🖥️' :
+                                    acc.category === 'Pen Drive' ? '💾' :
+                                    acc.category === 'Dock' ? '🔌' :
+                                    acc.category === 'Bag' ? '🎒' : '📦';
+
+                                // Warranty computation
+                                const now = new Date();
+                                const warrantyEnd = acc.warrantyEndDate ? new Date(acc.warrantyEndDate) : null;
+                                const diffDays = warrantyEnd ? Math.ceil((warrantyEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+                                return (
+                                    <div
+                                        key={acc.id}
+                                        className={`p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border transition-all ${
+                                            isAssigned 
+                                                ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-700/60' 
+                                                : 'bg-slate-100/50 dark:bg-slate-800/20 border-dashed border-slate-200 dark:border-slate-700 opacity-60'
+                                        }`}
+                                    >
+                                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xl shrink-0 shadow-sm">
+                                                {categoryIcon}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                                                        {acc.name}
+                                                    </h4>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                                        {acc.category}
+                                                    </span>
+                                                    {!isAssigned && (
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                                                            Returned
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+                                                    {acc.brand && <span>Brand: <strong>{acc.brand}</strong></span>}
+                                                    {acc.serialNumber && <span className="font-mono">S/N: {acc.serialNumber}</span>}
+                                                    {acc.condition && <span>Condition: <strong>{acc.condition}</strong></span>}
+                                                    <span>Issued: {new Date(acc.assignedAt).toLocaleDateString()}</span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                    {/* Warranty Status Badge */}
+                                                    {warrantyEnd ? (
+                                                        diffDays !== null && diffDays < 0 ? (
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
+                                                                🛡️ Warranty Expired ({warrantyEnd.toLocaleDateString()})
+                                                            </span>
+                                                        ) : diffDays !== null && diffDays <= 30 ? (
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                                                🛡️ Warranty Expiring in {diffDays}d ({warrantyEnd.toLocaleDateString()})
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                                🛡️ Under Warranty (Until {warrantyEnd.toLocaleDateString()})
+                                                            </span>
+                                                        )
+                                                    ) : (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-200/80 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                                            Self-Declared / Invoice Not Linked
+                                                        </span>
+                                                    )}
+
+                                                    {/* Batch Link Info */}
+                                                    {acc.batch && (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                            📦 Stock Batch: {acc.batch.name} {acc.batch.invoiceNumber ? `(#${acc.batch.invoiceNumber})` : ''}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-center">
+                                            {isAssigned && (
+                                                <button
+                                                    onClick={() => handleReturnAccessory(acc.id)}
+                                                    className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition-colors border border-amber-200 dark:border-amber-800"
+                                                    title="Mark accessory as returned to IT inventory"
+                                                >
+                                                    Return to Stock
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleDeleteAccessory(acc.id)}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                title="Remove accessory from profile"
+                                            >
+                                                {ICONS.delete}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="p-6 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                                <p className="text-2xl">🖱️</p>
+                                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No accessories recorded for this employee yet</p>
+                                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                                    Issue a mouse, keyboard, or headset from your stock batches to track warranty coverage without generating individual Asset IDs.
+                                </p>
+                                <button
+                                    onClick={() => setIsIssueAccessoryModalOpen(true)}
+                                    className="mt-2 text-xs font-bold text-brand-600 hover:underline inline-block"
+                                >
+                                    + Issue First Accessory &rarr;
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Asset History & Activity Log */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+
                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">
                         <div>
                             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Asset History & Activity Log</h3>
