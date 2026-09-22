@@ -1166,14 +1166,68 @@ const SupportTickets: React.FC = () => {
                                     >
                                         <option value="">No specific asset</option>
                                         {(() => {
-                                            const effectiveTargetId = formData.targetUserId ? Number(formData.targetUserId) : user?.id;
-                                            return assets
-                                                .filter(a => user?.role === 'Admin' || a.assigneeId === effectiveTargetId)
-                                                .map(a => (
+                                            // When logging on behalf of an employee, strictly show ONLY their assigned assets
+                                            if (formData.targetUserId) {
+                                                const targetId = Number(formData.targetUserId);
+                                                const targetUser = users.find(u => u.id === targetId);
+                                                const targetAssets = assets.filter(a => a.assigneeId === targetId);
+
+                                                if (targetAssets.length === 0) {
+                                                    return (
+                                                        <option value="" disabled>
+                                                            ⚠️ No assets currently assigned to {targetUser?.name || 'this employee'}
+                                                        </option>
+                                                    );
+                                                }
+
+                                                return targetAssets.map(a => (
                                                     <option key={a.id} value={a.id}>
-                                                        {a.name} ({a.assetId}){a.assignee ? ` - ${a.assignee.name}` : ''}
+                                                        {a.name} ({a.assetId}){a.category ? ` • ${a.category}` : ''}{a.serialNumber ? ` [S/N: ${a.serialNumber}]` : ''}
                                                     </option>
                                                 ));
+                                            }
+
+                                            // If regular user (non-admin), show only their own assets
+                                            if (user?.role !== 'Admin') {
+                                                const myAssets = assets.filter(a => a.assigneeId === user?.id);
+                                                if (myAssets.length === 0) {
+                                                    return (
+                                                        <option value="" disabled>
+                                                            No assets assigned to your account
+                                                        </option>
+                                                    );
+                                                }
+                                                return myAssets.map(a => (
+                                                    <option key={a.id} value={a.id}>
+                                                        {a.name} ({a.assetId}){a.category ? ` • ${a.category}` : ''}
+                                                    </option>
+                                                ));
+                                            }
+
+                                            // Admin logging for Self / IT Department (no target employee selected)
+                                            const myAdminAssets = assets.filter(a => a.assigneeId === user?.id);
+                                            const otherAssets = assets.filter(a => a.assigneeId !== user?.id);
+
+                                            return (
+                                                <>
+                                                    {myAdminAssets.length > 0 && (
+                                                        <optgroup label="Assigned to Me">
+                                                            {myAdminAssets.map(a => (
+                                                                <option key={a.id} value={a.id}>
+                                                                    {a.name} ({a.assetId})
+                                                                </option>
+                                                            ))}
+                                                        </optgroup>
+                                                    )}
+                                                    <optgroup label="All Company Inventory">
+                                                        {otherAssets.map(a => (
+                                                            <option key={a.id} value={a.id}>
+                                                                {a.name} ({a.assetId}){a.assignee ? ` - ${a.assignee.name}` : ' (Unassigned)'}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                </>
+                                            );
                                         })()}
                                     </select>
                                 </div>
