@@ -13,6 +13,7 @@ import WarrantyStatusOverview from './WarrantyStatusOverview';
 import { WarrantyStatus } from '../../types';
 import ExpiringLicensesTable from '../dashboard/ExpiringLicensesTable';
 import PendingHandovers from '../handovers/PendingHandovers';
+import MyAccessoriesCard from './MyAccessoriesCard';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -196,6 +197,9 @@ const Home: React.FC = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* My Peripherals & Accessories */}
+                        <MyAccessoriesCard userId={user.id} onNavigateAssets={() => setSelectedAssetId(null)} />
                     </div>
 
                     {/* Quick Info / Recent Requests */}
@@ -438,6 +442,7 @@ const Home: React.FC = () => {
                         icon={ICONS.assets}
                         color="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50"
                         onClick={() => handleFilterNavigation('status', 'All')}
+                        badge={`${stats.utilizationRate}% Deployed`}
                     />
                     <Card
                         title="Assigned (In Use)"
@@ -584,7 +589,7 @@ const Home: React.FC = () => {
                             <WarrantyAlertsTable assets={activeAssets} />
                         )}
                         {alertsTab === 'licenses' && (
-                            <ExpiringLicensesTable />
+                            <ExpiringLicensesTable selectedCompany={selectedCompany} />
                         )}
                     </div>
                 </div>

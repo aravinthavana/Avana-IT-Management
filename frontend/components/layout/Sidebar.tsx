@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
         },
         { name: 'Requests', icon: ICONS.assets, view: 'requests', roles: ['Admin', 'Manager', 'User'] },
         { name: 'Self-Audits', icon: ICONS.assets, view: 'audits', roles: ['Admin', 'Manager'] },
-        { name: 'Support Tickets', icon: ICONS.tickets, view: 'tickets', roles: ['Admin', 'User'] },
+        { name: 'Support Tickets', icon: ICONS.tickets, view: 'tickets', roles: ['Admin', 'Manager', 'User'] },
         { name: 'Knowledge Base', icon: ICONS.kb, view: 'kb', roles: ['Admin', 'Manager', 'User'] },
         { name: 'Purchases', icon: ICONS.purchases, view: 'purchases', roles: ['Admin'] },
         { name: 'User Management', icon: ICONS.users, view: 'users', roles: ['Admin', 'Manager'] },

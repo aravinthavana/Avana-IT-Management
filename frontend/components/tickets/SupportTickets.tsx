@@ -106,7 +106,7 @@ const SupportTickets: React.FC = () => {
 
     // Admin & Manager / Team detection
     const isAdmin = user?.role === 'Admin';
-    const isManager = Boolean(user && users.some(u => u.managerId === user.id));
+    const isManager = user?.role === 'Manager' || Boolean(user && users.some(u => u.managerId === user.id));
     const [teamViewTab, setTeamViewTab] = useState<'all' | 'my' | 'team'>('all');
 
     // Multi-Dimension Filter States
