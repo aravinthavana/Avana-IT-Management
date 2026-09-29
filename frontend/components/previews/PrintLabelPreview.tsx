@@ -2,17 +2,52 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import AssetLabel from '../assets/AssetLabel';
 import { ICONS } from '../../constants';
+import { printLabelDirect, openLabelPDF, downloadLabelPDF } from '../../utils/labelGenerator';
 
 export default function PrintLabelPreview() {
     const { assets, previewTarget, setPreviewTarget } = useAppContext();
     const [zoom, setZoom] = useState<number>(1.5);
+    const [isPrinting, setIsPrinting] = useState<boolean>(false);
 
     if (!previewTarget || previewTarget.type !== 'label') return null;
 
     const asset = assets.find(a => a.id === previewTarget.assetId);
 
-    const handlePrint = () => {
-        window.print();
+    const handlePrint = async () => {
+        if (!asset || isPrinting) return;
+        setIsPrinting(true);
+        try {
+            await printLabelDirect(asset);
+        } catch (err) {
+            console.error('Error launching label print:', err);
+            window.print();
+        } finally {
+            setIsPrinting(false);
+        }
+    };
+
+    const handleOpenPDF = async () => {
+        if (!asset || isPrinting) return;
+        setIsPrinting(true);
+        try {
+            await openLabelPDF(asset);
+        } catch (err) {
+            console.error('Error opening label PDF:', err);
+        } finally {
+            setIsPrinting(false);
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!asset || isPrinting) return;
+        setIsPrinting(true);
+        try {
+            await downloadLabelPDF(asset);
+        } catch (err) {
+            console.error('Error downloading label PDF:', err);
+        } finally {
+            setIsPrinting(false);
+        }
     };
 
     if (!asset) {
@@ -135,7 +170,7 @@ export default function PrintLabelPreview() {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                     {/* Zoom Toggle */}
-                    <div className="flex items-center bg-slate-200 dark:bg-slate-700 rounded-lg p-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <div className="hidden sm:flex items-center bg-slate-200 dark:bg-slate-700 rounded-lg p-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                         <button 
                             onClick={() => setZoom(1)} 
                             className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 1 ? 'bg-white dark:bg-slate-800 shadow-xs text-brand-600 dark:text-brand-400' : 'hover:text-slate-900'}`}
@@ -161,10 +196,32 @@ export default function PrintLabelPreview() {
 
                     <button 
                         onClick={handlePrint} 
-                        className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+                        disabled={isPrinting}
+                        className="bg-brand-600 text-white px-3.5 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                        title="Print directly using isolated 50mm x 30mm thermal layout"
                     >
                         {ICONS.print}
-                        <span>Print Label</span>
+                        <span>{isPrinting ? 'Preparing...' : 'Print Label'}</span>
+                    </button>
+
+                    <button 
+                        onClick={handleOpenPDF} 
+                        disabled={isPrinting}
+                        className="bg-emerald-600 text-white px-3.5 py-2 rounded-lg hover:bg-emerald-700 flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                        title="Open native 50x30mm PDF (100% guarantees zero browser headers/footers)"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <span>Open 50×30mm PDF</span>
+                    </button>
+
+                    <button 
+                        onClick={handleDownloadPDF} 
+                        disabled={isPrinting}
+                        className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer disabled:opacity-50"
+                        title="Save 50x30mm PDF file"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span className="hidden lg:inline">Download PDF</span>
                     </button>
                 </div>
             </header>
@@ -175,7 +232,7 @@ export default function PrintLabelPreview() {
                         <span>●</span> 50mm × 30mm Standard Thermal Label
                      </span>
                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        In print dialog, select <strong>50mm × 30mm</strong> paper size and set <strong>Margins: None</strong>.
+                        Optimized for <strong>Postek C168/300</strong> (300 DPI) and standard thermal label printers.
                      </p>
                  </div>
 
@@ -207,6 +264,38 @@ export default function PrintLabelPreview() {
                              <AssetLabel asset={asset} />
                          </div>
                      </div>
+                 </div>
+
+                 {/* Postek C168/300 & Thermal Printer Setup Guide */}
+                 <div className="mt-8 max-w-md w-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 text-xs shadow-xs text-amber-950 dark:text-amber-200">
+                     <div className="flex items-center gap-2 font-bold text-sm mb-2 text-amber-900 dark:text-amber-300">
+                         <span className="text-base">🖨️</span>
+                         <span>Postek C168/300 Print Settings</span>
+                     </div>
+                     <p className="text-slate-600 dark:text-slate-300 mb-2">
+                         To ensure Chrome does not add header titles/dates or center the label on A4:
+                     </p>
+                     <div className="space-y-1.5 bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-lg border border-amber-200/60 dark:border-amber-900/40">
+                         <div className="flex items-start gap-2">
+                             <span className="font-semibold text-slate-700 dark:text-slate-200 min-w-[125px]">1. Destination:</span>
+                             <span className="font-medium text-brand-600 dark:text-brand-400">Postek C168/300</span>
+                         </div>
+                         <div className="flex items-start gap-2">
+                             <span className="font-semibold text-slate-700 dark:text-slate-200 min-w-[125px]">2. Paper size:</span>
+                             <span className="font-medium text-slate-800 dark:text-slate-100">50mm × 30mm <span className="text-slate-400 font-normal">(or 50x30 stock)</span></span>
+                         </div>
+                         <div className="flex items-start gap-2">
+                             <span className="font-semibold text-slate-700 dark:text-slate-200 min-w-[125px]">3. Margins:</span>
+                             <span className="font-bold text-emerald-600 dark:text-emerald-400">None</span>
+                         </div>
+                         <div className="flex items-start gap-2">
+                             <span className="font-semibold text-slate-700 dark:text-slate-200 min-w-[125px]">4. Headers & Footers:</span>
+                             <span className="font-bold text-rose-600 dark:text-rose-400">UNCHECK [  ]</span>
+                         </div>
+                     </div>
+                     <p className="mt-2 text-[11px] text-amber-800 dark:text-amber-400">
+                         💡 <strong>Pro Tip:</strong> Click <strong>"Open 50×30mm PDF"</strong> to print directly from Chrome's PDF viewer — PDFs automatically have zero browser headers and footers!
+                     </p>
                  </div>
 
                  {/* Label Details Summary */}
