@@ -6,36 +6,57 @@ declare var QRious: any;
 
 interface AssetLabelProps {
     asset: Asset;
+    className?: string;
+    style?: React.CSSProperties;
+    isPrint?: boolean;
 }
 
-const AssetLabel: React.FC<AssetLabelProps> = ({ asset }) => {
+const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
     const qrCodeRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        if (qrCodeRef.current && asset.assetId) {
-            const canvas = qrCodeRef.current;
-            const iframeWindow = canvas.ownerDocument.defaultView as any;
+        if (!qrCodeRef.current || !asset.assetId) return;
 
-            if (iframeWindow && iframeWindow.QRious) {
-                new iframeWindow.QRious({
+        const renderQR = () => {
+            const canvas = qrCodeRef.current;
+            if (!canvas) return false;
+            const win = (canvas.ownerDocument?.defaultView || window) as any;
+            const QRiousConstructor = win?.QRious || (window as any).QRious;
+
+            if (QRiousConstructor) {
+                new QRiousConstructor({
                     element: canvas,
                     value: asset.assetId,
-                    size: 56,
+                    size: 112, // 2x resolution for high-DPI and sharp thermal printing
                     level: 'M'
                 });
+                return true;
             }
+            return false;
+        };
+
+        if (!renderQR()) {
+            const timer = setInterval(() => {
+                if (renderQR()) {
+                    clearInterval(timer);
+                }
+            }, 50);
+            return () => clearInterval(timer);
         }
     }, [asset.assetId]);
 
     return (
         <div 
-            className="bg-white overflow-hidden flex flex-col"
+            className={`bg-white overflow-hidden flex flex-col ${className || ''}`}
             style={{ 
-                width: '189px', 
-                height: '113px', 
+                width: '50mm', 
+                height: '30mm', 
+                maxWidth: '50mm',
+                maxHeight: '30mm',
                 boxSizing: 'border-box', 
                 padding: '4px',
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                ...style
             }}
         >
             {/* Header: Logo with Cropped Transparency */}

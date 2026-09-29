@@ -1,102 +1,18 @@
-import React, { useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import AssetLabel from '../assets/AssetLabel';
 import { ICONS } from '../../constants';
 
 export default function PrintLabelPreview() {
     const { assets, previewTarget, setPreviewTarget } = useAppContext();
-    const iframeRef = useRef<HTMLIFrameElement>(null);
-    const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
     const [zoom, setZoom] = useState<number>(1.5);
 
     if (!previewTarget || previewTarget.type !== 'label') return null;
 
     const asset = assets.find(a => a.id === previewTarget.assetId);
 
-    const iframeSrcDoc = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=10.0, user-scalable=yes">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-        <style>
-          *, *::before, *::after { box-sizing: border-box; }
-          html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-          body { 
-            background-color: transparent; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-          }
-          #mount-point, #label-container { 
-            width: 100%; 
-            height: 100%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-          }
-          
-          /* Tailwind-compatible utilities used by AssetLabel */
-          .flex { display: flex; } 
-          .flex-col { flex-direction: column; } 
-          .items-center { align-items: center; }
-          .justify-center { justify-content: center; } 
-          .justify-between { justify-content: space-between; }
-          .w-full { width: 100%; } 
-          .h-full { height: 100%; }
-          .font-bold { font-weight: 700; } 
-          .font-semibold { font-weight: 600; }
-          .font-medium { font-weight: 500; }
-          .uppercase { text-transform: uppercase; } 
-          .tracking-wider { letter-spacing: 0.05em; }
-          .tracking-tight { letter-spacing: -0.02em; }
-          .bg-white { background-color: #ffffff; } 
-          .overflow-hidden { overflow: hidden; } 
-          .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .shrink-0 { flex-shrink: 0; } 
-          .relative { position: relative; } 
-          .absolute { position: absolute; }
-          
-          @media print {
-            @page { size: 50mm 30mm; margin: 0; }
-            html, body { 
-              width: 50mm; 
-              height: 30mm; 
-              margin: 0; 
-              padding: 0; 
-              overflow: hidden; 
-              background-color: #ffffff; 
-            }
-            #mount-point, #label-container { 
-              width: 50mm; 
-              height: 30mm; 
-              position: absolute; 
-              top: 0; 
-              left: 0; 
-              margin: 0; 
-              padding: 0; 
-              overflow: hidden; 
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div id="mount-point"></div>
-      </body>
-    </html>
-    `;
-
     const handlePrint = () => {
-        const iframe = iframeRef.current;
-        if (iframe?.contentWindow) {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        }
+        window.print();
     };
 
     if (!asset) {
@@ -121,8 +37,88 @@ export default function PrintLabelPreview() {
     }
     
     return (
-        <div className="bg-slate-100 dark:bg-slate-900 min-h-screen flex flex-col">
-            <header className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 p-4 flex justify-between items-center shadow-xs">
+        <div className="bg-slate-100 dark:bg-slate-900 min-h-screen flex flex-col print:min-h-0 print:h-[30mm] print:bg-white print:overflow-hidden print:p-0 print:m-0">
+            <style>{`
+                @page {
+                    size: 50mm 30mm;
+                    margin: 0;
+                }
+                @media screen {
+                    .print-only {
+                        position: absolute !important;
+                        left: -99999px !important;
+                        top: -99999px !important;
+                        width: 50mm !important;
+                        height: 30mm !important;
+                        opacity: 0 !important;
+                        pointer-events: none !important;
+                        visibility: hidden !important;
+                    }
+                }
+                @media print {
+                    @page {
+                        size: 50mm 30mm;
+                        margin: 0;
+                    }
+                    *, *::before, *::after {
+                        box-sizing: border-box !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    html, body {
+                        width: 50mm !important;
+                        height: 30mm !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                        background-color: #ffffff !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    #root {
+                        width: 50mm !important;
+                        height: 30mm !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                        background-color: #ffffff !important;
+                    }
+                    .no-print,
+                    .no-print * {
+                        display: none !important;
+                    }
+                    .print-only {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        position: fixed !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 50mm !important;
+                        height: 30mm !important;
+                        max-width: 50mm !important;
+                        max-height: 30mm !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background-color: #ffffff !important;
+                        overflow: hidden !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
+                        page-break-before: avoid !important;
+                        break-before: avoid !important;
+                        z-index: 9999999 !important;
+                    }
+                }
+            `}</style>
+
+            {/* Dedicated print container rendered directly at (0, 0) for print */}
+            <div id="print-label-area" className="print-only" aria-hidden="true">
+                <AssetLabel asset={asset} isPrint />
+            </div>
+
+            <header className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 p-4 flex justify-between items-center shadow-xs no-print">
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={() => setPreviewTarget(null)} 
@@ -165,7 +161,7 @@ export default function PrintLabelPreview() {
 
                     <button 
                         onClick={handlePrint} 
-                        className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-semibold transition-colors shadow-sm"
+                        className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-semibold transition-colors shadow-sm cursor-pointer"
                     >
                         {ICONS.print}
                         <span>Print Label</span>
@@ -173,7 +169,7 @@ export default function PrintLabelPreview() {
                 </div>
             </header>
             
-            <main className="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center">
+            <main className="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center no-print">
                  <div className="text-center max-w-md mb-6">
                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mb-2">
                         <span>●</span> 50mm × 30mm Standard Thermal Label
@@ -202,28 +198,13 @@ export default function PrintLabelPreview() {
                          <div 
                              className="rounded-sm shadow-xl border border-slate-300 dark:border-slate-600 bg-white"
                              style={{ 
-                                 width: '189px', 
-                                 height: '113px', 
+                                 width: '50mm', 
+                                 height: '30mm', 
                                  boxSizing: 'content-box',
                                  overflow: 'hidden'
                              }}
                          >
-                            <iframe
-                                ref={iframeRef}
-                                srcDoc={iframeSrcDoc}
-                                title="Asset Label Preview"
-                                style={{ width: '189px', height: '113px', border: 'none', display: 'block' }}
-                                onLoad={() => {
-                                    const doc = iframeRef.current?.contentWindow?.document;
-                                    setMountNode(doc ? doc.getElementById('mount-point') : null);
-                                }}
-                            />
-                            {mountNode && ReactDOM.createPortal(
-                                <div id="label-container">
-                                     <AssetLabel asset={asset} />
-                                </div>,
-                                mountNode
-                            )}
+                             <AssetLabel asset={asset} />
                          </div>
                      </div>
                  </div>
