@@ -7,26 +7,42 @@ declare var QRious: any;
 interface DeclarationFormProps {
     user: User;
     laptop: Asset;
+    assignedDate?: string;
+    className?: string;
 }
 
-const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
+const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assignedDate, className }) => {
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
     const qrCodeRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        if (qrCodeRef.current && laptop.assetId) {
+        if (!qrCodeRef.current || !laptop.assetId) return;
+
+        const renderQR = () => {
             const canvas = qrCodeRef.current;
-            const iframeWindow = canvas.ownerDocument.defaultView as any;
-            const QRLib = (iframeWindow && iframeWindow.QRious) || (window as any).QRious;
+            if (!canvas) return false;
+            const win = (canvas.ownerDocument?.defaultView || window) as any;
+            const QRLib = win?.QRious || (window as any).QRious;
 
             if (QRLib) {
                 new QRLib({
                     element: canvas,
                     value: laptop.assetId,
-                    size: 72,
+                    size: 128,
                     level: 'H'
                 });
+                return true;
             }
+            return false;
+        };
+
+        if (!renderQR()) {
+            const timer = setInterval(() => {
+                if (renderQR()) {
+                    clearInterval(timer);
+                }
+            }, 50);
+            return () => clearInterval(timer);
         }
     }, [laptop.assetId]);
     
@@ -94,9 +110,18 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
     const branchLocation = user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A';
 
     return (
-        <div className="bg-white p-7 font-sans text-slate-800 flex flex-col justify-between" style={{ minHeight: '100%', fontSize: '9pt', lineHeight: '1.4' }}>
+        <div 
+            className={`bg-white p-5 sm:p-6 font-sans text-slate-800 flex flex-col justify-between box-border ${className || ''}`} 
+            style={{ 
+                height: 'auto',
+                fontSize: '8.5pt', 
+                lineHeight: '1.35',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid'
+            }}
+        >
             {/* ── 1. Compact Executive Header ── */}
-            <header className="flex justify-between items-center pb-2.5 border-b-2 border-slate-900 mb-2.5">
+            <header className="flex justify-between items-center pb-2 border-b-2 border-slate-900 mb-2">
                 <div className="text-[8.5pt] leading-tight">
                     <h1 className="font-bold text-sm text-slate-900 tracking-tight">{currentCompany.name}</h1>
                     {currentCompany.address.map((line, i) => (
@@ -133,8 +158,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                         <tr className="border-b border-slate-200 bg-slate-50">
                             <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Employee Name:</td>
                             <td className="py-1 px-2.5 font-bold text-slate-900 w-[32%]">{user.name}</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Date of Handover:</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-900 w-[32%]">{today}</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Assigned Date:</td>
+                            <td className="py-1 px-2.5 font-semibold text-slate-900 w-[32%]">{assignedDate || today}</td>
                         </tr>
                         <tr className="border-b border-slate-200">
                             <td className="py-1 px-2.5 font-semibold text-slate-600">Employee ID / Dept:</td>
@@ -224,8 +249,8 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop }) => {
                                 <p className="font-bold text-slate-900 pt-0.5 truncate">{user.name}</p>
                             </div>
                             <div>
-                                <span className="text-slate-500 block text-[7.5pt]">Date:</span>
-                                <p className="font-medium text-slate-800 pt-0.5">{today}</p>
+                                <span className="text-slate-500 block text-[7.5pt]">Received Date:</span>
+                                <div className="h-5 border-b border-slate-400 w-full"></div>
                             </div>
                             <div>
                                 <span className="text-slate-500 block text-[7.5pt]">Place / Branch:</span>
