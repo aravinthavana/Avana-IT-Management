@@ -96,8 +96,8 @@ export default function DeclarationFormPreview() {
                         padding: 0 !important;
                         background-color: #ffffff !important;
                     }
-                    header,
-                    nav,
+                    header.no-print,
+                    nav.no-print,
                     .no-print,
                     .no-print * {
                         display: none !important;
@@ -126,6 +126,14 @@ export default function DeclarationFormPreview() {
                         break-inside: avoid !important;
                         page-break-after: avoid !important;
                         break-after: avoid !important;
+                    }
+                    .declaration-container img {
+                        display: inline-block !important;
+                        max-width: 100% !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>

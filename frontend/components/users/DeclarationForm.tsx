@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { User, Asset } from '../../types';
+import { AVANA_LOGO_DATA_URL } from '../../utils/logoData';
 
 // Global QRious variable
 declare var QRious: any;
@@ -121,7 +122,7 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
             }}
         >
             {/* ── 1. Compact Executive Header ── */}
-            <header className="flex justify-between items-center pb-2 border-b-2 border-slate-900 mb-2">
+            <div className="flex justify-between items-center pb-2 border-b-2 border-slate-900 mb-2">
                 <div className="text-[8.5pt] leading-tight">
                     <h1 className="font-bold text-sm text-slate-900 tracking-tight">{currentCompany.name}</h1>
                     {currentCompany.address.map((line, i) => (
@@ -132,14 +133,19 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
                         {currentCompany.cin && <span className="ml-2 font-mono">CIN: {currentCompany.cin}</span>}
                     </p>
                 </div>
-                <div className="flex-shrink-0 ml-4">
+                <div className="flex-shrink-0 ml-4 flex items-center justify-end">
                     <img 
-                        src="/logo.png" 
+                        src={AVANA_LOGO_DATA_URL} 
                         alt="Avana Logo" 
-                        className="h-10 w-auto max-w-[125px] object-contain" 
+                        className="h-10 w-auto max-w-[125px] object-contain block" 
+                        style={{
+                            printColorAdjust: 'exact',
+                            WebkitPrintColorAdjust: 'exact',
+                            imageRendering: 'auto'
+                        }}
                     />
                 </div>
-            </header>
+            </div>
 
             {/* ── 2. Document Title ── */}
             <div className="text-center my-1.5">
