@@ -54,6 +54,10 @@ model User {
   m365AccountDisabled      Boolean   @default(false)
   offboardingStatus        String?   @default("Pending") // "Pending", "In Progress", "Completed"
   offboardingCompletedDate DateTime?
+
+  // Microsoft 365 / Entra ID Sync
+  azureAdId                String?   @unique
+  lastM365Sync             DateTime?
   department   Department?  @relation(fields: [departmentId], references: [id])
   branch       Branch?      @relation(fields: [branchId], references: [id])
   manager      User?        @relation("UserManager", fields: [managerId], references: [id])
@@ -240,6 +244,8 @@ model License {
   cost           Float?
   status         String    @default("Active") // Active, Expiring Soon, Expired, Cancelled
   remarks        String?
+  skuId          String?   @unique
+  isM365         Boolean   @default(false)
 
   assignments    LicenseAssignment[]
 }

@@ -256,6 +256,14 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Add New User'}>
             <form onSubmit={handleSubmit} autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="space-y-4">
+                {(user?.azureAdId || user?.m365AccountCreated) && (
+                    <div className="flex items-center gap-2.5 p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-sky-800 dark:text-sky-300 text-xs font-body">
+                        <svg className="w-4 h-4 text-sky-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/>
+                        </svg>
+                        <span><strong>Microsoft 365 Connected:</strong> Profile updates will automatically synchronize to Entra ID and M365 Admin Center.</span>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     {/* Account Credentials */}

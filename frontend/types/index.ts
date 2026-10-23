@@ -48,6 +48,10 @@ export interface User {
     m365AccountDisabled?: boolean;
     offboardingStatus?: 'Pending' | 'In Progress' | 'Completed' | 'Not Started';
     offboardingCompletedDate?: string | null;
+
+    // Microsoft 365
+    azureAdId?: string;
+    lastM365Sync?: string;
 }
 
 export interface DispatchDetails {
@@ -283,6 +287,8 @@ export interface License {
     cost?: number;
     status: string;
     remarks?: string;
+    skuId?: string;
+    isM365?: boolean;
     assignments?: LicenseAssignment[];
 }
 

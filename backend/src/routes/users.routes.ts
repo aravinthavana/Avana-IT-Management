@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { userSchema } from '../schemas';
+import { updateM365User } from '../services/m365.service';
 
 const router = Router();
 
@@ -345,6 +346,24 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
             data: updateData,
             include: { department: true, branch: true, manager: true }
         });
+
+        // Outbound real-time push to Microsoft 365 / Entra ID
+        const targetAd = user.azureAdId || (user.email.includes('@') ? user.email : null);
+        if (targetAd) {
+            updateM365User(targetAd, {
+                displayName: user.name,
+                jobTitle: user.jobTitle || undefined,
+                department: user.department?.name || undefined,
+                mobilePhone: user.mobile || undefined,
+                officeLocation: user.location || user.branch?.name || undefined,
+                city: user.city || undefined,
+                state: user.state || undefined,
+                country: user.country || undefined,
+                postalCode: user.postalCode || undefined,
+                accountEnabled: user.status === 'Active'
+            }).catch((e: any) => console.warn('[M365 Auto-Push Warning]:', e.message));
+        }
+
         const { password: _, ...sanitized } = user;
         res.json(sanitized);
     } catch (error: any) {
@@ -368,6 +387,14 @@ router.put('/api/users/:id/status', authenticateToken, requireAdmin, async (req,
             where: { id: Number(id) },
             data: { status },
         });
+
+        // Push account enablement status to Microsoft 365
+        const targetAdStatus = user.azureAdId || (user.email.includes('@') ? user.email : null);
+        if (targetAdStatus) {
+            updateM365User(targetAdStatus, {
+                accountEnabled: status === 'Active'
+            }).catch((e: any) => console.warn('[M365 Status Push Warning]:', e.message));
+        }
 
         if (status === 'Inactive' && reclaimAll) {
             // Reclaim Assets

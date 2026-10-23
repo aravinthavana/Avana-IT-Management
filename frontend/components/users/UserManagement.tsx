@@ -93,6 +93,31 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [isOnboardingWizardOpen, setIsOnboardingWizardOpen] = useState(false);
     const [wizardUser, setWizardUser] = useState<User | null>(null);
     const [showFilters, setShowFilters] = useState(false);
+    const [isM365Syncing, setIsM365Syncing] = useState(false);
+
+    const handleSyncM365 = async () => {
+        setIsM365Syncing(true);
+        try {
+            const res = await fetch(`${API_URL}/api/m365/sync`, {
+                method: 'POST',
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to sync with Microsoft 365');
+            }
+            setNotification({
+                message: data.message || `M365 Sync completed! ${data.data?.usersCreated || 0} created, ${data.data?.usersUpdated || 0} updated.`,
+                type: 'success'
+            });
+            fetchAllData();
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        } finally {
+            setIsM365Syncing(false);
+        }
+    };
 
     const handleOpenModal = (user: User | null = null) => { setEditingUser(user); setIsModalOpen(true); };
     const handleCloseModal = () => { setEditingUser(null); setIsModalOpen(false); };
@@ -430,6 +455,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'tree' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>Tree</button>
                     </div>
 
+                    {loggedInUser?.role === 'Admin' && (
+                        <button
+                            onClick={handleSyncM365}
+                            disabled={isM365Syncing}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                            title="Synchronize all user accounts, licenses, and profile details with Microsoft 365"
+                        >
+                            <svg className={`w-4 h-4 ${isM365Syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span className="hidden sm:inline">{isM365Syncing ? 'Syncing...' : 'Sync M365'}</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => handleOpenModal()}
                         className="bg-avana-dark text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5"
@@ -537,6 +575,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                 {isSelf && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
                                                 {user.accountType && user.accountType !== 'Employee' && (
                                                     <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 px-1.5 py-0.5 rounded-full font-semibold">{user.accountType}</span>
+                                                )}
+                                                {(user.azureAdId || user.m365AccountCreated) && (
+                                                    <span className="text-[10px] bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="Connected with Microsoft 365">
+                                                        <svg className="w-2.5 h-2.5 text-sky-600" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/></svg>
+                                                        M365
+                                                    </span>
                                                 )}
                                             </div>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">

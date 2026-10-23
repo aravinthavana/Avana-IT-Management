@@ -24,6 +24,8 @@ import auditsRoutes from './routes/audits.routes';
 import uploadRoutes from './routes/upload.routes';
 import webhooksRoutes from './routes/webhooks.routes';
 import accessoriesRoutes from './routes/accessories.routes';
+import m365Routes from './routes/m365.routes';
+import { syncFromM365 } from './services/m365.service';
 
 dotenv.config();
 
@@ -101,6 +103,7 @@ app.use(auditsRoutes);
 app.use(uploadRoutes);
 app.use(webhooksRoutes);
 app.use(accessoriesRoutes);
+app.use(m365Routes);
 
 app.listen(port, async () => {
     console.log(`Server running on port ${port} with security measures enabled.`);
@@ -139,4 +142,15 @@ app.listen(port, async () => {
     } catch (e) {
         console.error('Legacy user onboarding initialization notice:', e);
     }
+
+    // Schedule automated periodic background sync from M365 (every 1 hour)
+    const SYNC_INTERVAL_MS = 60 * 60 * 1000;
+    setInterval(async () => {
+        try {
+            console.log('[Background M365 Sync] Running scheduled periodic sync...');
+            await syncFromM365();
+        } catch (syncErr: any) {
+            console.error('[Background M365 Sync Error]:', syncErr.message);
+        }
+    }, SYNC_INTERVAL_MS);
 });
