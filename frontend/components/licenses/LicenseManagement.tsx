@@ -27,6 +27,13 @@ const LicenseManagement: React.FC = () => {
                 headers: getHeaders(),
                 credentials: 'include'
             });
+            if (res.status === 404) {
+                throw new Error('M365 sync endpoint not found (404). Please ensure the latest backend commit is deployed on Render.');
+            }
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`Unexpected server response (${res.status} ${res.statusText}). The backend may be deploying or restarting.`);
+            }
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to sync M365 licenses');
             setNotification({
