@@ -1,28 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, lazy } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Home from './components/home/Home';
-import AssetManagement from './components/assets/AssetManagement';
-import UserManagement from './components/users/UserManagement';
-import DepartmentManagement from './components/departments/DepartmentManagement';
-import BranchManagement from './components/branches/BranchManagement';
-import PurchaseManagement from './components/purchases/PurchaseManagement';
-import LicenseManagement from './components/licenses/LicenseManagement';
-import UserProfile from './components/profile/UserProfile';
 import Notification from './components/ui/Notification';
 import { useAppContext } from './hooks/useAppContext';
 import Breadcrumbs from './components/ui/Breadcrumbs';
-import AssetDetailView from './components/assets/AssetDetailView';
-import PurchaseDetailView from './components/purchases/PurchaseDetailView';
-import DeclarationFormPreview from './components/previews/DeclarationFormPreview';
-import PrintLabelPreview from './components/previews/PrintLabelPreview';
 import Login from './components/auth/Login';
-import AssetRequestList from './components/requests/AssetRequestList';
-import SupportTickets from './components/tickets/SupportTickets';
-import KnowledgeBase from './components/kb/KnowledgeBase';
-import SelfAuditsList from './components/audits/SelfAuditsList';
-import OnboardingManagement from './components/onboarding/OnboardingManagement';
 import { useAuth } from './contexts/AuthContext';
+
+// Dynamic lazy-loaded view components
+const AssetManagement = lazy(() => import('./components/assets/AssetManagement'));
+const UserManagement = lazy(() => import('./components/users/UserManagement'));
+const DepartmentManagement = lazy(() => import('./components/departments/DepartmentManagement'));
+const BranchManagement = lazy(() => import('./components/branches/BranchManagement'));
+const PurchaseManagement = lazy(() => import('./components/purchases/PurchaseManagement'));
+const LicenseManagement = lazy(() => import('./components/licenses/LicenseManagement'));
+const UserProfile = lazy(() => import('./components/profile/UserProfile'));
+const AssetDetailView = lazy(() => import('./components/assets/AssetDetailView'));
+const PurchaseDetailView = lazy(() => import('./components/purchases/PurchaseDetailView'));
+const DeclarationFormPreview = lazy(() => import('./components/previews/DeclarationFormPreview'));
+const PrintLabelPreview = lazy(() => import('./components/previews/PrintLabelPreview'));
+const AssetRequestList = lazy(() => import('./components/requests/AssetRequestList'));
+const SupportTickets = lazy(() => import('./components/tickets/SupportTickets'));
+const KnowledgeBase = lazy(() => import('./components/kb/KnowledgeBase'));
+const SelfAuditsList = lazy(() => import('./components/audits/SelfAuditsList'));
+const OnboardingManagement = lazy(() => import('./components/onboarding/OnboardingManagement'));
 
 class ErrorBoundary extends React.Component<any, any> {
     public state = { hasError: false, error: null as Error | null };
@@ -45,6 +47,13 @@ class ErrorBoundary extends React.Component<any, any> {
         return (this as any).props.children;
     }
 }
+
+const ViewLoadingFallback: React.FC = () => (
+    <div className="flex flex-col items-center justify-center py-28 text-slate-400">
+        <div className="w-8 h-8 border-3 border-[#b27f0d] border-t-transparent rounded-full animate-spin mb-3"></div>
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 font-body">Loading view...</span>
+    </div>
+);
 
 const AccessDenied: React.FC<{ message?: string }> = ({ 
     message = 'You do not have permission to view this page. Contact an Administrator if you believe this is an error.' 
@@ -85,12 +94,11 @@ export default function App() {
 
     // If a preview is active, render it in full-screen mode
     if (previewTarget) {
-        if (previewTarget.type === 'declaration') {
-            return <DeclarationFormPreview />;
-        }
-        if (previewTarget.type === 'label') {
-            return <PrintLabelPreview />;
-        }
+        return (
+            <Suspense fallback={<ViewLoadingFallback />}>
+                {previewTarget.type === 'declaration' ? <DeclarationFormPreview /> : <PrintLabelPreview />}
+            </Suspense>
+        );
     }
 
     const renderView = () => {
@@ -196,7 +204,9 @@ export default function App() {
                         <Breadcrumbs />
                         <div key={view} className="page-transition">
                             <ErrorBoundary>
-                                {renderView()}
+                                <Suspense fallback={<ViewLoadingFallback />}>
+                                    {renderView()}
+                                </Suspense>
                             </ErrorBoundary>
                         </div>
                     </main>
@@ -205,4 +215,4 @@ export default function App() {
             </div>
         </>
     );
-}
+}
