@@ -50,6 +50,36 @@ const LicenseManagement: React.FC = () => {
         }
     };
 
+    const [isZohoSyncing, setIsZohoSyncing] = useState(false);
+
+    const handleSyncZohoLicenses = async () => {
+        setIsZohoSyncing(true);
+        try {
+            const res = await fetch(`${API_URL}/api/zoho/sync-licenses`, {
+                method: 'POST',
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`Unexpected server response (${res.status} ${res.statusText}).`);
+            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to sync Zoho People Plus');
+            setNotification({
+                message: `Zoho People Plus synced! ${data.activeZohoEmployees || 0} active users counted. ${data.changesQueued || 0} HR profile change(s) queued for review.`,
+                type: 'success'
+            });
+            // Re-fetch licenses
+            const licRes = await fetch(`${API_URL}/api/licenses`, { headers: getHeaders(), credentials: 'include' });
+            if (licRes.ok) setLicenses(await licRes.json());
+        } catch (err: any) {
+            setNotification({ message: err.message, type: 'error' });
+        } finally {
+            setIsZohoSyncing(false);
+        }
+    };
+
     const openProRataForm = (license: License) => {
         setSelectedLicense(license);
         setIsProRataOpen(true);
@@ -152,6 +182,17 @@ const LicenseManagement: React.FC = () => {
                         </svg>
                         <span>{isSyncing ? 'Syncing...' : 'Sync M365'}</span>
                     </button>
+                    <button
+                        onClick={handleSyncZohoLicenses}
+                        disabled={isZohoSyncing}
+                        className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 flex items-center gap-1.5 disabled:opacity-50 text-sm shadow-sm"
+                        title="Sync Zoho People Plus active employee count & seats"
+                    >
+                        <svg className={`w-4 h-4 ${isZohoSyncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>{isZohoSyncing ? 'Syncing...' : 'Sync Zoho'}</span>
+                    </button>
                     <button 
                         onClick={openAddForm} 
                         className="bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 text-sm"
@@ -172,6 +213,12 @@ const LicenseManagement: React.FC = () => {
                                         <span className="inline-flex items-center gap-1 text-[10px] bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1.5 py-0.5 rounded-full font-semibold">
                                             <svg className="w-2.5 h-2.5 text-sky-600" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/></svg>
                                             M365
+                                        </span>
+                                    )}
+                                    {(license.key === 'ZOHO-PEOPLE-PLUS' || license.name.toLowerCase().includes('zoho')) && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200 dark:border-orange-800 px-1.5 py-0.5 rounded-full font-semibold">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                            Zoho People
                                         </span>
                                     )}
                                 </div>

@@ -27,6 +27,7 @@ import uploadRoutes from './routes/upload.routes';
 import webhooksRoutes from './routes/webhooks.routes';
 import accessoriesRoutes from './routes/accessories.routes';
 import m365Routes from './routes/m365.routes';
+import zohoRoutes from './routes/zoho.routes';
 import { syncFromM365 } from './services/m365.service';
 
 const app = express();
@@ -104,6 +105,7 @@ app.use(uploadRoutes);
 app.use(webhooksRoutes);
 app.use(accessoriesRoutes);
 app.use(m365Routes);
+app.use(zohoRoutes);
 
 app.listen(port, async () => {
     console.log(`Server running on port ${port} with security measures enabled.`);

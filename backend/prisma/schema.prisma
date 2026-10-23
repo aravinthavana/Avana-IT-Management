@@ -516,4 +516,22 @@ model UserAccessory {
   @@index([status])
 }
 
+model HrChangeNotification {
+  id             Int       @id @default(autoincrement())
+  source         String    @default("Zoho People Plus")
+  employeeId     String?
+  employeeEmail  String
+  employeeName   String
+  fieldName      String
+  currentValue   String?
+  zohoValue      String?
+  status         String    @default("Pending") // "Pending", "Applied", "Dismissed"
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+  resolvedBy     Int?
+
+  @@index([status])
+  @@index([employeeEmail])
+}
+
 

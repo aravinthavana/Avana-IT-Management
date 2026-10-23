@@ -7,6 +7,7 @@ import UserForm from './UserForm';
 import UserDetailView from './UserDetailView';
 import UserHierarchy from './UserHierarchy';
 import OnboardingWizardModal from '../onboarding/OnboardingWizardModal';
+import { HrReviewModal } from './HrReviewModal';
 import { User } from '../../types';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
@@ -94,6 +95,27 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
     const [wizardUser, setWizardUser] = useState<User | null>(null);
     const [showFilters, setShowFilters] = useState(false);
     const [isM365Syncing, setIsM365Syncing] = useState(false);
+    const [isHrReviewOpen, setIsHrReviewOpen] = useState(false);
+    const [pendingHrCount, setPendingHrCount] = useState(0);
+
+    const fetchPendingHrCount = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/zoho/changes?status=Pending`, {
+                headers: getHeaders(),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPendingHrCount(data.pendingCount || 0);
+            }
+        } catch (e) {
+            // Ignore if backend not reachable
+        }
+    };
+
+    useEffect(() => {
+        fetchPendingHrCount();
+    }, []);
 
     const handleSyncM365 = async () => {
         setIsM365Syncing(true);
@@ -463,17 +485,35 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     </div>
 
                     {loggedInUser?.role === 'Admin' && (
-                        <button
-                            onClick={handleSyncM365}
-                            disabled={isM365Syncing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
-                            title="Synchronize all user accounts, licenses, and profile details with Microsoft 365"
-                        >
-                            <svg className={`w-4 h-4 ${isM365Syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            <span className="hidden sm:inline">{isM365Syncing ? 'Syncing...' : 'Sync M365'}</span>
-                        </button>
+                        <>
+                            <button
+                                onClick={handleSyncM365}
+                                disabled={isM365Syncing}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                                title="Synchronize all user accounts, licenses, and profile details with Microsoft 365"
+                            >
+                                <svg className={`w-4 h-4 ${isM365Syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span className="hidden sm:inline">{isM365Syncing ? 'Syncing...' : 'Sync M365'}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setIsHrReviewOpen(true)}
+                                className="relative bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-800 px-3.5 py-2.5 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900/60 text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 shadow-sm"
+                                title="Review profile and department changes made by HR in Zoho People"
+                            >
+                                <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <span className="hidden sm:inline">HR Updates</span>
+                                {pendingHrCount > 0 && (
+                                    <span className="bg-orange-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse">
+                                        {pendingHrCount}
+                                    </span>
+                                )}
+                            </button>
+                        </>
                     )}
                     <button
                         onClick={() => handleOpenModal()}
@@ -669,6 +709,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         }}
                     />
                 )}
+
+                <HrReviewModal
+                    isOpen={isHrReviewOpen}
+                    onClose={() => {
+                        setIsHrReviewOpen(false);
+                        fetchPendingHrCount();
+                    }}
+                    apiUrl={API_URL}
+                    getHeaders={getHeaders}
+                    onChangesApplied={() => {
+                        fetchAllData();
+                        fetchPendingHrCount();
+                    }}
+                />
             </div>
         </>
     );
