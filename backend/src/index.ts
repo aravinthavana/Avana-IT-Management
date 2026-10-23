@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
@@ -26,8 +28,6 @@ import webhooksRoutes from './routes/webhooks.routes';
 import accessoriesRoutes from './routes/accessories.routes';
 import m365Routes from './routes/m365.routes';
 import { syncFromM365 } from './services/m365.service';
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;

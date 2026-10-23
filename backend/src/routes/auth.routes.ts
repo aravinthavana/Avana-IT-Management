@@ -8,7 +8,7 @@ import { prisma } from '../db';
 import { sendOtpEmail } from '../utils/email';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || '';
+const getJwtSecret = () => process.env.JWT_SECRET || '';
 
 
 const authLimiter = rateLimit({
@@ -133,7 +133,7 @@ router.post('/api/auth/m365', async (req, res) => {
                         return res.status(403).json({ error: 'Account is inactive' });
                     }
 
-                    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+                    const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
                     const csrfToken = crypto.randomBytes(32).toString('hex');
                     
                     res.cookie('authToken', token, {
@@ -174,7 +174,7 @@ router.post('/api/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
         const csrfToken = crypto.randomBytes(32).toString('hex');
         
         res.cookie('authToken', token, {
@@ -358,7 +358,7 @@ router.post('/api/auth/otp/verify', async (req, res) => {
         await prisma.loginOtp.delete({ where: { id: activeOtp.id } });
 
         // Issue auth cookie and CSRF token
-        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
         const csrfToken = crypto.randomBytes(32).toString('hex');
 
         res.cookie('authToken', token, {
