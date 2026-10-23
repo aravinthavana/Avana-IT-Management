@@ -75,6 +75,7 @@ model User {
   reconciledDeclarations AssetDeclaration[] @relation("DeclarationReconciledBy")
   ticketComments TicketComment[]
   accessories  UserAccessory[]
+  serviceRecordsLogged ServiceRecord[]
 
 
   @@index([departmentId])
@@ -131,6 +132,7 @@ model Asset {
   lastAuditedAt     DateTime?
 
   histories         AssetHistory[]
+  serviceRecords    ServiceRecord[]
   licenseAssignments LicenseAssignment[]
   handovers         HandoverLog[]
   selfAudits        SelfAudit[]
@@ -176,6 +178,39 @@ model HandoverLog {
   @@index([assetId])
   @@index([userId])
   @@index([status])
+}
+
+model ServiceRecord {
+  id                        Int       @id @default(autoincrement())
+  serviceId                 String    @unique
+  assetId                   Int
+  asset                     Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  serviceType               String    // Repair, Maintenance, Hardware Upgrade, Warranty Claim, Diagnostics, Screen Replacement, Battery Replacement, OS Reinstall, Other
+  serviceDate               DateTime  // Date sent or serviced
+  completionDate            DateTime? // Date service completed
+  vendor                    String?   // Service Center / Vendor / Technician name
+  vendorContact             String?   // Contact info / phone / email
+  invoiceNumber             String?   // Vendor invoice or job sheet number
+  cost                      Float?    @default(0)
+  isWarrantyClaim           Boolean   @default(false)
+  
+  issueDescription          String    // Reason for service / problem reported
+  workDone                  String?   // Resolution / parts replaced / action taken
+  status                    String    @default("Completed") // In Progress, Completed, Cancelled
+  
+  invoiceAttachmentUrl      String?   // Base64 Data URL or hosted attachment URL
+  invoiceAttachmentFilename String?   // Original uploaded file name
+  
+  performedById             Int?
+  performedBy               User?     @relation(fields: [performedById], references: [id], onDelete: SetNull)
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([assetId])
+  @@index([status])
+  @@index([serviceDate])
 }
 
 model PurchaseRecord {

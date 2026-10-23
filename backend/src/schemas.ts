@@ -89,3 +89,21 @@ export const licenseSchema = z.object({
     status: z.string().default('Active'),
     remarks: z.string().nullable().optional(),
 });
+
+export const serviceRecordSchema = z.object({
+    serviceType: z.string().min(1, 'Service type is required'),
+    serviceDate: z.string().min(1, 'Service date is required'),
+    completionDate: z.string().nullable().optional(),
+    vendor: z.string().nullable().optional(),
+    vendorContact: z.string().nullable().optional(),
+    invoiceNumber: z.string().nullable().optional(),
+    cost: z.union([z.number(), z.string()]).transform(val => (val !== undefined && val !== null && val !== '' && !isNaN(Number(val))) ? Number(val) : 0).optional(),
+    isWarrantyClaim: z.boolean().default(false),
+    issueDescription: z.string().min(2, 'Issue description must be at least 2 characters'),
+    workDone: z.string().nullable().optional(),
+    status: z.enum(['In Progress', 'Completed', 'Cancelled']).default('Completed'),
+    invoiceAttachmentUrl: z.string().nullable().optional(),
+    invoiceAttachmentFilename: z.string().nullable().optional(),
+    updateAssetStatus: z.boolean().optional(),
+    targetAssetStatus: z.string().nullable().optional(),
+});

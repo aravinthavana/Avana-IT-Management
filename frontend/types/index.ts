@@ -148,6 +148,7 @@ export interface Asset {
     condition?: string;
     specs?: AssetSpecs;
     lastAuditedAt?: string;
+    serviceRecords?: ServiceRecord[];
 }
 
 export interface AssetHistory {
@@ -158,6 +159,30 @@ export interface AssetHistory {
     event: string;
     details?: string;
     condition?: string;
+}
+
+export interface ServiceRecord {
+    id: number;
+    serviceId: string;
+    assetId: number;
+    asset?: Asset;
+    serviceType: string;
+    serviceDate: string;
+    completionDate?: string | null;
+    vendor?: string | null;
+    vendorContact?: string | null;
+    invoiceNumber?: string | null;
+    cost?: number | null;
+    isWarrantyClaim: boolean;
+    issueDescription: string;
+    workDone?: string | null;
+    status: 'In Progress' | 'Completed' | 'Cancelled';
+    invoiceAttachmentUrl?: string | null;
+    invoiceAttachmentFilename?: string | null;
+    performedById?: number | null;
+    performedBy?: { id: number; name: string; email: string; role?: string } | null;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface PurchaseRecord {

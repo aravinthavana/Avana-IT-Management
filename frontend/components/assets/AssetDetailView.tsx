@@ -3,6 +3,7 @@ import { Asset } from '../../types';
 import { getWarrantyStatus } from '../../utils/assetUtils';
 import { ICONS } from '../../constants';
 import AssetHistoryLog from './AssetHistoryLog';
+import AssetServiceHistory from './AssetServiceHistory';
 import { useAppContext } from '../../hooks/useAppContext';
 import { getAssigneeDisplayInfo } from '../../utils/assigneeUtils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -410,6 +411,16 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         </div>
                     </div>
                 )}
+                                <AssetServiceHistory 
+                    asset={asset} 
+                    purchaseAmount={purchase?.amount}
+                    onAssetStatusChanged={(newStatus) => {
+                        setAssets(assets.map(a => a.id === asset.id ? { ...a, status: newStatus } : a));
+                        setHistoryRefreshKey(prev => prev + 1);
+                        fetchAssetHistory();
+                    }}
+                    refreshTrigger={historyRefreshKey}
+                />
                 <AssetHistoryLog assetId={asset.id} refreshTrigger={historyRefreshKey} />
             </div>
             <SelfAuditModal isOpen={isAuditModalOpen} onClose={() => setIsAuditModalOpen(false)} asset={asset} />
