@@ -68,44 +68,44 @@ const MyAccessoriesCard: React.FC<MyAccessoriesCardProps> = ({ userId }) => {
         const today = new Date();
         const exp = new Date(warrantyEndDate);
         const daysLeft = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysLeft < 0) return { label: 'Warranty Expired', color: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' };
-        if (daysLeft <= 30) return { label: `Expiring in ${daysLeft}d`, color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' };
-        return { label: `Under Warranty`, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' };
+        if (daysLeft < 0) return { label: 'Warranty Expired', color: 'bg-surface text-ink  ' };
+        if (daysLeft <= 30) return { label: `Expiring in ${daysLeft}d`, color: 'bg-surface text-ink  ' };
+        return { label: `Under Warranty`, color: 'bg-surface text-ink  ' };
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-sm border border-line overflow-hidden">
             <div
-                className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+                className="px-6 py-4 border-b border-line flex justify-between items-center bg-canvas cursor-pointer"
                 onClick={() => setIsExpanded(prev => !prev)}
             >
                 <div className="flex items-center gap-3">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">
+                    <h3 className="text-sm font-bold text-ink uppercase tracking-tight">
                         My Peripherals & Accessories
                     </h3>
-                    <span className="px-2.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold">
+                    <span className="px-2.5 py-0.5 bg-muted text-ink rounded-full text-xs font-bold">
                         {accessories.length}
                     </span>
                 </div>
-                <span className="text-slate-400 text-xs font-bold select-none">
+                <span className="text-quiet text-xs font-bold select-none">
                     {isExpanded ? '▲ Hide' : '▼ Show'}
                 </span>
             </div>
 
             {isExpanded && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                <div className="divide-y divide-line">
                     {accessories.map(acc => {
                         const icon = CATEGORY_ICON[acc.category] ?? '📦';
                         const warrantyBadge = getWarrantyBadge(acc.warrantyEndDate);
                         return (
-                            <div key={acc.id} className="px-6 py-3.5 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                            <div key={acc.id} className="px-6 py-3.5 flex items-center gap-4 hover:bg-canvas transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0 shadow-inner">
                                     {icon}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="font-semibold text-slate-900 dark:text-white text-sm">{acc.name}</p>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                        <p className="font-semibold text-ink text-sm">{acc.name}</p>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-quiet">
                                             {acc.category}
                                         </span>
                                         {warrantyBadge && (
@@ -114,13 +114,13 @@ const MyAccessoriesCard: React.FC<MyAccessoriesCardProps> = ({ userId }) => {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    <p className="text-xs text-quiet mt-0.5">
                                         {acc.brand && <span className="mr-2">{acc.brand}</span>}
                                         {acc.serialNumber && <span className="font-mono mr-2">S/N: {acc.serialNumber}</span>}
                                         {acc.condition && <span>{acc.condition}</span>}
                                     </p>
                                 </div>
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap shrink-0">
+                                <p className="text-[11px] text-quiet whitespace-nowrap shrink-0">
                                     Issued {new Date(acc.assignedAt).toLocaleDateString()}
                                 </p>
                             </div>

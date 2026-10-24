@@ -150,13 +150,13 @@ const AccessoryBatchModal: React.FC<AccessoryBatchModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4 py-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Category *
                         </label>
-                        <select
+                        <select aria-label="Category *"
                             value={formData.category}
                             onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         >
                             {CATEGORIES.map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
@@ -165,69 +165,69 @@ const AccessoryBatchModal: React.FC<AccessoryBatchModalProps> = ({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Brand / Make
                         </label>
-                        <input
+                        <input aria-label="Brand / Make"
                             type="text"
                             placeholder="e.g. Dell, Logitech, HP"
                             value={formData.brand}
                             onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-ink mb-1">
                         Accessory Name &amp; Description *
                     </label>
-                    <input
+                    <input aria-label="Accessory Name &amp; Description *"
                         type="text"
                         required
                         placeholder="e.g. Dell Optical Mouse MS116 (Black)"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                        className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Quantity Bought *
                         </label>
-                        <input
+                        <input aria-label="Quantity Bought *"
                             type="number"
                             min="1"
                             required
                             value={formData.quantityPurchased}
                             onChange={e => setFormData({ ...formData, quantityPurchased: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Purchase Date *
                         </label>
-                        <input
+                        <input aria-label="Purchase Date *"
                             type="date"
                             required
                             value={formData.purchaseDate}
                             onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Warranty (Months)
                         </label>
-                        <select
+                        <select aria-label="Warranty (Months)"
                             value={formData.warrantyMonths}
                             onChange={e => setFormData({ ...formData, warrantyMonths: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         >
                             <option value="0">No Warranty / 0 Mo</option>
                             <option value="6">6 Months</option>
@@ -241,11 +241,11 @@ const AccessoryBatchModal: React.FC<AccessoryBatchModalProps> = ({
 
                 {/* Live Warranty Expiry Preview */}
                 {computedWarrantyEnd && (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center justify-between text-xs">
-                        <span className="text-emerald-800 dark:text-emerald-300 font-semibold">
+                    <div className="p-3 bg-surface border border-line rounded-xl flex items-center justify-between text-xs">
+                        <span className="text-ink font-semibold">
                             🛡️ Warranty Coverage:
                         </span>
-                        <span className="font-bold text-emerald-900 dark:text-emerald-200">
+                        <span className="font-bold text-ink">
                             Valid until {computedWarrantyEnd}
                         </span>
                     </div>
@@ -253,58 +253,58 @@ const AccessoryBatchModal: React.FC<AccessoryBatchModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Vendor / Supplier
                         </label>
-                        <input
+                        <input aria-label="Vendor / Supplier"
                             type="text"
                             placeholder="e.g. Amazon Business, Dell Direct"
                             value={formData.vendor}
                             onChange={e => setFormData({ ...formData, vendor: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Invoice / Bill Number
                         </label>
-                        <input
+                        <input aria-label="Invoice / Bill Number"
                             type="text"
                             placeholder="e.g. INV-2026-0412"
                             value={formData.invoiceNumber}
                             onChange={e => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent font-mono"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-ink mb-1">
                         Notes / Remarks
                     </label>
-                    <textarea
+                    <textarea aria-label="Notes / Remarks"
                         rows={2}
                         placeholder="Optional batch notes (e.g. for new joiner welcome kits)..."
                         value={formData.notes}
                         onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                        className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                     />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-quiet hover:bg-muted transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-colors shadow-md shadow-brand-500/20 disabled:opacity-50"
+                        className="px-5 py-2 rounded-xl text-xs font-bold text-on-strong bg-accent hover:bg-accent transition-colors shadow-md shadow-strong/15 disabled:opacity-50"
                     >
                         {isSubmitting ? 'Saving...' : batch ? 'Update Batch' : 'Save Batch & Stock'}
                     </button>

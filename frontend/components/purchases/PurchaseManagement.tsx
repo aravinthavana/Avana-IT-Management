@@ -141,7 +141,7 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
     const getWarrantyBadge = (batch: AccessoryBatch) => {
         if (!batch.warrantyEndDate) {
             return (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-quiet">
                     No Warranty on File
                 </span>
             );
@@ -153,7 +153,7 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
         if (diffDays < 0) {
             return (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                     🛡️ Expired ({end.toLocaleDateString()})
                 </span>
             );
@@ -161,14 +161,14 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
         if (diffDays <= 30) {
             return (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                     🛡️ Expiring in {diffDays}d ({end.toLocaleDateString()})
                 </span>
             );
         }
 
         return (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                 🛡️ Under Warranty (Until {end.toLocaleDateString()})
             </span>
         );
@@ -186,21 +186,21 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
             <div className="space-y-4 animate-fade-in">
                 {/* Header & Sub-navigation Tabs */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-100 dark:border-slate-700">
+                <div className="bg-surface rounded-2xl shadow-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-line">
                     <div>
-                        <h2 className="text-xl font-black text-slate-800 dark:text-white">Procurement &amp; Inventory</h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <h2 className="text-xl font-black text-ink">Procurement &amp; Inventory</h2>
+                        <p className="text-xs text-quiet mt-0.5">
                             Manage hardware invoices, asset capital purchases, and peripheral accessory batches
                         </p>
                     </div>
 
-                    <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-900 text-xs font-bold w-full sm:w-auto">
+                    <div className="flex rounded-xl p-1 bg-muted text-xs font-bold w-full sm:w-auto">
                         <button
                             onClick={() => setActiveTab('purchases')}
                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                                 activeTab === 'purchases'
-                                    ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                    ? 'bg-surface  text-ink  shadow-sm'
+                                    : 'text-quiet hover:text-ink '
                             }`}
                         >
                             📑 Invoices &amp; Hardware ({purchaseRecords.length})
@@ -209,8 +209,8 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                             onClick={() => setActiveTab('accessories')}
                             className={`flex-1 sm:flex-none px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                                 activeTab === 'accessories'
-                                    ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                    ? 'bg-surface  text-ink  shadow-sm'
+                                    : 'text-quiet hover:text-ink '
                             }`}
                         >
                             🖱️ Accessories &amp; Stock ({batches.length})
@@ -220,62 +220,62 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
                 {/* TAB 1: CAPITAL HARDWARE PURCHASES */}
                 {activeTab === 'purchases' && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700">
-                        <div className="p-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 dark:border-slate-700">
+                    <div className="bg-surface rounded-2xl shadow-md border border-line">
+                        <div className="p-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-line">
                             <div className="relative w-full sm:w-auto">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">{ICONS.search}</span>
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet">{ICONS.search}</span>
                                 <input
                                     type="text"
                                     placeholder="Search by invoice or vendor..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                    className="pl-10 pr-4 py-2 bg-canvas border border-line rounded-xl w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                                 />
                             </div>
-                            <button onClick={() => handleOpenForm()} className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 w-full sm:w-auto font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-brand-500/20">
+                            <button onClick={() => handleOpenForm()} className="bg-accent text-on-strong px-5 py-2.5 rounded-xl hover:bg-accent w-full sm:w-auto font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-strong/15">
                                 <div className="w-4 h-4">{ICONS.add}</div>
                                 Add Hardware Purchase
                             </button>
                         </div>
                         <div className="p-5 space-y-3">
                             {filteredPurchases.map(purchase => (
-                                <div key={purchase.id} onClick={() => setSelectedPurchaseId(purchase.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+                                <div key={purchase.id} onClick={() => setSelectedPurchaseId(purchase.id)} className="bg-canvas p-4 rounded-xl flex items-center justify-between border border-line/80 cursor-pointer hover:bg-muted transition-colors">
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="font-semibold text-brand-600 dark:text-red-400">{purchase.invoiceNumber}</p>
+                                            <p className="font-semibold text-ink">{purchase.invoiceNumber}</p>
                                             {(purchase as any).poNumber && (
-                                                <span className="text-xs bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-mono">
+                                                <span className="text-xs bg-muted/80 text-ink px-2 py-0.5 rounded font-mono">
                                                     PO: {(purchase as any).poNumber}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300">{purchase.vendor || 'No Vendor'}</p>
+                                        <p className="text-sm text-quiet">{purchase.vendor || 'No Vendor'}</p>
                                         <div className="flex items-center gap-3 mt-1 flex-wrap">
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            <p className="text-xs text-quiet">
                                                 {purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : 'N/A'}
                                             </p>
                                             {(purchase as any).assets?.length > 0 && (
-                                                <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">
+                                                <span className="text-xs bg-muted text-quiet px-2 py-0.5 rounded-full font-medium">
                                                     {(purchase as any).assets.length} Asset(s)
                                                 </span>
                                             )}
                                             {purchase.amount != null && (
-                                                <span className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-semibold">
+                                                <span className="text-xs bg-surface text-ink px-2 py-0.5 rounded-full font-semibold">
                                                     ₹{purchase.amount.toLocaleString()}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-1 flex-shrink-0">
-                                        <button onClick={(e) => handleDeletePurchase(purchase.id, e)} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-red-100 dark:hover:bg-slate-700 hover:text-red-600" title="Delete">{ICONS.delete}</button>
-                                        <div className="p-2 text-slate-400">
+                                        <button onClick={(e) => handleDeletePurchase(purchase.id, e)} className="p-2 text-quiet rounded-full hover:bg-surface hover:text-ink" title="Delete">{ICONS.delete}</button>
+                                        <div className="p-2 text-quiet">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             {filteredPurchases.length === 0 && (
-                                <p className="text-xs text-slate-400 text-center py-8">No hardware purchases found.</p>
+                                <p className="text-xs text-quiet text-center py-8">No hardware purchases found.</p>
                             )}
                         </div>
                     </div>
@@ -283,21 +283,21 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
 
                 {/* TAB 2: ACCESSORY BATCHES & STOCK */}
                 {activeTab === 'accessories' && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700">
-                        <div className="p-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 dark:border-slate-700">
+                    <div className="bg-surface rounded-2xl shadow-md border border-line">
+                        <div className="p-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-line">
                             <div className="relative w-full sm:w-auto">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">{ICONS.search}</span>
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet">{ICONS.search}</span>
                                 <input
                                     type="text"
                                     placeholder="Search mice, keyboards, vendors..."
                                     value={accessorySearchTerm}
                                     onChange={(e) => setAccessorySearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                    className="pl-10 pr-4 py-2 bg-canvas border border-line rounded-xl w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                                 />
                             </div>
                             <button
                                 onClick={() => handleOpenBatchModal()}
-                                className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 w-full sm:w-auto font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-brand-500/20"
+                                className="bg-accent text-on-strong px-5 py-2.5 rounded-xl hover:bg-accent w-full sm:w-auto font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-strong/15"
                             >
                                 <div className="w-4 h-4">{ICONS.add}</div>
                                 Record Accessory Batch
@@ -307,28 +307,28 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                         {/* Batch Inventory Cards */}
                         <div className="p-5 space-y-3">
                             {isLoadingBatches ? (
-                                <p className="text-xs text-slate-400 text-center py-8">Loading accessory batches...</p>
+                                <p className="text-xs text-quiet text-center py-8">Loading accessory batches...</p>
                             ) : filteredBatches.length > 0 ? (
                                 filteredBatches.map(batch => (
                                     <div
                                         key={batch.id}
-                                        className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
+                                        className="bg-canvas p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-line/80 hover:border-line transition-all"
                                     >
                                         <div className="flex items-start gap-3 min-w-0 flex-1">
-                                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xl shrink-0 shadow-sm">
+                                            <div className="w-10 h-10 rounded-xl bg-surface border border-line flex items-center justify-center text-xl shrink-0 shadow-sm">
                                                 {CATEGORY_ICONS[batch.category] || '📦'}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                                                    <h4 className="font-bold text-ink truncate">
                                                         {batch.name}
                                                     </h4>
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-ink">
                                                         {batch.category}
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+                                                <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-quiet">
                                                     {batch.brand && <span>Brand: <strong>{batch.brand}</strong></span>}
                                                     {batch.vendor && <span>Vendor: <strong>{batch.vendor}</strong></span>}
                                                     {batch.invoiceNumber && <span className="font-mono">Inv: {batch.invoiceNumber}</span>}
@@ -339,8 +339,8 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                                                     {/* Stock Level Badge */}
                                                     <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
                                                         batch.quantityAvailable > 0
-                                                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                                            : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800'
+                                                            ? 'bg-surface text-ink   border-line '
+                                                            : 'bg-surface text-ink   border-line '
                                                     }`}>
                                                         📦 Stock: {batch.quantityAvailable} of {batch.quantityPurchased} available ({batch._count?.assignments || (batch.quantityPurchased - batch.quantityAvailable)} issued)
                                                     </span>
@@ -354,13 +354,13 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                                         <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-center">
                                             <button
                                                 onClick={() => handleOpenBatchModal(batch)}
-                                                className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-bold transition-colors"
+                                                className="px-3 py-1.5 rounded-lg bg-muted text-ink hover:bg-muted text-xs font-bold transition-colors"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={(e) => handleDeleteBatch(batch.id, e)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                className="p-1.5 text-quiet hover:text-ink rounded-lg hover:bg-surface transition-all"
                                                 title="Delete Batch"
                                             >
                                                 {ICONS.delete}
@@ -371,13 +371,13 @@ const PurchaseManagement: React.FC<PurchaseManagementProps> = ({ pageState, onPa
                             ) : (
                                 <div className="text-center py-10 space-y-2">
                                     <p className="text-3xl">🖱️</p>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No accessory batches recorded yet</p>
-                                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                                    <p className="text-sm font-bold text-ink">No accessory batches recorded yet</p>
+                                    <p className="text-xs text-quiet max-w-sm mx-auto">
                                         Track newly purchased mice, keyboards, and headsets here with warranty coverage without cluttering your machine inventory.
                                     </p>
                                     <button
                                         onClick={() => handleOpenBatchModal()}
-                                        className="mt-2 text-xs font-bold text-brand-600 hover:underline"
+                                        className="mt-2 text-xs font-bold text-ink hover:underline"
                                     >
                                         + Record First Accessory Batch &rarr;
                                     </button>

@@ -17,7 +17,7 @@ const defaultAssetFilter = [{ id: Date.now(), field: 'status', value: 'All' }];
 const parseInitialPath = () => {
     const raw = typeof window !== 'undefined' ? (window.location.pathname.replace(/\/+$/, '') || '/') : '/';
     const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-    
+
     const declMatch = raw.match(/^\/preview\/declaration\/(\d+)$/);
     if (declMatch) {
         const uid = params.get('userId');
@@ -145,11 +145,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 setAssets(rawAssets.map((a: any) => ({
                     ...a,
                     condition: a.condition || historyConditionMap.get(a.id) || 'Good',
-                    specs: typeof a.specs === 'string' ? (() => { 
-                        try { 
-                            const parsed = JSON.parse(a.specs); 
+                    specs: typeof a.specs === 'string' ? (() => {
+                        try {
+                            const parsed = JSON.parse(a.specs);
                             return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-                        } catch { return {}; } 
+                        } catch { return {}; }
                     })() : (a.specs || {}),
                     assigneeType: a.assigneeType || (a.userId ? 'User' : undefined),
                     assigneeId: a.assigneeId || a.userId || undefined,
@@ -367,8 +367,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         // 3. Section/List URLs
         const knownViews = [
-            'assets', 'users', 'departments', 'branches', 'requests', 
-            'audits', 'tickets', 'kb', 'purchases', 'licenses', 
+            'assets', 'users', 'departments', 'branches', 'requests',
+            'audits', 'tickets', 'kb', 'purchases', 'licenses',
             'onboarding', 'profile'
         ];
         const sectionMatch = rawPath.match(/^\/([a-zA-Z0-9_-]+)$/);

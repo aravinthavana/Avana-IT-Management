@@ -18,8 +18,8 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
     const inputId = id || name;
     return (
         <div>
-            <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+            <label htmlFor={inputId} className="block text-sm font-medium text-ink">{label}</label>
+            <input id={inputId} name={name} {...props} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
         </div>
     );
 };
@@ -28,11 +28,11 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
     const { setPurchaseRecords, setAssets, setNotification, getHeaders } = useAppContext();
     const invoiceFileInputRef = useRef<HTMLInputElement>(null);
     const poFileInputRef = useRef<HTMLInputElement>(null);
-    
+
     const [formData, setFormData] = useState({ invoiceNumber: '', poNumber: '', vendor: '', purchaseDate: '', amount: '', invoiceAttachmentUrl: '', invoiceAttachmentFilename: '', poAttachmentUrl: '', poAttachmentFilename: '' });
     const [assetsInPurchase, setAssetsInPurchase] = useState<Asset[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     const [isAssetChoiceModalOpen, setIsAssetChoiceModalOpen] = useState(false);
     const [isAssetFormOpen, setIsAssetFormOpen] = useState(false);
     const [newAssetType, setNewAssetType] = useState<'Device' | 'Other'>('Device');
@@ -64,7 +64,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
             reader.readAsDataURL(file);
         }
     };
-    
+
     const removeAttachment = (type: 'invoice' | 'po') => {
         setFormData(prev => ({ ...prev, [`${type}AttachmentUrl`]: '', [`${type}AttachmentFilename`]: '' }));
         const ref = type === 'invoice' ? invoiceFileInputRef : poFileInputRef;
@@ -84,7 +84,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
         setAssetsInPurchase(prev => [...prev, ...newAssetsWithTempIds]);
         setIsAssetFormOpen(false);
     };
-    
+
     const removeAssetFromList = (tempId: number) => {
         setAssetsInPurchase(prev => prev.filter(a => a.id !== tempId));
     };
@@ -144,7 +144,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
             <Modal isOpen={isOpen} onClose={onClose} title={purchase ? 'Edit Purchase Record' : 'Add New Purchase Record'} maxWidth="max-w-4xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <fieldset>
-                        <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Purchase Details</legend>
+                        <legend className="text-lg font-semibold text-ink mb-4">Purchase Details</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormInput label="Invoice Number *" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleChange} required />
                             <FormInput label="Purchase Order (PO) Number" name="poNumber" value={formData.poNumber} onChange={handleChange} />
@@ -152,44 +152,44 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                             <FormInput label="Purchase Date *" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={handleChange} required />
                             <FormInput label="Total Amount (₹) *" name="amount" type="number" step="0.01" min="0" value={formData.amount} onChange={handleChange} required />
                             <div className="hidden md:block"></div> {/* empty div for layout alignment */}
-                            
+
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Invoice Attachment</label>
+                                <label className="block text-sm font-medium text-ink">Invoice Attachment</label>
                                 {formData.invoiceAttachmentFilename ? (
-                                    <div className="mt-1 flex justify-between items-center p-2 pl-3 bg-slate-100 dark:bg-slate-900/50 rounded-md border border-slate-300 dark:border-slate-600">
+                                    <div className="mt-1 flex justify-between items-center p-2 pl-3 bg-muted rounded-md border border-line">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <span className="text-slate-500 dark:text-slate-400">{ICONS.paperclip}</span>
-                                            <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{formData.invoiceAttachmentFilename}</span>
+                                            <span className="text-quiet">{ICONS.paperclip}</span>
+                                            <span className="text-sm text-ink truncate">{formData.invoiceAttachmentFilename}</span>
                                         </div>
-                                        <button type="button" onClick={() => removeAttachment('invoice')} className="p-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">
+                                        <button aria-label="Close dialog" type="button" onClick={() => removeAttachment('invoice')} className="p-1 text-ink hover:text-ink rounded-full hover:bg-surface">
                                             {ICONS.close}
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="mt-1">
-                                        <label htmlFor="invoice-upload" className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 inline-flex items-center gap-2">
+                                        <label htmlFor="invoice-upload" className="cursor-pointer bg-surface border border-line rounded-md px-3 py-2 text-sm font-medium text-ink hover:bg-canvas inline-flex items-center gap-2">
                                             <span>Upload Invoice</span>
                                         </label>
                                         <input id="invoice-upload" name="invoice-upload" type="file" className="sr-only" onChange={(e) => handleFileChange(e, 'invoice')} ref={invoiceFileInputRef} />
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">PO Attachment (Optional)</label>
+                                <label className="block text-sm font-medium text-ink">PO Attachment (Optional)</label>
                                 {formData.poAttachmentFilename ? (
-                                    <div className="mt-1 flex justify-between items-center p-2 pl-3 bg-slate-100 dark:bg-slate-900/50 rounded-md border border-slate-300 dark:border-slate-600">
+                                    <div className="mt-1 flex justify-between items-center p-2 pl-3 bg-muted rounded-md border border-line">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <span className="text-slate-500 dark:text-slate-400">{ICONS.paperclip}</span>
-                                            <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{formData.poAttachmentFilename}</span>
+                                            <span className="text-quiet">{ICONS.paperclip}</span>
+                                            <span className="text-sm text-ink truncate">{formData.poAttachmentFilename}</span>
                                         </div>
-                                        <button type="button" onClick={() => removeAttachment('po')} className="p-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">
+                                        <button aria-label="Close dialog" type="button" onClick={() => removeAttachment('po')} className="p-1 text-ink hover:text-ink rounded-full hover:bg-surface">
                                             {ICONS.close}
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="mt-1">
-                                        <label htmlFor="po-upload" className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 inline-flex items-center gap-2">
+                                        <label htmlFor="po-upload" className="cursor-pointer bg-surface border border-line rounded-md px-3 py-2 text-sm font-medium text-ink hover:bg-canvas inline-flex items-center gap-2">
                                             <span>Upload PO</span>
                                         </label>
                                         <input id="po-upload" name="po-upload" type="file" className="sr-only" onChange={(e) => handleFileChange(e, 'po')} ref={poFileInputRef} />
@@ -200,34 +200,34 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ isOpen, onClose, purchase }
                         </div>
                     </fieldset>
 
-                    <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
+                    <fieldset className="mt-6 border-t border-line pt-6">
                         <div className="flex justify-between items-center mb-4">
-                            <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200">Assets in this Purchase ({assetsInPurchase.length})</legend>
-                            <button type="button" onClick={handleOpenAssetChoice} className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 text-sm font-medium transition-colors">Add Asset</button>
+                            <legend className="text-lg font-semibold text-ink">Assets in this Purchase ({assetsInPurchase.length})</legend>
+                            <button type="button" onClick={handleOpenAssetChoice} className="bg-accent text-on-strong px-4 py-2 rounded-lg hover:bg-accent text-sm font-medium transition-colors">Add Asset</button>
                         </div>
                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                              {assetsInPurchase.map(asset => (
-                                <div key={asset.id} className="flex items-center justify-between p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
+                                <div key={asset.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
                                     <div>
-                                        <p className="font-medium text-sm text-slate-800 dark:text-slate-100">{asset.name}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{asset.category} &bull; S/N: {asset.serialNumber}</p>
+                                        <p className="font-medium text-sm text-ink">{asset.name}</p>
+                                        <p className="text-xs text-quiet">{asset.category} &bull; S/N: {asset.serialNumber}</p>
                                     </div>
-                                    <button type="button" onClick={() => removeAssetFromList(asset.id)} className="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">{ICONS.delete}</button>
+                                    <button aria-label="Delete" type="button" onClick={() => removeAssetFromList(asset.id)} className="p-2 text-ink hover:text-ink">{ICONS.delete}</button>
                                 </div>
                             ))}
                             {assetsInPurchase.length === 0 && (
-                                <p className="text-center text-slate-500 dark:text-slate-400 py-4">No assets added yet.</p>
+                                <p className="text-center text-quiet py-4">No assets added yet.</p>
                             )}
                         </div>
                     </fieldset>
-                    
+
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
-                        <button type="button" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">Cancel</button>
-                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">{isSubmitting ? 'Saving...' : 'Save Purchase'}</button>
+                        <button type="button" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">Cancel</button>
+                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto justify-center bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium transition-all duration-200 active:scale-95 flex items-center disabled:opacity-60">{isSubmitting ? 'Saving...' : 'Save Purchase'}</button>
                     </div>
                 </form>
             </Modal>
-            
+
             <AssetTypeChoiceModal isOpen={isAssetChoiceModalOpen} onClose={() => setIsAssetChoiceModalOpen(false)} onSelect={handleSelectAssetType} />
 
             {isAssetFormOpen && (

@@ -190,27 +190,27 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-strong/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <div className="bg-surface rounded-3xl shadow-2xl border border-line w-full max-w-2xl max-h-[calc(100dvh-1rem)] flex flex-col overflow-hidden my-auto animate-scale-in">
                 {/* Modal Header */}
-                <div className="px-6 py-4 sm:px-8 sm:py-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-900/40 shrink-0">
+                <div className="px-6 py-4 sm:px-8 sm:py-5 border-b border-line flex justify-between items-center bg-canvas/70 shrink-0">
                     <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="p-1.5 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-xl text-lg">
+                            <span className="p-1.5 bg-surface text-ink rounded-xl text-lg">
                                 🛠️
                             </span>
-                            <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
+                            <h3 className="text-lg sm:text-xl font-bold text-ink truncate">
                                 {serviceToEdit ? `Edit Service Record (${serviceToEdit.serviceId})` : 'Log Asset Service & Repair'}
                             </h3>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                        <p className="text-xs text-quiet mt-0.5 truncate">
                             {asset.name} &bull; <span className="font-mono font-semibold">{asset.assetId}</span> ({asset.category})
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="text-quiet hover:text-quiet p-2 rounded-xl hover:bg-muted transition-colors"
                         aria-label="Close modal"
                     >
                         {ICONS.close}
@@ -222,13 +222,13 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                     {/* 1. Service Type & Status */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-                                Service Type <span className="text-red-500">*</span>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                                Service Type <span className="text-ink">*</span>
                             </label>
-                            <select
+                            <select aria-label="Service Type"
                                 value={serviceType}
                                 onChange={(e) => setServiceType(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             >
                                 {SERVICE_TYPES.map((type) => (
                                     <option key={type} value={type}>{type}</option>
@@ -236,10 +236,10 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-                                Service Status <span className="text-red-500">*</span>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                                Service Status <span className="text-ink">*</span>
                             </label>
-                            <select
+                            <select aria-label="Service Status"
                                 value={status}
                                 onChange={(e) => {
                                     const nextStatus = e.target.value as 'In Progress' | 'Completed' | 'Cancelled';
@@ -248,7 +248,7 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                                         setCompletionDate(new Date().toISOString().split('T')[0]);
                                     }
                                 }}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all font-semibold"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all font-semibold"
                             >
                                 <option value="Completed">Completed (Returned)</option>
                                 <option value="In Progress">In Progress (At Service Center)</option>
@@ -260,26 +260,26 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                     {/* 2. Dates */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-                                Service / Handover Date <span className="text-red-500">*</span>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                                Service / Handover Date <span className="text-ink">*</span>
                             </label>
-                            <input
+                            <input aria-label="Service / Handover Date"
                                 type="date"
                                 required
                                 value={serviceDate}
                                 onChange={(e) => setServiceDate(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-                                Completion / Return Date {status === 'Completed' && <span className="text-slate-400 font-normal">(Optional)</span>}
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                                Completion / Return Date {status === 'Completed' && <span className="text-quiet font-normal">(Optional)</span>}
                             </label>
-                            <input
+                            <input aria-label="Completion / Return Date"
                                 type="date"
                                 value={completionDate}
                                 onChange={(e) => setCompletionDate(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -287,52 +287,52 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                     {/* 3. Vendor & Reference */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
                                 Vendor / Service Center
                             </label>
-                            <input
+                            <input aria-label="Vendor / Service Center"
                                 type="text"
                                 placeholder="e.g. Dell Authorized Care"
                                 value={vendor}
                                 onChange={(e) => setVendor(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
                                 Vendor Contact
                             </label>
-                            <input
+                            <input aria-label="Vendor Contact"
                                 type="text"
                                 placeholder="Phone / Email / Address"
                                 value={vendorContact}
                                 onChange={(e) => setVendorContact(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
                                 Invoice / Job Sheet No.
                             </label>
-                            <input
+                            <input aria-label="Invoice / Job Sheet No."
                                 type="text"
                                 placeholder="e.g. INV-2026-88"
                                 value={invoiceNumber}
                                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                     </div>
 
                     {/* 4. Financials / Cost */}
-                    <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="p-4 bg-canvas rounded-2xl border border-line space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex-1">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1">
                                     Service Cost (₹)
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-semibold">₹</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-quiet font-semibold">₹</span>
                                     <input
                                         type="number"
                                         min="0"
@@ -340,7 +340,7 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                                         disabled={isWarrantyClaim}
                                         value={isWarrantyClaim ? '0' : cost}
                                         onChange={(e) => setCost(e.target.value)}
-                                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl pl-8 pr-3.5 py-2 text-sm text-slate-800 dark:text-white font-semibold outline-none focus:ring-2 focus:ring-brand-500 transition-all disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-800/40"
+                                        className="w-full bg-surface border border-line rounded-xl pl-8 pr-3.5 py-2 text-sm text-ink font-semibold outline-none focus:ring-2 focus:ring-accent transition-all disabled:opacity-50 disabled:bg-muted"
                                     />
                                 </div>
                             </div>
@@ -353,9 +353,9 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                                         setIsWarrantyClaim(e.target.checked);
                                         if (e.target.checked) setCost('0');
                                     }}
-                                    className="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500 cursor-pointer"
+                                    className="w-4 h-4 text-ink rounded border-line focus:ring-accent cursor-pointer"
                                 />
-                                <label htmlFor="warranty-claim-toggle" className="text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none">
+                                <label htmlFor="warranty-claim-toggle" className="text-xs font-bold text-ink cursor-pointer select-none">
                                     Covered under OEM Warranty (Free / ₹0)
                                 </label>
                             </div>
@@ -365,40 +365,40 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                     {/* 5. Issue & Work Done */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-                                Problem / Issue Reported <span className="text-red-500">*</span>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                                Problem / Issue Reported <span className="text-ink">*</span>
                             </label>
-                            <textarea
+                            <textarea aria-label="Problem / Issue Reported"
                                 required
                                 rows={2}
                                 placeholder="Describe the issue (e.g. Screen flickering, Battery health degraded, RAM upgrade required)..."
                                 value={issueDescription}
                                 onChange={(e) => setIssueDescription(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl p-3 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
                                 Work Done / Resolution & Parts Replaced
                             </label>
-                            <textarea
+                            <textarea aria-label="Work Done / Resolution & Parts Replaced"
                                 rows={2}
                                 placeholder="Resolution details (e.g. Replaced display panel with OEM part, Installed 16GB DDR4 RAM, Cleaned heat sink)..."
                                 value={workDone}
                                 onChange={(e) => setWorkDone(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                className="w-full bg-canvas border border-line rounded-xl p-3 text-sm text-ink focus:ring-2 focus:ring-accent outline-none transition-all"
                             />
                         </div>
                     </div>
 
                     {/* 6. Invoice & Document Attachment */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
                             Attach Service Invoice / Job Sheet (PDF, Image)
                         </label>
 
                         {invoiceAttachmentFilename ? (
-                            <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-200">
+                            <div className="flex items-center justify-between p-3 bg-surface border border-line rounded-xl text-ink">
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     <span className="text-base shrink-0">{ICONS.paperclip}</span>
                                     <span className="text-xs font-bold truncate">{invoiceAttachmentFilename}</span>
@@ -406,14 +406,14 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleRemoveFile}
-                                    className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors ml-2 shrink-0"
+                                    className="p-1 text-ink hover:text-ink hover:bg-surface rounded-lg transition-colors ml-2 shrink-0"
                                     title="Remove attachment"
                                 >
                                     {ICONS.close}
                                 </button>
                             </div>
                         ) : (
-                            <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-400 rounded-2xl p-4 text-center transition-all bg-slate-50/50 dark:bg-slate-900/30">
+                            <div className="relative border-2 border-dashed border-line hover:border-accent rounded-2xl p-4 text-center transition-all bg-canvas/50">
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -422,13 +422,13 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 />
                                 <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
-                                    <div className="w-9 h-9 rounded-full bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-sm font-bold">
+                                    <div className="w-9 h-9 rounded-full bg-surface text-ink flex items-center justify-center text-sm font-bold">
                                         📄
                                     </div>
-                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                    <p className="text-xs font-bold text-ink">
                                         Click to upload or drag & drop invoice
                                     </p>
-                                    <p className="text-[11px] text-slate-400">PDF, PNG, JPG (Max 15MB)</p>
+                                    <p className="text-[11px] text-quiet">PDF, PNG, JPG (Max 15MB)</p>
                                 </div>
                             </div>
                         )}
@@ -436,23 +436,23 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
 
                     {/* 7. Asset Status Sync Options */}
                     {!serviceToEdit && (
-                        <div className="p-3.5 bg-brand-50/60 dark:bg-brand-950/30 border border-brand-200/60 dark:border-brand-800/40 rounded-2xl flex items-start gap-3">
+                        <div className="p-3.5 bg-surface/60 border border-accent/60 rounded-2xl flex items-start gap-3">
                             <input
                                 id="status-sync-toggle"
                                 type="checkbox"
                                 checked={updateAssetStatus}
                                 onChange={(e) => setUpdateAssetStatus(e.target.checked)}
-                                className="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500 mt-0.5 cursor-pointer"
+                                className="w-4 h-4 text-ink rounded border-line focus:ring-accent mt-0.5 cursor-pointer"
                             />
                             <div className="text-xs">
-                                <label htmlFor="status-sync-toggle" className="font-bold text-slate-800 dark:text-white cursor-pointer select-none">
+                                <label htmlFor="status-sync-toggle" className="font-bold text-ink cursor-pointer select-none">
                                     Synchronize Asset Status Automatically
                                 </label>
-                                <p className="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                <p className="text-quiet mt-0.5 leading-relaxed">
                                     {status === 'In Progress' ? (
-                                        <>Will update this machine&#39;s status to <span className="font-bold text-amber-600 dark:text-amber-400">In Repair</span>.</>
+                                        <>Will update this machine&#39;s status to <span className="font-bold text-ink">In Repair</span>.</>
                                     ) : (
-                                        <>Will keep or return this machine&#39;s status to <span className="font-bold text-emerald-600 dark:text-emerald-400">In Stock</span> if it was In Repair.</>
+                                        <>Will keep or return this machine&#39;s status to <span className="font-bold text-ink">In Stock</span> if it was In Repair.</>
                                     )}
                                 </p>
                             </div>
@@ -460,23 +460,23 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
                     )}
 
                     {/* Modal Actions */}
-                    <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-700">
+                    <div className="pt-2 flex items-center justify-end gap-3 border-t border-line">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold text-xs sm:text-sm transition-colors"
+                            className="px-5 py-2.5 rounded-xl border border-line text-ink hover:bg-muted font-semibold text-xs sm:text-sm transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-brand-600/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                            className="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent active:scale-95 text-on-strong font-bold text-xs sm:text-sm shadow-md shadow-strong/15 transition-all flex items-center gap-2 disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin"></div>
                                     <span>Saving...</span>
                                 </>
                             ) : (

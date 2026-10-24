@@ -34,16 +34,16 @@ const ExpiringLicensesTable: React.FC<ExpiringLicensesTableProps> = ({ selectedC
     if (expiringLicenses.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center mb-3 text-emerald-500">
+                <div className="w-12 h-12 bg-surface rounded-full flex items-center justify-center mb-3 text-ink">
                     {ICONS.licenses}
                 </div>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">All subscriptions are active</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                <p className="text-sm font-semibold text-ink">All subscriptions are active</p>
+                <p className="text-xs text-quiet mt-1 max-w-xs">
                     No software licenses or subscriptions are due for renewal in the next 90 days.
                 </p>
                 <button
                     onClick={() => navigate('licenses')}
-                    className="mt-4 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                    className="mt-4 text-xs font-bold text-ink hover:underline"
                 >
                     Manage All Licenses →
                 </button>
@@ -53,16 +53,16 @@ const ExpiringLicensesTable: React.FC<ExpiringLicensesTableProps> = ({ selectedC
 
     return (
         <div>
-            <div className="overflow-x-auto">
+            <div tabIndex={0} role="region" aria-label="Data table; scroll horizontally for more columns" className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                    <thead className="text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                    <thead className="text-quiet border-b border-line">
                         <tr>
                             <th className="pb-2 font-semibold text-xs uppercase tracking-wider">License / Subscription</th>
                             <th className="pb-2 font-semibold text-xs uppercase tracking-wider">Category</th>
                             <th className="pb-2 font-semibold text-xs uppercase tracking-wider text-right">Renews In</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    <tbody className="divide-y divide-line">
                         {expiringLicenses.map(license => {
                             const daysLeft = getDaysUntilExpiry(license.expirationDate!);
                             const isUrgent = daysLeft <= 14;
@@ -71,26 +71,26 @@ const ExpiringLicensesTable: React.FC<ExpiringLicensesTableProps> = ({ selectedC
                                 <tr
                                     key={license.id}
                                     onClick={() => navigate('licenses')}
-                                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer transition-colors"
+                                    className="hover:bg-canvas cursor-pointer transition-colors"
                                 >
                                     <td className="py-2.5 pr-4">
                                         <div className="flex items-center gap-2">
-                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isUrgent ? 'bg-red-500' : isSoon ? 'bg-amber-500' : 'bg-yellow-400'}`} />
-                                            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]" title={license.name}>
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isUrgent ? 'bg-olive' : isSoon ? 'bg-olive' : 'bg-muted'}`} />
+                                            <span className="font-semibold text-ink truncate max-w-[180px]" title={license.name}>
                                                 {license.name}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="py-2.5 text-slate-500 dark:text-slate-400 text-xs">
+                                    <td className="py-2.5 text-quiet text-xs">
                                         {license.category}
                                     </td>
                                     <td className="py-2.5 text-right">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border ${
                                             isUrgent
-                                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'
+                                                ? 'bg-surface text-ink border-line   '
                                                 : isSoon
-                                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800'
+                                                    ? 'bg-surface text-ink border-line   '
+                                                    : 'bg-surface text-ink border-line   '
                                         }`}>
                                             {daysLeft === 0 ? 'Today' : daysLeft === 1 ? '1 day' : `${daysLeft}d`}
                                         </span>
@@ -101,10 +101,10 @@ const ExpiringLicensesTable: React.FC<ExpiringLicensesTableProps> = ({ selectedC
                     </tbody>
                 </table>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+            <div className="mt-4 pt-3 border-t border-line">
                 <button
                     onClick={() => navigate('licenses')}
-                    className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                    className="text-xs font-bold text-ink hover:underline"
                 >
                     Manage All Licenses →
                 </button>

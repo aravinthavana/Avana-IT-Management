@@ -20,7 +20,7 @@ export async function generateLabelCanvas(asset: Asset): Promise<HTMLCanvasEleme
     if (!ctx) throw new Error('Could not get canvas 2D context');
 
     // 1. Solid pure white thermal paper background
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#d7d0bc';
     ctx.fillRect(0, 0, width, height);
 
     // 2. Load and draw Avana logo
@@ -50,7 +50,7 @@ export async function generateLabelCanvas(asset: Asset): Promise<HTMLCanvasEleme
         ctx.drawImage(logoImg, logoX, logoY, drawW, drawH);
     } catch {
         // Fallback text if logo fails to render
-        ctx.fillStyle = '#0f172a';
+        ctx.fillStyle = '#172025';
         ctx.font = 'bold 32px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('AVANA', width / 2, 58);
@@ -58,7 +58,7 @@ export async function generateLabelCanvas(asset: Asset): Promise<HTMLCanvasEleme
     }
 
     // 3. Top divider line
-    ctx.strokeStyle = '#d1d5db';
+    ctx.strokeStyle = '#d7d0bc';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(14, 98);
@@ -99,17 +99,17 @@ export async function generateLabelCanvas(asset: Asset): Promise<HTMLCanvasEleme
     };
 
     // Asset Name (Bold, 26px)
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#172025';
     ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText(fitText(asset.name || 'Unnamed Asset', maxTextWidth), textStartX, 150);
 
     // Category (Uppercase, Slate-500, 20px)
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = '#aab2b2';
     ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText(fitText((asset.category || '').toUpperCase(), maxTextWidth), textStartX, 184);
 
     // Inner subtle divider line
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = '#d7d0bc';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(textStartX, 200);
@@ -117,12 +117,12 @@ export async function generateLabelCanvas(asset: Asset): Promise<HTMLCanvasEleme
     ctx.stroke();
 
     // Serial Number (Monospace, Slate-700, 22px)
-    ctx.fillStyle = '#334155';
+    ctx.fillStyle = '#404131';
     ctx.font = '22px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
     ctx.fillText(fitText(`SN: ${asset.serialNumber || 'N/A'}`, maxTextWidth), textStartX, 238);
 
     // Asset ID (Primary bold identifier, 34px)
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#172025';
     ctx.font = 'bold 34px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
     ctx.fillText(fitText(asset.assetId, maxTextWidth), textStartX, 286);
 
@@ -180,7 +180,7 @@ export async function printLabelDirect(asset: Asset): Promise<void> {
         width: 50mm;
         height: 30mm;
         overflow: hidden;
-        background-color: #ffffff;
+        background-color: #d7d0bc;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }

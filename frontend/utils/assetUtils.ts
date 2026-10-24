@@ -1,7 +1,7 @@
 import { Asset } from '../types';
 
 export const getWarrantyStatus = (asset: Asset): { label: string, text: string, color: string } => {
-    if (!asset.warrantyType) return { label: 'None', text: 'No Warranty', color: 'text-gray-500' };
+    if (!asset.warrantyType) return { label: 'None', text: 'No Warranty', color: 'text-quiet' };
 
     let endDate: Date;
     if (asset.warrantyType === 'Years' && asset.warrantyStartDate && asset.warrantyYears) {
@@ -10,7 +10,7 @@ export const getWarrantyStatus = (asset: Asset): { label: string, text: string, 
     } else if (asset.warrantyEndDate) {
         endDate = new Date(asset.warrantyEndDate);
     } else {
-        return { label: 'Unknown', text: 'Unknown', color: 'text-gray-500' };
+        return { label: 'Unknown', text: 'Unknown', color: 'text-quiet' };
     }
 
     const now = new Date();
@@ -18,11 +18,11 @@ export const getWarrantyStatus = (asset: Asset): { label: string, text: string, 
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-        return { label: 'Expired', text: `Expired on ${endDate.toLocaleDateString()}`, color: 'text-brand-600 dark:text-red-400' };
+        return { label: 'Expired', text: `Expired on ${endDate.toLocaleDateString()}`, color: 'text-ink ' };
     } else if (diffDays <= 30) {
-        return { label: 'Expiring Soon', text: `Expiring Soon: ${endDate.toLocaleDateString()}`, color: 'text-yellow-600 dark:text-yellow-400' };
+        return { label: 'Expiring Soon', text: `Expiring Soon: ${endDate.toLocaleDateString()}`, color: 'text-ink ' };
     } else {
-        return { label: 'Valid', text: `Valid until ${endDate.toLocaleDateString()}`, color: 'text-green-600 dark:text-green-400' };
+        return { label: 'Valid', text: `Valid until ${endDate.toLocaleDateString()}`, color: 'text-ink ' };
     }
 };
 

@@ -1,3 +1,4 @@
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import React, { useState, useEffect } from 'react';
 import { ICONS } from '../../constants';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -9,21 +10,30 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
-    const { view: currentView, navigate, setSelectedAssetId, setSelectedUserId, setSelectedDepartmentId, setSelectedBranchId, setSelectedPurchaseId, setAssetFilters, assetFilters, assetRequests } = useAppContext();
+    const { view: currentView, navigate, setSelectedAssetId, setSelectedUserId, setSelectedDepartmentId, setSelectedBranchId, setSelectedPurchaseId, setAssetFilters, assetFilters, assetRequests, tickets } = useAppContext();
     const { user } = useAuth();
     const [isAssetsSubMenuOpen, setIsAssetsSubMenuOpen] = useState(currentView === 'assets');
 
+    const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1023px)').matches);
+    const drawerRef = useDialogAccessibility<HTMLElement>(isSidebarOpen && isMobile, () => setSidebarOpen(false));
+    useEffect(() => {
+        const query = window.matchMedia('(max-width: 1023px)');
+        const update = () => { setIsMobile(query.matches); if (!query.matches) setSidebarOpen(false); };
+        query.addEventListener('change', update);
+        return () => query.removeEventListener('change', update);
+    }, [setSidebarOpen]);
+    const openTicketCount = tickets.filter(t => t.status === 'Open').length;
     const pendingCount = assetRequests.filter(r => r.status === (user?.role === 'Admin' ? 'Pending Admin' : 'Pending Manager')).length;
 
     useEffect(() => {
         setIsAssetsSubMenuOpen(currentView === 'assets');
     }, [currentView]);
-    
+
     const navItems = [
         { name: 'Home', icon: ICONS.dashboard, view: 'dashboard', roles: ['Admin', 'Manager', 'User'] },
-        { 
-            name: user?.role === 'User' ? 'My Assets' : 'Asset Management', 
-            icon: ICONS.assets, 
+        {
+            name: user?.role === 'User' ? 'My Assets' : 'Asset Management',
+            icon: ICONS.assets,
             view: 'assets',
             roles: ['Admin', 'Manager', 'User'],
             subItems: user?.role === 'User' ? undefined : [
@@ -51,17 +61,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
     ];
 
     const filteredNavItems = navItems.filter(item => user && item.roles.includes(user.role));
-    
+
     const handleNav = (view: string) => {
         setSelectedAssetId(null);
         setSelectedUserId(null);
         setSelectedDepartmentId(null);
         setSelectedBranchId(null);
         setSelectedPurchaseId(null);
-        navigate(view); 
-        if(window.innerWidth < 768) setSidebarOpen(false);
+        navigate(view);
+        if(window.innerWidth < 1024) setSidebarOpen(false);
     };
-    
+
     const handleAssetFilterNav = (status: string) => {
         setAssetFilters([{ id: Date.now(), field: 'status', value: status }]);
         handleNav('assets');
@@ -71,13 +81,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
 
     return (
         <>
-            <aside className={`bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-slate-200 dark:border-slate-800 flex flex-col`}>
-                <div className="py-2 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 h-16 shrink-0">
+            <aside ref={drawerRef} id="primary-navigation" tabIndex={-1} role={isMobile && isSidebarOpen ? 'dialog' : undefined} aria-modal={isMobile && isSidebarOpen ? true : undefined} aria-label="Main navigation" className={`bg-surface  text-ink  w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'} lg:translate-x-0 lg:visible transition-transform duration-300 ease-in-out z-40 border-r border-line  flex flex-col`}>
+                <div className="py-2 px-4 flex items-center justify-between border-b border-line h-16 shrink-0">
                     <a
                         href="#"
                         onClick={(e) => {
                             e.preventDefault();
-                            navigate('dashboard');
+                            handleNav('dashboard');
                         }}
                         className="flex flex-1 justify-center"
                         aria-label="Go to dashboard"
@@ -86,19 +96,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     </a>
                     {/* Mobile close button */}
                     <button
-                        className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 ml-2"
+                        className="lg:hidden p-1.5 rounded-lg text-quiet hover:bg-muted ml-2"
                         onClick={() => setSidebarOpen(false)}
                         aria-label="Close sidebar"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
-                <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+                <nav aria-label="Workspace" className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
                     {filteredNavItems.map(item => (
                         <div key={item.name}>
-                             <a 
-                                href="#" 
-                                onClick={(e) => { 
+                             <a
+                                href={item.view === 'dashboard' ? '/' : '/' + item.view}
+                                aria-current={currentView === item.view ? 'page' : undefined}
+                                aria-expanded={item.subItems ? isAssetsSubMenuOpen : undefined}
+                                onClick={(e) => {
                                     e.preventDefault();
                                     if(item.subItems) {
                                         setIsAssetsSubMenuOpen(!isAssetsSubMenuOpen);
@@ -108,24 +120,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                                     } else {
                                         handleNav(item.view);
                                     }
-                                }} 
+                                }}
                                 className={`group flex items-center justify-between w-full px-3 py-2.5 rounded-lg transition-colors duration-150 text-sm font-medium ${
-                                    currentView === item.view 
-                                        ? 'bg-avana-dark text-white shadow-sm' 
-                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                                    currentView === item.view
+                                        ? 'bg-strong text-on-strong shadow-sm'
+                                        : 'text-quiet  hover:bg-muted  hover:text-ink '
                                 }`}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
                                     <span className="w-5 h-5 mr-3 flex-shrink-0 opacity-80">{item.icon}</span>
                                     <span className="flex-1 truncate">{item.name}</span>
                                     {item.view === 'requests' && pendingCount > 0 && (
-                                        <span className="ml-2 bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                                        <span className="ml-2 bg-accent text-on-strong text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                                             {pendingCount}
                                         </span>
                                     )}
-                                    {item.view === 'tickets' && user?.role === 'Admin' && useAppContext().tickets?.filter((t: any) => t.status === 'Open').length > 0 && (
-                                        <span className="ml-2 bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                            {useAppContext().tickets.filter((t: any) => t.status === 'Open').length}
+                                    {item.view === 'tickets' && user?.role === 'Admin' && openTicketCount > 0 && (
+                                        <span className="ml-2 bg-accent text-on-strong text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                            {openTicketCount}
                                         </span>
                                     )}
                                 </div>
@@ -135,9 +147,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                             </a>
                             {item.subItems && isAssetsSubMenuOpen && (
                                 <div className="pl-8 py-1 space-y-0.5">
-                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-bold text-ink ' : 'text-quiet  hover:text-ink '}`}>All Assets</a>
                                     {item.subItems.map(subItem => (
-                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-bold text-ink ' : 'text-quiet  hover:text-ink '}`}>
                                             {subItem.name}
                                         </a>
                                     ))}
@@ -147,9 +159,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     ))}
                 </nav>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-avana-dark/50 backdrop-blur-sm z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
+            {isSidebarOpen && <div className="fixed inset-0 bg-strong/50 backdrop-blur-sm z-[35] lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
         </>
     );
 };
 
-export default Sidebar;
+export default Sidebar;

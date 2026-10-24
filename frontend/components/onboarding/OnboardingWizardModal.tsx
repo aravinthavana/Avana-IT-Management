@@ -1,3 +1,4 @@
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -24,6 +25,8 @@ const STEPS = [
 
 
 const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, onClose, initialUser, onSuccess }) => {
+
+    const dialogRef = useDialogAccessibility(isOpen, onClose);
     const { users, setUsers, assets, setAssets, departments, branches, licenses, setLicenses, getHeaders, setNotification, fetchAssetHistory, fetchAllData } = useAppContext();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -312,16 +315,16 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
             }
 
             const softwareAllDone = softwareChecks.notApplicable || (
-                softwareChecks.osConfigured && 
-                softwareChecks.m365Apps && 
-                softwareChecks.necessaryApps && 
+                softwareChecks.osConfigured &&
+                softwareChecks.m365Apps &&
+                softwareChecks.necessaryApps &&
                 softwareChecks.driversInstalled
             );
             const qaAllDone = qaChecks.notApplicable || (
-                qaChecks.display && 
-                qaChecks.keyboard && 
-                qaChecks.battery && 
-                qaChecks.cameraMic && 
+                qaChecks.display &&
+                qaChecks.keyboard &&
+                qaChecks.battery &&
+                qaChecks.cameraMic &&
                 qaChecks.network
             );
             const credsHandedOver = credentialsChecks.m365CredsShared || credentialsChecks.laptopCredsShared;
@@ -404,60 +407,60 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                
+        <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Employee onboarding" className="fixed inset-0 z-50 flex items-center justify-center bg-strong/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-2xl border border-line w-full max-w-4xl max-h-[calc(100dvh-1rem)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
                 {/* Header */}
-                <div className="px-6 py-4 bg-gradient-to-r from-brand-600 to-indigo-600 text-white flex items-center justify-between shrink-0">
+                <div className="px-6 py-4 bg-gradient-to-r from-strong to-olive text-on-strong flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-xl">
+                        <div className="p-2 bg-surface/20 rounded-xl">
                             {ICONS.onboarding}
                         </div>
                         <div>
                             <h2 className="text-lg font-bold">New Employee Onboarding Wizard</h2>
-                            <p className="text-xs text-white/80">Step-by-step IT operations & equipment allocation</p>
+                            <p className="text-xs text-on-strong">Step-by-step IT operations & equipment allocation</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                    <button aria-label="Close dialog" onClick={onClose} className="p-1 rounded-lg text-on-strong hover:text-on-strong hover:bg-surface/10 transition-colors">
                         {ICONS.close}
                     </button>
                 </div>
 
                 {/* Stepper Progress Header */}
-                <div className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 px-6 py-3 shrink-0 overflow-x-auto">
-                    <div className="flex items-center justify-between min-w-[620px]">
+                <div className="bg-canvas border-b border-line px-6 py-3 shrink-0 overflow-x-auto">
+                    <div className="flex items-center justify-between w-max min-w-full gap-4">
                         {STEPS.map((step, idx) => {
                             const isDone = currentStep > step.id;
                             const isCurrent = currentStep === step.id;
                             const canJump = selectedUserId !== 'new' || step.id <= currentStep;
                             return (
                                 <React.Fragment key={step.id}>
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => {
                                             if (canJump) setCurrentStep(step.id);
                                         }}
                                         disabled={!canJump}
                                         className={`flex items-center gap-2 text-left group transition-all ${
-                                            isCurrent ? 'text-brand-600 dark:text-brand-400 font-semibold' : 
-                                            isDone ? 'text-emerald-600 dark:text-emerald-400 cursor-pointer' : 
-                                            canJump ? 'text-slate-600 dark:text-slate-400 hover:text-brand-600 cursor-pointer' : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                            isCurrent ? 'text-ink  font-semibold' :
+                                            isDone ? 'text-ink  cursor-pointer' :
+                                            canJump ? 'text-quiet  hover:text-ink cursor-pointer' : 'text-on-strong  cursor-not-allowed'
                                         }`}
                                     >
                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                                            isCurrent ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-200 dark:ring-brand-900' :
-                                            isDone ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                                            isCurrent ? 'bg-accent text-on-strong shadow-md ring-2 ring-accent ' :
+                                            isDone ? 'bg-olive text-on-strong' : 'bg-muted  text-quiet'
                                         }`}>
                                             {isDone ? '✓' : step.id}
                                         </div>
                                         <div className="hidden sm:block">
                                             <p className="text-xs leading-none font-medium">{step.name}</p>
-                                            <p className="text-[10px] text-slate-400 leading-tight">{step.desc}</p>
+                                            <p className="text-[10px] text-quiet leading-tight">{step.desc}</p>
                                         </div>
                                     </button>
                                     {idx < STEPS.length - 1 && (
                                         <div className={`flex-1 h-[2px] mx-2 transition-colors ${
-                                            step.id < currentStep ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                                            step.id < currentStep ? 'bg-olive' : 'bg-muted '
                                         }`} />
                                     )}
                                 </React.Fragment>
@@ -467,22 +470,22 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                 </div>
 
                 {/* Body Content */}
-                <div className="p-6 overflow-y-auto flex-1 text-slate-700 dark:text-slate-200">
-                    
+                <div className="p-6 overflow-y-auto flex-1 text-ink">
+
                     {/* STEP 1: Employee Selection / Creation */}
                     {currentStep === 1 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between pb-3 border-b border-line">
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 1: Employee Information</h3>
-                                    <p className="text-xs text-slate-500">Select an existing pending employee or create a new user profile</p>
+                                    <h3 className="text-base font-semibold text-ink">Step 1: Employee Information</h3>
+                                    <p className="text-xs text-quiet">Select an existing pending employee or create a new user profile</p>
                                 </div>
                                 {!initialUser && (
-                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs">
+                                    <div className="flex bg-muted p-1 rounded-lg text-xs">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedUserId('new')}
-                                            className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId === 'new' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500'}`}
+                                            className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId === 'new' ? 'bg-surface  text-ink  shadow-sm' : 'text-quiet'}`}
                                         >
                                             + New User
                                         </button>
@@ -493,7 +496,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                                     loadUserData(users[0]);
                                                 }
                                             }}
-                                            className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId !== 'new' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500'}`}
+                                            className={`px-3 py-1.5 rounded-md font-medium transition-all ${selectedUserId !== 'new' ? 'bg-surface  text-ink  shadow-sm' : 'text-quiet'}`}
                                         >
                                             Select Existing
                                         </button>
@@ -503,8 +506,8 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
 
                             {selectedUserId !== 'new' && (
                                 <div className="space-y-2">
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Select Existing User</label>
-                                    <select
+                                    <label className="block text-xs font-semibold text-quiet uppercase tracking-wider">Select Existing User</label>
+                                    <select aria-label="Select Existing User"
                                         value={selectedUserId}
                                         onChange={(e) => {
                                             const uId = Number(e.target.value);
@@ -513,7 +516,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                                 loadUserData(found);
                                             }
                                         }}
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     >
                                         {users.map(u => (
                                             <option key={u.id} value={u.id}>
@@ -526,87 +529,87 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Full Name *</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Full Name *</label>
+                                    <input aria-label="Full Name *"
                                         type="text"
                                         required
                                         value={userData.name}
                                         onChange={e => setUserData({ ...userData, name: e.target.value })}
                                         placeholder="e.g. Rahul Sharma"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Company Email *</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Company Email *</label>
+                                    <input aria-label="Company Email *"
                                         type="email"
                                         required
                                         value={userData.email}
                                         onChange={e => setUserData({ ...userData, email: e.target.value })}
                                         placeholder="e.g. rahul@avanamedical.com"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Employee ID</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Employee ID</label>
+                                    <input aria-label="Employee ID"
                                         type="text"
                                         value={userData.employeeId}
                                         onChange={e => setUserData({ ...userData, employeeId: e.target.value })}
                                         placeholder="e.g. AMD-0142"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Mobile Number</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Mobile Number</label>
+                                    <input aria-label="Mobile Number"
                                         type="text"
                                         value={userData.mobile}
                                         onChange={e => setUserData({ ...userData, mobile: e.target.value })}
                                         placeholder="e.g. +91 98765 43210"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Department</label>
-                                    <select
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Department</label>
+                                    <select aria-label="Department"
                                         value={userData.departmentId}
                                         onChange={e => setUserData({ ...userData, departmentId: e.target.value })}
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     >
                                         <option value="">Select Department</option>
                                         {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Office Branch</label>
-                                    <select
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Office Branch</label>
+                                    <select aria-label="Office Branch"
                                         value={userData.branchId}
                                         onChange={e => setUserData({ ...userData, branchId: e.target.value })}
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     >
                                         <option value="">Select Branch</option>
                                         {branches.map(b => <option key={b.id} value={b.id}>{b.name} {b.location ? `(${b.location})` : ''}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Designation / Job Title</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Designation / Job Title</label>
+                                    <input aria-label="Designation / Job Title"
                                         type="text"
                                         value={userData.jobTitle}
                                         onChange={e => setUserData({ ...userData, jobTitle: e.target.value })}
                                         placeholder="e.g. Biomedical Engineer"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Work Location</label>
-                                    <input
+                                    <label className="block text-xs font-semibold text-quiet mb-1">Work Location</label>
+                                    <input aria-label="Work Location"
                                         type="text"
                                         value={userData.location}
                                         onChange={e => setUserData({ ...userData, location: e.target.value })}
                                         placeholder="e.g. Chennai HQ, Remote, Pune"
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                        className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                     />
                                 </div>
                             </div>
@@ -616,60 +619,60 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 2: M365 Account & Multiple Licenses */}
                     {currentStep === 2 && (
                         <div className="space-y-6 max-w-2xl mx-auto">
-                            <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 2: Microsoft 365 Account & Licenses</h3>
-                                <p className="text-xs text-slate-500">Configure Microsoft 365 cloud credentials and software subscriptions</p>
+                            <div className="pb-3 border-b border-line">
+                                <h3 className="text-base font-semibold text-ink">Step 2: Microsoft 365 Account & Licenses</h3>
+                                <p className="text-xs text-quiet">Configure Microsoft 365 cloud credentials and software subscriptions</p>
                             </div>
 
                             {/* M365 Account Created Checkbox */}
-                            <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-brand-300 transition-colors">
+                            <label className="flex items-start gap-3 p-4 rounded-xl border border-line bg-canvas cursor-pointer hover:border-accent transition-colors">
                                 <input
                                     type="checkbox"
                                     checked={m365AccountCreated}
                                     onChange={e => setM365AccountCreated(e.target.checked)}
-                                    className="w-5 h-5 mt-0.5 text-brand-600 rounded focus:ring-brand-500 cursor-pointer"
+                                    className="w-5 h-5 mt-0.5 text-ink rounded focus:ring-accent cursor-pointer"
                                 />
                                 <div>
-                                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Microsoft 365 Account Provisioned</span>
-                                    <p className="text-xs text-slate-500 mt-0.5">User account created in Microsoft 365 Admin Portal / Entra ID ({userData.email})</p>
+                                    <span className="text-sm font-semibold text-ink">Microsoft 365 Account Provisioned</span>
+                                    <p className="text-xs text-quiet mt-0.5">User account created in Microsoft 365 Admin Portal / Entra ID ({userData.email})</p>
                                 </div>
                             </label>
 
                             {/* License Option Radio */}
                             <div className="space-y-3">
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Subscription / License Allocation</label>
-                                
+                                <label className="block text-xs font-semibold text-quiet uppercase tracking-wider">Subscription / License Allocation</label>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div 
+                                    <div
                                         onClick={() => setLicenseOption('assign')}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${licenseOption === 'assign' ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${licenseOption === 'assign' ? 'border-accent bg-surface/50  ' : 'border-line  hover:border-line'}`}
                                     >
                                         <div className="flex items-center gap-2 font-semibold text-sm">
-                                            <input type="radio" name="licenseOpt" checked={licenseOption === 'assign'} onChange={() => setLicenseOption('assign')} className="text-brand-600" />
+                                            <input type="radio" name="licenseOpt" checked={licenseOption === 'assign'} onChange={() => setLicenseOption('assign')} className="text-ink" />
                                             <span>Assign Licenses</span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1 pl-5">Select one or more software subscriptions (e.g. M365 + others)</p>
+                                        <p className="text-xs text-quiet mt-1 pl-5">Select one or more software subscriptions (e.g. M365 + others)</p>
                                     </div>
 
-                                    <div 
+                                    <div
                                         onClick={() => setLicenseOption('skip')}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${licenseOption === 'skip' ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${licenseOption === 'skip' ? 'border-accent bg-surface/50  ' : 'border-line  hover:border-line'}`}
                                     >
                                         <div className="flex items-center gap-2 font-semibold text-sm">
-                                            <input type="radio" name="licenseOpt" checked={licenseOption === 'skip'} onChange={() => setLicenseOption('skip')} className="text-brand-600" />
+                                            <input type="radio" name="licenseOpt" checked={licenseOption === 'skip'} onChange={() => setLicenseOption('skip')} className="text-ink" />
                                             <span>No License Required</span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1 pl-5">Skip license allocation (e.g. frontline worker, external user)</p>
+                                        <p className="text-xs text-quiet mt-1 pl-5">Skip license allocation (e.g. frontline worker, external user)</p>
                                     </div>
                                 </div>
 
                                 {licenseOption === 'assign' && (
-                                    <div className="mt-4 p-4 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/30 dark:bg-brand-950/20 space-y-3 animate-in fade-in duration-150">
+                                    <div className="mt-4 p-4 rounded-xl border border-accent bg-surface/30 space-y-3 animate-in fade-in duration-150">
                                         <div className="flex items-center justify-between">
-                                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            <label className="block text-xs font-semibold text-ink">
                                                 Available Licenses ({selectedLicenseIds.length} selected)
                                             </label>
-                                            <span className="text-[11px] text-slate-500">Multiple licenses can be selected</span>
+                                            <span className="text-[11px] text-quiet">Multiple licenses can be selected</span>
                                         </div>
 
                                         <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -681,14 +684,14 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                                 const isAvailable = available > 0 || isAlreadyAssigned;
 
                                                 return (
-                                                    <label 
-                                                        key={l.id} 
+                                                    <label
+                                                        key={l.id}
                                                         className={`flex items-center justify-between p-3 rounded-lg border text-xs cursor-pointer transition-all ${
-                                                            isChecked 
-                                                                ? 'bg-brand-50/80 dark:bg-brand-900/30 border-brand-500 text-brand-900 dark:text-brand-200 font-semibold' 
-                                                                : isAvailable 
-                                                                    ? 'border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300' 
-                                                                    : 'opacity-50 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/40 cursor-not-allowed'
+                                                            isChecked
+                                                                ? 'bg-surface/80  border-accent text-ink  font-semibold'
+                                                                : isAvailable
+                                                                    ? 'border-line  hover:bg-surface  text-ink '
+                                                                    : 'opacity-50 border-line  bg-muted  cursor-not-allowed'
                                                         }`}
                                                     >
                                                         <div className="flex items-center gap-2.5">
@@ -703,25 +706,25 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                                                         setSelectedLicenseIds(prev => prev.filter(id => id !== l.id));
                                                                     }
                                                                 }}
-                                                                className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                                                className="w-4 h-4 text-ink rounded focus:ring-accent"
                                                             />
                                                             <div>
                                                                 <p className="font-semibold">{l.name}</p>
-                                                                <p className="text-[10px] text-slate-500 font-normal">{l.category} {l.vendor ? `• ${l.vendor}` : ''}</p>
+                                                                <p className="text-[10px] text-quiet font-normal">{l.category} {l.vendor ? `• ${l.vendor}` : ''}</p>
                                                             </div>
                                                         </div>
 
                                                         <div className="text-right">
                                                             {isAlreadyAssigned ? (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink">
                                                                     ✓ Assigned
                                                                 </span>
                                                             ) : available > 0 ? (
-                                                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                                                                <span className="text-[11px] font-medium text-quiet">
                                                                     {available} / {l.seats} available
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-[10px] text-red-500 font-bold">
+                                                                <span className="text-[10px] text-ink font-bold">
                                                                     0 seats left
                                                                 </span>
                                                             )}
@@ -731,7 +734,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                             })}
 
                                             {licenses.length === 0 && (
-                                                <p className="text-xs text-amber-600 dark:text-amber-400">No licenses found in inventory. You can add licenses in Licenses & Subs.</p>
+                                                <p className="text-xs text-ink">No licenses found in inventory. You can add licenses in Licenses & Subs.</p>
                                             )}
                                         </div>
                                     </div>
@@ -743,43 +746,43 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 3: Hardware Allocation */}
                     {currentStep === 3 && (
                         <div className="space-y-6 max-w-2xl mx-auto">
-                            <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 3: Company Hardware / Asset Allocation</h3>
-                                <p className="text-xs text-slate-500">Allocate an available device or mark employee as BYOD / Uses own laptop</p>
+                            <div className="pb-3 border-b border-line">
+                                <h3 className="text-base font-semibold text-ink">Step 3: Company Hardware / Asset Allocation</h3>
+                                <p className="text-xs text-quiet">Allocate an available device or mark employee as BYOD / Uses own laptop</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div 
+                                <div
                                     onClick={() => setAssetOption('assign')}
-                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${assetOption === 'assign' ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${assetOption === 'assign' ? 'border-accent bg-surface/50  ' : 'border-line  hover:border-line'}`}
                                 >
                                     <div className="flex items-center gap-2 font-semibold text-sm">
-                                        <input type="radio" name="assetOpt" checked={assetOption === 'assign'} onChange={() => setAssetOption('assign')} className="text-brand-600" />
+                                        <input type="radio" name="assetOpt" checked={assetOption === 'assign'} onChange={() => setAssetOption('assign')} className="text-ink" />
                                         <span>Assign Company Device</span>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-1 pl-5">Select a laptop or equipment from in-stock assets</p>
+                                    <p className="text-xs text-quiet mt-1 pl-5">Select a laptop or equipment from in-stock assets</p>
                                 </div>
 
-                                <div 
+                                <div
                                     onClick={() => setAssetOption('skip')}
-                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${assetOption === 'skip' ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${assetOption === 'skip' ? 'border-accent bg-surface/50  ' : 'border-line  hover:border-line'}`}
                                 >
                                     <div className="flex items-center gap-2 font-semibold text-sm">
-                                        <input type="radio" name="assetOpt" checked={assetOption === 'skip'} onChange={() => setAssetOption('skip')} className="text-brand-600" />
+                                        <input type="radio" name="assetOpt" checked={assetOption === 'skip'} onChange={() => setAssetOption('skip')} className="text-ink" />
                                         <span>No Device / Uses Own Laptop</span>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-1 pl-5">Skip device allocation (BYOD, remote or desk phone only)</p>
+                                    <p className="text-xs text-quiet mt-1 pl-5">Skip device allocation (BYOD, remote or desk phone only)</p>
                                 </div>
                             </div>
 
                             {assetOption === 'assign' && (
-                                <div className="p-4 rounded-xl border border-brand-200 dark:border-brand-900 bg-brand-50/30 dark:bg-brand-950/20 space-y-4 animate-in fade-in duration-150">
+                                <div className="p-4 rounded-xl border border-accent bg-surface/30 space-y-4 animate-in fade-in duration-150">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Select In-Stock Asset *</label>
-                                        <select
+                                        <label className="block text-xs font-semibold text-ink mb-1">Select In-Stock Asset *</label>
+                                        <select aria-label="Select In-Stock Asset *"
                                             value={selectedAssetId}
                                             onChange={e => setSelectedAssetId(Number(e.target.value))}
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                            className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                         >
                                             <option value="">-- Choose Asset from In Stock ({inStockAssets.length} available) --</option>
                                             {inStockAssets.map(a => (
@@ -791,11 +794,11 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Condition at Handover *</label>
-                                        <select
+                                        <label className="block text-xs font-semibold text-ink mb-1">Condition at Handover *</label>
+                                        <select aria-label="Condition at Handover *"
                                             value={assetCondition}
                                             onChange={e => setAssetCondition(e.target.value)}
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                            className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                         >
                                             <option value="New">Brand New (Sealed / Fresh out of box)</option>
                                             <option value="Excellent">Excellent (Flawless / Like new)</option>
@@ -811,10 +814,10 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 4: Software Configuration (Exact Office Standards) */}
                     {currentStep === 4 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between pb-3 border-b border-line">
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 4: Software & Application Configuration</h3>
-                                    <p className="text-xs text-slate-500">Verify company software setup, drivers, and standard application stack</p>
+                                    <h3 className="text-base font-semibold text-ink">Step 4: Software & Application Configuration</h3>
+                                    <p className="text-xs text-quiet">Verify company software setup, drivers, and standard application stack</p>
                                 </div>
                                 <button
                                     type="button"
@@ -825,7 +828,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         driversInstalled: true,
                                         notApplicable: false,
                                     })}
-                                    className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+                                    className="text-xs text-ink font-semibold hover:underline"
                                 >
                                     Mark All Done
                                 </button>
@@ -838,22 +841,22 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     { key: 'necessaryApps', title: 'Necessary Applications Installation', desc: 'Essential company applications, tools, web browsers (Chrome/Edge), and PDF viewer installed' },
                                     { key: 'driversInstalled', title: 'Drivers Installation', desc: 'Latest OEM chipset, display, audio, Wi-Fi, Ethernet, and peripheral drivers installed and verified' },
                                 ].map(item => (
-                                    <label key={item.key} className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
+                                    <label key={item.key} className="flex items-start gap-3 p-3.5 rounded-xl border border-line hover:bg-canvas cursor-pointer transition-colors">
                                         <input
                                             type="checkbox"
                                             checked={(softwareChecks as any)[item.key]}
                                             disabled={softwareChecks.notApplicable}
                                             onChange={e => setSoftwareChecks({ ...softwareChecks, [item.key]: e.target.checked, notApplicable: false })}
-                                            className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500"
+                                            className="w-4 h-4 mt-0.5 text-ink rounded focus:ring-accent"
                                         />
                                         <div>
-                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</span>
-                                            <p className="text-xs text-slate-500">{item.desc}</p>
+                                            <span className="text-sm font-semibold text-ink">{item.title}</span>
+                                            <p className="text-xs text-quiet">{item.desc}</p>
                                         </div>
                                     </label>
                                 ))}
 
-                                <label className="flex items-center gap-2 pt-2 text-xs text-slate-500 cursor-pointer">
+                                <label className="flex items-center gap-2 pt-2 text-xs text-quiet cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={softwareChecks.notApplicable}
@@ -864,7 +867,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                             driversInstalled: false,
                                             notApplicable: e.target.checked,
                                         })}
-                                        className="rounded text-brand-600"
+                                        className="rounded text-ink"
                                     />
                                     <span>Not Applicable (No company hardware issued for this employee)</span>
                                 </label>
@@ -875,10 +878,10 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 5: QA Testing & Diagnostics */}
                     {currentStep === 5 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between pb-3 border-b border-line">
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 5: QA Testing & Hardware Diagnostics</h3>
-                                    <p className="text-xs text-slate-500">Ensure the device is fully tested and 100% operational before handover</p>
+                                    <h3 className="text-base font-semibold text-ink">Step 5: QA Testing & Hardware Diagnostics</h3>
+                                    <p className="text-xs text-quiet">Ensure the device is fully tested and 100% operational before handover</p>
                                 </div>
                                 <button
                                     type="button"
@@ -890,7 +893,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         network: true,
                                         notApplicable: false,
                                     })}
-                                    className="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline"
+                                    className="text-xs text-ink font-semibold hover:underline"
                                 >
                                     Mark All Tested
                                 </button>
@@ -904,22 +907,22 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     { key: 'cameraMic', title: 'Webcam, Microphone & Speakers', desc: 'Teams call test passed, microphone clear, webcam privacy shutter verified' },
                                     { key: 'network', title: 'Wi-Fi & Bluetooth Connectivity', desc: 'Connects to company Wi-Fi network and Bluetooth peripherals seamlessly' },
                                 ].map(item => (
-                                    <label key={item.key} className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
+                                    <label key={item.key} className="flex items-start gap-3 p-3.5 rounded-xl border border-line hover:bg-canvas cursor-pointer transition-colors">
                                         <input
                                             type="checkbox"
                                             checked={(qaChecks as any)[item.key]}
                                             disabled={qaChecks.notApplicable}
                                             onChange={e => setQaChecks({ ...qaChecks, [item.key]: e.target.checked, notApplicable: false })}
-                                            className="w-4 h-4 mt-0.5 text-brand-600 rounded focus:ring-brand-500"
+                                            className="w-4 h-4 mt-0.5 text-ink rounded focus:ring-accent"
                                         />
                                         <div>
-                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</span>
-                                            <p className="text-xs text-slate-500">{item.desc}</p>
+                                            <span className="text-sm font-semibold text-ink">{item.title}</span>
+                                            <p className="text-xs text-quiet">{item.desc}</p>
                                         </div>
                                     </label>
                                 ))}
 
-                                <label className="flex items-center gap-2 pt-2 text-xs text-slate-500 cursor-pointer">
+                                <label className="flex items-center gap-2 pt-2 text-xs text-quiet cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={qaChecks.notApplicable}
@@ -931,7 +934,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                             network: false,
                                             notApplicable: e.target.checked,
                                         })}
-                                        className="rounded text-brand-600"
+                                        className="rounded text-ink"
                                     />
                                     <span>Not Applicable (No hardware allocated)</span>
                                 </label>
@@ -942,9 +945,9 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 6: Logistics & Dispatch (Courier or In-Person, with DC No) */}
                     {currentStep === 6 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
-                            <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 6: Handover / Dispatch Logistics</h3>
-                                <p className="text-xs text-slate-500">Record courier dispatch details, Delivery Challan (DC) number, or in-person handover desk</p>
+                            <div className="pb-3 border-b border-line">
+                                <h3 className="text-base font-semibold text-ink">Step 6: Handover / Dispatch Logistics</h3>
+                                <p className="text-xs text-quiet">Record courier dispatch details, Delivery Challan (DC) number, or in-person handover desk</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -957,76 +960,76 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                         key={mode.id}
                                         onClick={() => setDispatchMode(mode.id as any)}
                                         className={`p-3.5 rounded-xl border-2 flex items-center gap-3 text-left transition-all ${
-                                            dispatchMode === mode.id 
-                                                ? 'border-brand-600 bg-brand-50/50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 font-semibold' 
-                                                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                                            dispatchMode === mode.id
+                                                ? 'border-accent bg-surface/50  text-ink  font-semibold'
+                                                : 'border-line  text-quiet  hover:border-line'
                                         }`}
                                     >
-                                        <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm shrink-0">
+                                        <div className="p-2 bg-surface rounded-lg shadow-sm shrink-0">
                                             {mode.icon}
                                         </div>
                                         <div>
                                             <span className="text-xs font-bold block">{mode.title}</span>
-                                            <span className="text-[10px] text-slate-400 block">{mode.desc}</span>
+                                            <span className="text-[10px] text-quiet block">{mode.desc}</span>
                                         </div>
                                     </button>
                                 ))}
                             </div>
 
                             {dispatchMode === 'Courier' && (
-                                <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 animate-in fade-in duration-150">
+                                <div className="space-y-3 p-4 rounded-xl border border-line bg-canvas/60 animate-in fade-in duration-150">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Dispatched Shipping Address</label>
-                                        <textarea
+                                        <label className="block text-xs font-semibold text-quiet mb-1">Dispatched Shipping Address</label>
+                                        <textarea aria-label="Dispatched Shipping Address"
                                             rows={2}
                                             value={shippingAddress}
                                             onChange={e => setShippingAddress(e.target.value)}
                                             placeholder="Employee residential / field delivery address with pincode..."
-                                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                            className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Delivery Challan (DC) No</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Delivery Challan (DC) No</label>
+                                            <input aria-label="Delivery Challan (DC) No"
                                                 type="text"
                                                 value={dcNumber}
                                                 onChange={e => setDcNumber(e.target.value)}
                                                 placeholder="e.g. DC-2024-0012"
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent font-mono"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Courier / Carrier Name</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Courier / Carrier Name</label>
+                                            <input aria-label="Courier / Carrier Name"
                                                 type="text"
                                                 value={courierName}
                                                 onChange={e => setCourierName(e.target.value)}
                                                 placeholder="e.g. Blue Dart, DTDC, DHL, FedEx, Delhivery"
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Docket / AWB Tracking Number</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Docket / AWB Tracking Number</label>
+                                            <input aria-label="Docket / AWB Tracking Number"
                                                 type="text"
                                                 value={docketNumber}
                                                 onChange={e => setDocketNumber(e.target.value)}
                                                 placeholder="e.g. BD-893471092"
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent font-mono"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Dispatch Date</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Dispatch Date</label>
+                                            <input aria-label="Dispatch Date"
                                                 type="date"
                                                 value={dispatchDate}
                                                 onChange={e => setDispatchDate(e.target.value)}
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                             />
                                         </div>
                                     </div>
@@ -1034,27 +1037,27 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                             )}
 
                             {dispatchMode === 'In-Person' && (
-                                <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 animate-in fade-in duration-150">
+                                <div className="space-y-3 p-4 rounded-xl border border-line bg-canvas/60 animate-in fade-in duration-150">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Handover Branch / Desk Location</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Handover Branch / Desk Location</label>
+                                            <input aria-label="Handover Branch / Desk Location"
                                                 type="text"
                                                 value={inPersonBranch}
                                                 onChange={e => setInPersonBranch(e.target.value)}
                                                 placeholder="e.g. Chennai Office, IT Support Desk Floor 3"
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Delivery Challan (DC) No (Optional)</label>
-                                            <input
+                                            <label className="block text-xs font-semibold text-quiet mb-1">Delivery Challan (DC) No (Optional)</label>
+                                            <input aria-label="Delivery Challan (DC) No (Optional)"
                                                 type="text"
                                                 value={dcNumber}
                                                 onChange={e => setDcNumber(e.target.value)}
                                                 placeholder="e.g. DC-2024-0012"
-                                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+                                                className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent font-mono"
                                             />
                                         </div>
                                     </div>
@@ -1062,13 +1065,13 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                             )}
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Dispatch & Handover Remarks (Optional)</label>
-                                <input
+                                <label className="block text-xs font-semibold text-quiet mb-1">Dispatch & Handover Remarks (Optional)</label>
+                                <input aria-label="Dispatch & Handover Remarks (Optional)"
                                     type="text"
                                     value={dispatchRemarks}
                                     onChange={e => setDispatchRemarks(e.target.value)}
                                     placeholder="e.g. Laptop bag, wireless mouse, and original adapter included."
-                                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500"
+                                    className="w-full p-2.5 rounded-lg border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
                                 />
                             </div>
                         </div>
@@ -1077,48 +1080,48 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 7: Credential Sharing */}
                     {currentStep === 7 && (
                         <div className="space-y-4 max-w-2xl mx-auto">
-                            <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 7: Credentials & Security Handover</h3>
-                                <p className="text-xs text-slate-500">Verify temporary login passwords and IT policies have been handed over</p>
+                            <div className="pb-3 border-b border-line">
+                                <h3 className="text-base font-semibold text-ink">Step 7: Credentials & Security Handover</h3>
+                                <p className="text-xs text-quiet">Verify temporary login passwords and IT policies have been handed over</p>
                             </div>
 
                             <div className="space-y-3">
-                                <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100/50 transition-colors">
+                                <label className="flex items-start gap-3 p-4 rounded-xl border border-line bg-canvas/50 cursor-pointer hover:bg-muted/50 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={credentialsChecks.m365CredsShared}
                                         onChange={e => setCredentialsChecks({ ...credentialsChecks, m365CredsShared: e.target.checked })}
-                                        className="w-5 h-5 mt-0.5 text-brand-600 rounded focus:ring-brand-500 cursor-pointer"
+                                        className="w-5 h-5 mt-0.5 text-ink rounded focus:ring-accent cursor-pointer"
                                     />
                                     <div>
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">M365 Temporary Password Shared</span>
-                                        <p className="text-xs text-slate-500 mt-0.5">Initial password and login portal link provided via secure channel (SMS/WhatsApp/Personal Email)</p>
+                                        <span className="text-sm font-semibold text-ink">M365 Temporary Password Shared</span>
+                                        <p className="text-xs text-quiet mt-0.5">Initial password and login portal link provided via secure channel (SMS/WhatsApp/Personal Email)</p>
                                     </div>
                                 </label>
 
-                                <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100/50 transition-colors">
+                                <label className="flex items-start gap-3 p-4 rounded-xl border border-line bg-canvas/50 cursor-pointer hover:bg-muted/50 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={credentialsChecks.laptopCredsShared}
                                         onChange={e => setCredentialsChecks({ ...credentialsChecks, laptopCredsShared: e.target.checked })}
-                                        className="w-5 h-5 mt-0.5 text-brand-600 rounded focus:ring-brand-500 cursor-pointer"
+                                        className="w-5 h-5 mt-0.5 text-ink rounded focus:ring-accent cursor-pointer"
                                     />
                                     <div>
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Laptop / Device Login PIN Provided</span>
-                                        <p className="text-xs text-slate-500 mt-0.5">Local Windows/Mac login PIN and BitLocker guidance shared with the user</p>
+                                        <span className="text-sm font-semibold text-ink">Laptop / Device Login PIN Provided</span>
+                                        <p className="text-xs text-quiet mt-0.5">Local Windows/Mac login PIN and BitLocker guidance shared with the user</p>
                                     </div>
                                 </label>
 
-                                <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100/50 transition-colors">
+                                <label className="flex items-start gap-3 p-4 rounded-xl border border-line bg-canvas/50 cursor-pointer hover:bg-muted/50 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={credentialsChecks.policyCommunicated}
                                         onChange={e => setCredentialsChecks({ ...credentialsChecks, policyCommunicated: e.target.checked })}
-                                        className="w-5 h-5 mt-0.5 text-brand-600 rounded focus:ring-brand-500 cursor-pointer"
+                                        className="w-5 h-5 mt-0.5 text-ink rounded focus:ring-accent cursor-pointer"
                                     />
                                     <div>
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">IT Acceptable Use Policy Communicated</span>
-                                        <p className="text-xs text-slate-500 mt-0.5">Employee informed of security protocols, laptop declaration, and data safety expectations</p>
+                                        <span className="text-sm font-semibold text-ink">IT Acceptable Use Policy Communicated</span>
+                                        <p className="text-xs text-quiet mt-0.5">Employee informed of security protocols, laptop declaration, and data safety expectations</p>
                                     </div>
                                 </label>
                             </div>
@@ -1128,58 +1131,58 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                     {/* STEP 8: Review & Confirm */}
                     {currentStep === 8 && (
                         <div className="space-y-5 max-w-2xl mx-auto">
-                            <div className="pb-3 border-b border-slate-200 dark:border-slate-700">
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Step 8: Final Review & Confirmation</h3>
-                                <p className="text-xs text-slate-500">Verify the onboarding setup below. You can save as In Progress or mark 100% complete.</p>
+                            <div className="pb-3 border-b border-line">
+                                <h3 className="text-base font-semibold text-ink">Step 8: Final Review & Confirmation</h3>
+                                <p className="text-xs text-quiet">Verify the onboarding setup below. You can save as In Progress or mark 100% complete.</p>
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
-                                <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                                    <span className="text-slate-500">Employee:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">{userData.name} ({userData.email})</span>
+                            <div className="bg-canvas rounded-xl p-4 border border-line space-y-3 text-xs">
+                                <div className="flex justify-between py-1 border-b border-line">
+                                    <span className="text-quiet">Employee:</span>
+                                    <span className="font-semibold text-ink">{userData.name} ({userData.email})</span>
                                 </div>
-                                <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                                    <span className="text-slate-500">Microsoft 365:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {m365AccountCreated ? '✓ Account Created' : 'Not Set'} | {licenseOption === 'assign' && selectedLicenseIds.length > 0 
-                                            ? `${selectedLicenseIds.length} License(s) Assigned (${selectedLicenseIds.map(id => licenses.find(l => l.id === id)?.name).filter(Boolean).join(', ')})` 
+                                <div className="flex justify-between py-1 border-b border-line">
+                                    <span className="text-quiet">Microsoft 365:</span>
+                                    <span className="font-semibold text-ink">
+                                        {m365AccountCreated ? '✓ Account Created' : 'Not Set'} | {licenseOption === 'assign' && selectedLicenseIds.length > 0
+                                            ? `${selectedLicenseIds.length} License(s) Assigned (${selectedLicenseIds.map(id => licenses.find(l => l.id === id)?.name).filter(Boolean).join(', ')})`
                                             : 'No License Needed'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                                    <span className="text-slate-500">Assigned Hardware:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {assetOption === 'assign' && selectedAssetId 
+                                <div className="flex justify-between py-1 border-b border-line">
+                                    <span className="text-quiet">Assigned Hardware:</span>
+                                    <span className="font-semibold text-ink">
+                                        {assetOption === 'assign' && selectedAssetId
                                             ? `${assets.find(a => a.id === selectedAssetId)?.name} (Condition: ${assetCondition})`
                                             : 'No Device (Uses Own Laptop / Not Needed)'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                                    <span className="text-slate-500">Software & QA:</span>
-                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                <div className="flex justify-between py-1 border-b border-line">
+                                    <span className="text-quiet">Software & QA:</span>
+                                    <span className="font-semibold text-ink">
                                         {softwareChecks.notApplicable ? 'Hardware N/A' : (softwareChecks.osConfigured && softwareChecks.m365Apps ? '✓ Configured & Tested' : 'Partial / In Progress')}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                                    <span className="text-slate-500">Dispatch / Logistics:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {dispatchMode === 'Courier' 
+                                <div className="flex justify-between py-1 border-b border-line">
+                                    <span className="text-quiet">Dispatch / Logistics:</span>
+                                    <span className="font-semibold text-ink">
+                                        {dispatchMode === 'Courier'
                                             ? `Courier: ${courierName}${dcNumber ? ` (DC: ${dcNumber})` : ''}${docketNumber ? ` (Docket: ${docketNumber})` : ''}`
                                             : `In-Person Handover (${inPersonBranch || 'Office'})${dcNumber ? ` (DC: ${dcNumber})` : ''}`}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-1">
-                                    <span className="text-slate-500">Credentials Handover:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                    <span className="text-quiet">Credentials Handover:</span>
+                                    <span className="font-semibold text-ink">
                                         {credentialsChecks.m365CredsShared ? '✓ Credentials Shared' : 'Pending Share'}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="p-3.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between gap-3">
+                            <div className="p-3.5 bg-surface border border-line rounded-xl flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-200">Pending dispatch or later handover?</p>
-                                    <p className="text-[11px] text-blue-700 dark:text-blue-300 mt-0.5">
+                                    <p className="text-xs font-semibold text-ink">Pending dispatch or later handover?</p>
+                                    <p className="text-[11px] text-ink mt-0.5">
                                         If dispatch or credentials handover will be completed later, you can save your progress as <strong>"In Progress"</strong>.
                                     </p>
                                 </div>
@@ -1187,15 +1190,15 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     type="button"
                                     onClick={() => handleSaveProgress('In Progress')}
                                     disabled={isSubmitting}
-                                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shrink-0 transition-colors shadow-sm"
+                                    className="px-3.5 py-2 bg-accent hover:bg-accent text-on-strong text-xs font-semibold rounded-lg shrink-0 transition-colors shadow-sm"
                                 >
                                     💾 Save as In Progress
                                 </button>
                             </div>
 
-                            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-3">
-                                <span className="text-emerald-600 dark:text-emerald-400 text-lg">✓</span>
-                                <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                            <div className="p-3.5 bg-surface border border-line rounded-xl flex items-center gap-3">
+                                <span className="text-ink text-lg">✓</span>
+                                <p className="text-xs text-ink">
                                     Clicking <strong>"Complete Onboarding & Handover"</strong> will mark onboarding 100% complete and update the employee's onboarding status to Completed.
                                 </p>
                             </div>
@@ -1204,12 +1207,12 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                 </div>
 
                 {/* Footer Controls */}
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                <div className="px-6 py-4 bg-canvas border-t border-line flex items-center justify-between shrink-0">
                     <button
                         type="button"
                         onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
                         disabled={currentStep === 1 || isSubmitting}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="px-4 py-2 rounded-xl text-sm font-semibold border border-line text-ink hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         ← Back
                     </button>
@@ -1218,7 +1221,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            className="px-4 py-2 rounded-xl text-sm font-medium text-quiet hover:bg-muted transition-colors"
                         >
                             Cancel
                         </button>
@@ -1227,7 +1230,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                             type="button"
                             onClick={() => handleSaveProgress('In Progress')}
                             disabled={isSubmitting || (selectedUserId === 'new' && (!userData.name.trim() || !userData.email.trim()))}
-                            className="px-4 py-2 rounded-xl text-sm font-semibold border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-xl text-sm font-semibold border border-accent text-ink hover:bg-surface transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save all changes so far and continue later"
                         >
                             <span>💾</span> Save & Continue Later
@@ -1238,7 +1241,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 type="button"
                                 onClick={handleNext}
                                 disabled={isSubmitting}
-                                className="px-6 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-500/20 transition-all flex items-center gap-1.5"
+                                className="px-6 py-2 rounded-xl text-sm font-semibold bg-accent hover:bg-accent text-on-strong shadow-md shadow-strong/15 transition-all flex items-center gap-1.5"
                             >
                                 {isSubmitting ? 'Saving...' : 'Next Step →'}
                             </button>
@@ -1247,7 +1250,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                 type="button"
                                 onClick={() => handleSaveProgress('Completed')}
                                 disabled={isSubmitting}
-                                className="px-6 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
+                                className="px-6 py-2 rounded-xl text-sm font-semibold bg-olive hover:bg-olive text-on-strong shadow-md shadow-strong/15 transition-all flex items-center gap-1.5"
                             >
                                 {isSubmitting ? 'Finalizing...' : '✓ Complete Onboarding & Handover'}
                             </button>

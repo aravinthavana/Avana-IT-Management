@@ -1,99 +1,107 @@
 @import "tailwindcss";
-
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  /* ── Typography ── */
+/* The five approved colors are the only UI color primitives. */
+@theme inline {
+  --color-*: initial;
+  --shadow-2xs: 0 1px 1px var(--ui-line);
+  --shadow-xs: 0 1px 2px var(--ui-line);
+  --shadow-sm: 0 1px 3px var(--ui-line);
+  --shadow-md: 0 2px 5px var(--ui-line);
+  --shadow-lg: 0 4px 10px var(--ui-line);
+  --shadow-xl: 0 6px 14px var(--ui-line);
+  --shadow-2xl: 0 8px 18px var(--ui-line);
   --font-sans: 'Arimo', sans-serif;
   --font-heading: 'Fira Sans', sans-serif;
-  --font-subheading: 'Zalando Sans', 'DM Sans', 'Arimo', sans-serif;
-
-  /* ── Brand / Primary (gold scale) ── */
-  --color-brand-50:  #faefd6;
-  --color-brand-100: #f1ddad;
-  --color-brand-200: #e7ca83;
-  --color-brand-300: #deb859;
-  --color-brand-400: #d5a52e;
-  --color-brand-500: #b27f0d;
-  --color-brand-600: #936709;
-  --color-brand-700: #745106;
-  --color-brand-800: #553b03;
-  --color-brand-900: #3c2901;
-  --color-brand-950: #2a1c00;
-
-  /* ── Avana Named Colors ── */
-  --color-avana-dark:  #172025;
-  --color-avana-olive: #404131;
-  --color-avana-beige: #d7d0bc;
-  --color-avana-gray:  #aab2b2;
-
-  /* ── Remap slate-* → Avana warm-neutral scale ──
-     This remapping automatically applies to ALL components using slate-* classes */
-  --color-slate-50:  #faf9f6;
-  --color-slate-100: #f0ede6;
-  --color-slate-200: #d7d0bc;
-  --color-slate-300: #aab2b2;
-  --color-slate-400: #7d8e8e;
-  --color-slate-500: #5e6e6e;
-  --color-slate-600: #404131;
-  --color-slate-700: #2e3025;
-  --color-slate-800: #1e2520;
-  --color-slate-900: #172025;
-  --color-slate-950: #0e1518;
+  --font-subheading: 'DM Sans', 'Arimo', sans-serif;
+  --color-canvas: var(--ui-canvas);
+  --color-surface: var(--ui-surface);
+  --color-muted: var(--ui-muted);
+  --color-ink: var(--ui-ink);
+  --color-quiet: var(--ui-quiet);
+  --color-line: var(--ui-line);
+  --color-accent: #b27f0d;
+  --color-on-accent: #172025;
+  --color-strong: #172025;
+  --color-on-strong: #d7d0bc;
+  --color-olive: #404131;
 }
-
-/* ── Base typography enforcement ── */
+:root {
+  color-scheme: light;
+  --ui-canvas: #aab2b2;
+  --ui-surface: #d7d0bc;
+  --ui-muted: #aab2b2;
+  --ui-ink: #172025;
+  --ui-quiet: #404131;
+  --ui-line: #aab2b2;
+}
+.dark {
+  color-scheme: dark;
+  --ui-canvas: #172025;
+  --ui-surface: #172025;
+  --ui-muted: #404131;
+  --ui-ink: #d7d0bc;
+  --ui-quiet: #aab2b2;
+  --ui-line: #aab2b2;
+}
 @layer base {
-  html, body {
-    font-family: 'Arimo', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Fira Sans', sans-serif;
-    font-weight: 600;
-  }
-
-  label, th, .font-subheading, [data-subheading] {
-    font-family: 'Zalando Sans', 'DM Sans', 'Arimo', sans-serif;
-  }
-
-  * { -webkit-tap-highlight-color: transparent; }
-
-  /* Ensure buttons and nav links have accessible touch targets on mobile */
-  button, [role="button"] { min-height: 36px; }
+  html { scroll-padding-top: 5rem; }
+  body { margin: 0; background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  #root { min-height: 100dvh; }
+  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); font-weight: 600; }
+  label, th { font-family: var(--font-subheading); }
+  button, [role="button"] { min-height: 36px; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--ui-ink); outline-offset: 3px; }
+  input, textarea, select { accent-color: #b27f0d; background-color: var(--ui-surface); color: var(--ui-ink); }
+  input:not([type="checkbox"]):not([type="radio"]), textarea, select { min-width: 0; max-width: 100%; border-color: var(--ui-quiet); }
+  input::placeholder, textarea::placeholder { color: var(--ui-quiet); opacity: 1; }
+  img, video, canvas { max-width: 100%; }
+  main, section, form { min-width: 0; }
+  p, dd { overflow-wrap: anywhere; }
+  ::selection { background: #b27f0d; color: #172025; }
 }
-
-/* ── Page transition ── */
-@keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
+/* Gold needs dark lettering; beige lettering on gold has insufficient contrast. */
+@layer utilities {
+  .bg-accent, .bg-accent.text-on-strong, .bg-accent .text-on-strong { color: #172025; }
+  .bg-strong .text-ink, .bg-olive .text-ink { color: #d7d0bc; }
+  .bg-strong .text-quiet, .bg-olive .text-quiet { color: #aab2b2; }
+  .bg-strong .bg-surface .text-ink, .bg-olive .bg-surface .text-ink { color: var(--ui-ink); }
+  .bg-strong .bg-surface .text-quiet, .bg-olive .bg-surface .text-quiet { color: var(--ui-quiet); }
 }
-.page-transition { animation: page-in 0.2s ease-out; }
-
-/* ── Sidebar scrollbar ── */
-nav::-webkit-scrollbar { width: 4px; }
-nav::-webkit-scrollbar-track { background: transparent; }
-nav::-webkit-scrollbar-thumb { background-color: rgba(170,178,178,0.4); border-radius: 9999px; }
-nav::-webkit-scrollbar-thumb:hover { background-color: rgba(170,178,178,0.7); }
-
-/* ── Global scrollbar (subtle) ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background-color: rgba(170,178,178,0.5); border-radius: 9999px; }
-
-/* ── Rich Text Editor / Prose image constraints ── */
-.ql-editor img, .prose img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-transition { animation: page-in .18s ease-out; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #404131; border: 2px solid #aab2b2; border-radius: 8px; }
+.overflow-x-auto { max-width: 100%; overscroll-behavior-x: contain; scrollbar-gutter: stable; }
+.ql-editor img, .prose img { max-width: 100%; height: auto; border-radius: .5rem; }
+.ql-toolbar.ql-snow, .ql-container.ql-snow { border-color: var(--ui-line); background: var(--ui-surface); color: var(--ui-ink); }
+.ql-snow .ql-stroke { stroke: var(--ui-ink); }
+.ql-snow .ql-fill { fill: var(--ui-ink); }
+.ql-snow .ql-picker { color: var(--ui-ink); }
+.ql-snow .ql-picker-options, .ql-snow .ql-tooltip { background: var(--ui-surface); border-color: var(--ui-line); color: var(--ui-ink); }
+.skip-link { position: fixed; left: 1rem; top: -6rem; z-index: 100; padding: .75rem 1rem; border-radius: .5rem; background: #b27f0d; color: #172025; font-weight: 700; }
+.skip-link:focus { top: 1rem; }
+@media (max-width: 639px) {
+  button, [role="button"], nav a { min-height: 44px; }
+  button:has(>svg:only-child) { min-width: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea { min-height: 44px; font-size: 16px; }
+  [class*="text-[9px]"], [class*="text-[10px]"], [class*="text-[11px]"] { font-size: 12px; line-height: 1.4; }
+  .overflow-x-auto { padding-bottom: .5rem; }
+  [role="dialog"] { scroll-padding-bottom: env(safe-area-inset-bottom); }
 }
-
-/* ── Mobile: prevent horizontal overflow ── */
-@media (max-width: 767px) {
-  main { overflow-x: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+@media print { .no-print, .no-print * { display: none !important; } }
+
+:focus-visible { outline: 2px solid var(--ui-ink); outline-offset: 3px; }
+
+.bg-accent:hover { background-color: #b27f0d; color: #172025; }
+.bg-strong.text-ink, .bg-olive.text-ink { color: #d7d0bc; }
+
+.ql-snow .ql-toolbar button:hover .ql-stroke, .ql-snow.ql-toolbar button:hover .ql-stroke, .ql-snow .ql-active .ql-stroke { stroke: #b27f0d; }
+.ql-snow .ql-toolbar button:hover .ql-fill, .ql-snow.ql-toolbar button:hover .ql-fill, .ql-snow .ql-active .ql-fill { fill: #b27f0d; }
+
+.bg-accent .text-ink, .bg-accent .text-quiet { color: #172025; }
+.ql-snow a { color: var(--ui-ink); text-decoration: underline; }

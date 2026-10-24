@@ -8,11 +8,11 @@ interface UserFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (
-        user: any, 
-        assetAssignment?: { 
-            assetId?: number; 
-            condition?: string; 
-            action?: 'assign' | 'unassign'; 
+        user: any,
+        assetAssignment?: {
+            assetId?: number;
+            condition?: string;
+            action?: 'assign' | 'unassign';
             unassignAssetId?: number;
         },
         launchOnboardingWizard?: boolean
@@ -25,7 +25,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
     const inputId = id || name;
     return (
         <div>
-            <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <label htmlFor={inputId} className="block text-sm font-medium text-ink">{label}</label>
             <input
                 id={inputId}
                 name={name}
@@ -34,7 +34,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
                 data-1p-ignore="true"
                 data-form-type="other"
                 {...props}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink"
             />
         </div>
     );
@@ -44,7 +44,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
     const selectId = id || name;
     return (
         <div>
-            <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <label htmlFor={selectId} className="block text-sm font-medium text-ink">{label}</label>
             <select
                 id={selectId}
                 name={name}
@@ -54,7 +54,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
                 data-1p-ignore="true"
                 data-form-type="other"
                 {...props}
-                className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed"
+                className="mt-1 block w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink disabled:opacity-60 disabled:bg-muted disabled:cursor-not-allowed"
             >
                 {children}
             </select>
@@ -64,7 +64,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
 
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
     <div className="md:col-span-2 pt-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-600 pb-1">{title}</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-quiet border-b border-line pb-1">{title}</h4>
     </div>
 );
 
@@ -110,10 +110,10 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     }, [availableAssets]);
 
     const otherAssets = React.useMemo(() => {
-        return availableAssets.filter(a => 
-            a.category?.toLowerCase() !== 'desktop' && 
-            !a.assetId?.includes('-DES-') && 
-            a.category?.toLowerCase() !== 'laptop' && 
+        return availableAssets.filter(a =>
+            a.category?.toLowerCase() !== 'desktop' &&
+            !a.assetId?.includes('-DES-') &&
+            a.category?.toLowerCase() !== 'laptop' &&
             !a.assetId?.includes('-LAP-')
         );
     }, [availableAssets]);
@@ -257,8 +257,8 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
         <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Add New User'}>
             <form onSubmit={handleSubmit} autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="space-y-4">
                 {(user?.azureAdId || user?.m365AccountCreated) && (
-                    <div className="flex items-center gap-2.5 p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl text-sky-800 dark:text-sky-300 text-xs font-body">
-                        <svg className="w-4 h-4 text-sky-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <div className="flex items-center gap-2.5 p-3 bg-surface border border-line rounded-xl text-ink text-xs font-body">
+                        <svg className="w-4 h-4 text-ink flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/>
                         </svg>
                         <span><strong>Microsoft 365 Connected:</strong> Profile updates will automatically synchronize to Entra ID and M365 Admin Center.</span>
@@ -281,7 +281,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             placeholder={user ? '••••••••' : 'Set a password for this user'}
                             autoComplete="new-password"
                         />
-                        {!user && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">This password will be required for the user to log in.</p>}
+                        {!user && <p className="mt-1 text-xs text-quiet">This password will be required for the user to log in.</p>}
                     </div>
 
                     {/* Role & Access */}
@@ -293,7 +293,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             <option value="Admin">Admin</option>
                         </FormSelect>
                         {!isAdmin && (
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-body">Role can only be modified by an Admin.</p>
+                            <p className="text-[11px] text-quiet mt-1 font-body">Role can only be modified by an Admin.</p>
                         )}
                     </div>
                     <div>
@@ -302,7 +302,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             <option value="Inactive">Inactive</option>
                         </FormSelect>
                         {!isAdmin && (
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-body">Status can only be modified by an Admin.</p>
+                            <p className="text-[11px] text-quiet mt-1 font-body">Status can only be modified by an Admin.</p>
                         )}
                     </div>
                     <FormSelect label="Account Type *" name="uf_accountType" value={formData.accountType} onChange={handleChange} required>
@@ -350,24 +350,24 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
                     {/* Workstation & Device Assignment */}
                     <SectionHeader title="Workstation & Device Assignment" />
-                    
+
                     {user && activeAssignedAsset ? (
                         <div className="md:col-span-2 space-y-3">
-                            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="p-3.5 bg-canvas rounded-xl border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Currently Assigned Hardware</span>
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-quiet">Currently Assigned Hardware</span>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-ink">
                                             {activeAssignedAsset.status}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mt-1">
+                                    <p className="text-sm font-bold text-ink flex items-center gap-2 mt-1">
                                         {activeAssignedAsset.category?.toLowerCase() === 'desktop' || activeAssignedAsset.assetId?.includes('-DES-') ? '🖥️ Desktop:' : '💻 Laptop:'} {activeAssignedAsset.name}
-                                        <span className="font-mono text-xs px-2 py-0.5 bg-brand-50 text-brand-700 dark:bg-brand-950/50 dark:text-brand-300 rounded font-semibold">
+                                        <span className="font-mono text-xs px-2 py-0.5 bg-surface text-ink rounded font-semibold">
                                             [{activeAssignedAsset.assetId}]
                                         </span>
                                     </p>
-                                    <p className="text-xs text-slate-500 mt-0.5">
+                                    <p className="text-xs text-quiet mt-0.5">
                                         {activeAssignedAsset.brand ? `${activeAssignedAsset.brand} ` : ''}{activeAssignedAsset.model || ''}
                                         {activeAssignedAsset.serialNumber ? ` • S/N: ${activeAssignedAsset.serialNumber}` : ''}
                                     </p>
@@ -377,51 +377,51 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             {/* Actions for current equipment */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <label className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
-                                    assignmentAction === 'keep' ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-semibold' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                                    assignmentAction === 'keep' ? 'border-accent bg-surface/50  text-ink  font-semibold' : 'border-line  hover:bg-canvas text-quiet '
                                 }`}>
-                                    <input type="radio" name="assignAction" checked={assignmentAction === 'keep'} onChange={() => setAssignmentAction('keep')} className="text-brand-600" />
+                                    <input type="radio" name="assignAction" checked={assignmentAction === 'keep'} onChange={() => setAssignmentAction('keep')} className="text-ink" />
                                     <span>Keep Current Device</span>
                                 </label>
                                 <label className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
-                                    assignmentAction === 'reassign' ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-semibold' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                                    assignmentAction === 'reassign' ? 'border-accent bg-surface/50  text-ink  font-semibold' : 'border-line  hover:bg-canvas text-quiet '
                                 }`}>
-                                    <input type="radio" name="assignAction" checked={assignmentAction === 'reassign'} onChange={() => setAssignmentAction('reassign')} className="text-brand-600" />
+                                    <input type="radio" name="assignAction" checked={assignmentAction === 'reassign'} onChange={() => setAssignmentAction('reassign')} className="text-ink" />
                                     <span>Replace / Reassign</span>
                                 </label>
                                 <label className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
-                                    assignmentAction === 'unassign' ? 'border-red-500 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-semibold' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                                    assignmentAction === 'unassign' ? 'border-line bg-surface/50  text-ink  font-semibold' : 'border-line  hover:bg-canvas text-quiet '
                                 }`}>
-                                    <input type="radio" name="assignAction" checked={assignmentAction === 'unassign'} onChange={() => setAssignmentAction('unassign')} className="text-red-600" />
+                                    <input type="radio" name="assignAction" checked={assignmentAction === 'unassign'} onChange={() => setAssignmentAction('unassign')} className="text-ink" />
                                     <span>Unassign to Stock</span>
                                 </label>
                             </div>
 
                             {assignmentAction === 'reassign' && (
-                                <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 animate-in fade-in duration-150">
+                                <div className="bg-canvas p-4 rounded-xl border border-line space-y-3 animate-in fade-in duration-150">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Filter Replacement Device</label>
-                                            <span className="text-[11px] text-slate-500">{filteredAvailableAssets.length} in stock</span>
+                                            <label className="text-xs font-semibold text-ink">Filter Replacement Device</label>
+                                            <span className="text-[11px] text-quiet">{filteredAvailableAssets.length} in stock</span>
                                         </div>
-                                        <div className="flex flex-wrap gap-1.5 p-1 bg-white dark:bg-slate-700/60 rounded-lg border border-slate-200 dark:border-slate-600 text-xs">
+                                        <div className="flex flex-wrap gap-1.5 p-1 bg-surface rounded-lg border border-line text-xs">
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('all')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all ${assetCategoryFilter === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all ${assetCategoryFilter === 'all' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 All ({availableAssets.length})
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('desktop')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'desktop' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'desktop' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 🖥️ Desktops ({desktopAssets.length})
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('laptop')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'laptop' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'laptop' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 💻 Laptops ({laptopAssets.length})
                                             </button>
@@ -429,14 +429,14 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        <label className="block text-xs font-semibold text-ink mb-1">
                                             Select Replacement Asset *
                                         </label>
-                                        <select
+                                        <select aria-label="Select Replacement Asset *"
                                             value={selectedAssetId}
                                             onChange={(e) => setSelectedAssetId(e.target.value)}
                                             required={assignmentAction === 'reassign'}
-                                            className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-xs shadow-sm focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                            className="w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-xs shadow-sm focus:ring-1 focus:ring-accent text-ink"
                                         >
                                             <option value="">-- Choose Asset from In Stock ({filteredAvailableAssets.length} available) --</option>
                                             {filteredAvailableAssets.map(a => {
@@ -451,13 +451,13 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        <label className="block text-xs font-semibold text-ink mb-1">
                                             Condition at Handover
                                         </label>
-                                        <select
+                                        <select aria-label="Condition at Handover"
                                             value={handoverCondition}
                                             onChange={(e) => setHandoverCondition(e.target.value)}
-                                            className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-xs shadow-sm focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                            className="w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-xs shadow-sm focus:ring-1 focus:ring-accent text-ink"
                                         >
                                             <option value="Good">Good (Working fine, normal wear)</option>
                                             <option value="Brand New">Brand New (Fresh / Box piece)</option>
@@ -468,7 +468,7 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             )}
 
                             {assignmentAction === 'unassign' && (
-                                <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900/50 text-xs text-red-700 dark:text-red-300">
+                                <div className="p-3 bg-surface rounded-lg border border-line text-xs text-ink">
                                     ⚠️ When you save, <strong>{activeAssignedAsset.assetId}</strong> will be unlinked from this employee and returned to 'In Stock'.
                                 </div>
                             )}
@@ -478,67 +478,67 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
                                     deviceOption === 'assign_now'
-                                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 ring-1 ring-brand-500'
-                                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                        ? 'border-accent bg-surface/50  ring-1 ring-accent'
+                                        : 'border-line  hover:bg-canvas '
                                 }`}>
                                     <input
                                         type="radio"
                                         name="deviceOption"
                                         checked={deviceOption === 'assign_now'}
                                         onChange={() => setDeviceOption('assign_now')}
-                                        className="mt-1 text-brand-600 focus:ring-brand-500"
+                                        className="mt-1 text-ink focus:ring-accent"
                                     />
                                     <div className="ml-3">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Assign Company Device</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Allocate an in-stock Desktop or Laptop</p>
+                                        <p className="text-sm font-semibold text-ink">Assign Company Device</p>
+                                        <p className="text-xs text-quiet">Allocate an in-stock Desktop or Laptop</p>
                                     </div>
                                 </label>
 
                                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
                                     deviceOption === 'no_device'
-                                        ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 ring-1 ring-brand-500'
-                                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                        ? 'border-accent bg-surface/50  ring-1 ring-accent'
+                                        : 'border-line  hover:bg-canvas '
                                 }`}>
                                     <input
                                         type="radio"
                                         name="deviceOption"
                                         checked={deviceOption === 'no_device'}
                                         onChange={() => setDeviceOption('no_device')}
-                                        className="mt-1 text-brand-600 focus:ring-brand-500"
+                                        className="mt-1 text-ink focus:ring-accent"
                                     />
                                     <div className="ml-3">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">No Company Device / BYOD</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Personal device, shared desk, or cloud user</p>
+                                        <p className="text-sm font-semibold text-ink">No Company Device / BYOD</p>
+                                        <p className="text-xs text-quiet">Personal device, shared desk, or cloud user</p>
                                     </div>
                                 </label>
                             </div>
 
                             {deviceOption === 'assign_now' && (
-                                <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 animate-in fade-in duration-150">
+                                <div className="bg-canvas p-4 rounded-xl border border-line space-y-3 animate-in fade-in duration-150">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Filter Device Type</label>
-                                            <span className="text-[11px] text-slate-500">{filteredAvailableAssets.length} in stock</span>
+                                            <label className="text-xs font-semibold text-ink">Filter Device Type</label>
+                                            <span className="text-[11px] text-quiet">{filteredAvailableAssets.length} in stock</span>
                                         </div>
-                                        <div className="flex flex-wrap gap-1.5 p-1 bg-white dark:bg-slate-700/60 rounded-lg border border-slate-200 dark:border-slate-600 text-xs">
+                                        <div className="flex flex-wrap gap-1.5 p-1 bg-surface rounded-lg border border-line text-xs">
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('all')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all ${assetCategoryFilter === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all ${assetCategoryFilter === 'all' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 All Available ({availableAssets.length})
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('desktop')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'desktop' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'desktop' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 🖥️ Desktops ({desktopAssets.length})
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setAssetCategoryFilter('laptop')}
-                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'laptop' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}`}
+                                                className={`px-3 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${assetCategoryFilter === 'laptop' ? 'bg-accent text-on-strong shadow-sm' : 'text-quiet  hover:bg-muted '}`}
                                             >
                                                 💻 Laptops ({laptopAssets.length})
                                             </button>
@@ -546,14 +546,14 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        <label className="block text-xs font-semibold text-ink mb-1">
                                             Choose Asset to Allocate *
                                         </label>
-                                        <select
+                                        <select aria-label="Choose Asset to Allocate *"
                                             value={selectedAssetId}
                                             onChange={(e) => setSelectedAssetId(e.target.value)}
                                             required={deviceOption === 'assign_now' && !user}
-                                            className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-xs shadow-sm focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                            className="w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-xs shadow-sm focus:ring-1 focus:ring-accent text-ink"
                                         >
                                             <option value="">-- Choose Asset from In Stock ({filteredAvailableAssets.length} available) --</option>
                                             {filteredAvailableAssets.map(a => {
@@ -566,20 +566,20 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                                             })}
                                         </select>
                                         {filteredAvailableAssets.length === 0 && (
-                                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                            <p className="mt-1 text-xs text-ink">
                                                 No {assetCategoryFilter === 'desktop' ? 'desktops' : assetCategoryFilter === 'laptop' ? 'laptops' : 'devices'} currently available in stock.
                                             </p>
                                         )}
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        <label className="block text-xs font-semibold text-ink mb-1">
                                             Condition at Handover
                                         </label>
-                                        <select
+                                        <select aria-label="Condition at Handover"
                                             value={handoverCondition}
                                             onChange={(e) => setHandoverCondition(e.target.value)}
-                                            className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-xs shadow-sm focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                            className="w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-xs shadow-sm focus:ring-1 focus:ring-accent text-ink"
                                         >
                                             <option value="Good">Good (Working fine, normal wear)</option>
                                             <option value="Brand New">Brand New (Fresh / Box piece)</option>
@@ -590,15 +590,15 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                             )}
 
                             {deviceOption === 'no_device' && (
-                                <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                <div className="p-3 bg-canvas rounded-xl border border-line">
+                                    <label className="block text-xs font-semibold text-ink mb-1">
                                         Hardware Status / Policy
                                     </label>
-                                    <select
+                                    <select aria-label="Hardware Status / Policy"
                                         name="laptopStatus"
                                         value={formData.laptopStatus}
                                         onChange={handleChange}
-                                        className="w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-xs shadow-sm focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                        className="w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-xs shadow-sm focus:ring-1 focus:ring-accent text-ink"
                                     >
                                         <option value="No Device Assigned">No Device Assigned (Desk phone / shared desk / cloud only)</option>
                                         <option value="Uses Own Laptop">Uses Own Laptop / Device (BYOD)</option>
@@ -609,18 +609,18 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
                             {/* Guided Onboarding Wizard Checkbox for New Users */}
                             {!user && (
-                                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50/40 dark:bg-brand-950/20 cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors">
+                                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-accent bg-surface/40 cursor-pointer hover:bg-surface transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={launchWizardOnSave}
                                         onChange={(e) => setLaunchWizardOnSave(e.target.checked)}
-                                        className="mt-0.5 w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                        className="mt-0.5 w-4 h-4 text-ink rounded focus:ring-accent"
                                     />
                                     <div>
-                                        <p className="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+                                        <p className="text-xs font-bold text-ink flex items-center gap-1.5">
                                             ⚡ Launch Guided Onboarding Wizard Immediately Upon Saving
                                         </p>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                        <p className="text-[11px] text-quiet mt-0.5">
                                             Opens the step-by-step checklist to configure M365 account, assign M365 license, allocate device (desktop/laptop), run QA hardware diagnostics, and generate the Handover Declaration.
                                         </p>
                                     </div>
@@ -631,8 +631,8 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
                 </div>
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
-                    <button type="button" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">Cancel</button>
-                    <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">
+                    <button type="button" onClick={onClose} disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">Cancel</button>
+                    <button type="submit" disabled={isLoading} className="w-full sm:w-auto flex justify-center bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium transition-all duration-200 active:scale-95 disabled:opacity-60">
                         {isLoading ? 'Saving...' : 'Save User'}
                     </button>
                 </div>

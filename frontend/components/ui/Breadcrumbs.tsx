@@ -30,6 +30,8 @@ const Breadcrumbs: React.FC = () => {
         purchases: 'Purchase Management',
         licenses: 'License Management',
         profile: 'My Profile',
+        onboarding: 'Onboarding', audits: 'Self-Audits',
+        tickets: 'Support Tickets', kb: 'Knowledge Base',
     };
 
     const fullPath = React.useMemo(() => {
@@ -42,7 +44,7 @@ const Breadcrumbs: React.FC = () => {
         const baseViewTitle = viewTitles[view];
         if (!baseViewTitle) return path;
 
-        const isDetailView = (view === 'assets' && selectedAssetId) || 
+        const isDetailView = (view === 'assets' && selectedAssetId) ||
                              (view === 'users' && selectedUserId) ||
                              (view === 'departments' && selectedDepartmentId) ||
                              (view === 'branches' && selectedBranchId);
@@ -56,7 +58,7 @@ const Breadcrumbs: React.FC = () => {
                 if (view === 'branches') setSelectedBranchId(null);
             } : (view === 'dashboard' ? undefined : () => navigate(view))
         });
-        
+
         // Add asset filter crumb
         if (view === 'assets' && assetFilters.length > 0) {
             const statusFilter = assetFilters.find(f => f.field === 'status' && f.value !== 'All');
@@ -80,7 +82,7 @@ const Breadcrumbs: React.FC = () => {
             const branch = branches.find(b => b.id === selectedBranchId);
             path.push({ label: branch ? branch.name : '...' });
         }
-        
+
         if (selectedAssetId) {
             const asset = assets.find(a => a.id === selectedAssetId);
             if(asset) {
@@ -95,28 +97,28 @@ const Breadcrumbs: React.FC = () => {
                 path.push({ label: asset.name });
             }
         }
-        
+
         return path;
     }, [
-        view, selectedAssetId, selectedUserId, selectedDepartmentId, selectedBranchId, 
+        view, selectedAssetId, selectedUserId, selectedDepartmentId, selectedBranchId,
         assets, users, departments, branches, assetFilters,
-        navigate, 
+        navigate,
         setSelectedAssetId, setSelectedUserId, setSelectedDepartmentId, setSelectedBranchId
     ]);
 
 
     if (fullPath.length <= 1) {
-        return <div className="mb-6 h-5"></div>; // Keep space consistent even when empty
+        return null;
     }
 
     return (
         <nav className="mb-6" aria-label="Breadcrumb">
-            <ol role="list" className="flex items-center space-x-2 text-sm">
+            <ol role="list" className="flex flex-wrap items-center gap-2 text-sm">
                 {fullPath.map((crumb, index) => (
                     <React.Fragment key={index}>
                         {index > 0 && (
-                            <li>
-                                <svg className="h-5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <li className="min-w-0 break-words">
+                                <svg className="h-5 w-5 flex-shrink-0 text-quiet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                 </svg>
                             </li>
@@ -129,12 +131,12 @@ const Breadcrumbs: React.FC = () => {
                                         e.preventDefault();
                                         crumb.onClick && crumb.onClick();
                                     }}
-                                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:underline"
+                                    className="text-quiet hover:text-ink hover:underline"
                                 >
                                     {crumb.label}
                                 </a>
                             ) : (
-                                <span className="font-medium text-slate-700 dark:text-slate-200" aria-current="page">
+                                <span className="font-medium text-ink" aria-current="page">
                                     {crumb.label}
                                 </span>
                             )}

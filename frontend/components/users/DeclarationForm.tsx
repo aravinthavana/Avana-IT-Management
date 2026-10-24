@@ -46,25 +46,25 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
             return () => clearInterval(timer);
         }
     }, [laptop.assetId]);
-    
+
     const companyDetails = {
-        AMD: { 
-            name: 'Avana Medical Devices Pvt. Ltd.', 
-            address: ['No. 91, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'], 
-            phone: '+91 44 4233 1061 / 62 / 63', 
-            cin: 'U74999TN2009PTC071443' 
+        AMD: {
+            name: 'Avana Medical Devices Pvt. Ltd.',
+            address: ['No. 91, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'],
+            phone: '+91 44 4233 1061 / 62 / 63',
+            cin: 'U74999TN2009PTC071443'
         },
-        ASSP: { 
-            name: 'Avana Surgical Systems Pvt. Ltd.', 
-            address: ['No. 91, 2nd Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai – 600 032, Tamil Nadu, India.'], 
-            phone: '+91 44 2233 1061 / 62 / 63', 
-            cin: 'U74999TN2009PTC071443' 
+        ASSP: {
+            name: 'Avana Surgical Systems Pvt. Ltd.',
+            address: ['No. 91, 2nd Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai – 600 032, Tamil Nadu, India.'],
+            phone: '+91 44 2233 1061 / 62 / 63',
+            cin: 'U74999TN2009PTC071443'
         },
-        ATS: { 
-            name: 'Avana Technology Services Pvt. Ltd.', 
-            address: ['No. 91, Ground Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'], 
-            phone: '+91 44 2233 1061 / 62 / 63', 
-            cin: '' 
+        ATS: {
+            name: 'Avana Technology Services Pvt. Ltd.',
+            address: ['No. 91, Ground Floor, Sundar Nagar 4th Avenue,', 'Nandambakkam, Chennai - 600 032, Tamil Nadu, India.'],
+            phone: '+91 44 2233 1061 / 62 / 63',
+            cin: ''
         }
     };
 
@@ -111,33 +111,33 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
     const branchLocation = user.location || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'N/A';
 
     return (
-        <div 
-            className={`bg-white p-5 sm:p-6 font-sans text-slate-800 flex flex-col justify-between box-border ${className || ''}`} 
-            style={{ 
+        <div
+            className={`bg-surface p-5 sm:p-6 font-sans text-ink flex flex-col justify-between box-border ${className || ''}`}
+            style={{
                 height: 'auto',
-                fontSize: '8.5pt', 
+                fontSize: '8.5pt',
                 lineHeight: '1.35',
                 pageBreakInside: 'avoid',
                 breakInside: 'avoid'
             }}
         >
             {/* ── 1. Compact Executive Header ── */}
-            <div className="flex justify-between items-center pb-2 border-b-2 border-slate-900 mb-2">
+            <div className="flex justify-between items-center pb-2 border-b-2 border-line mb-2">
                 <div className="text-[8.5pt] leading-tight">
-                    <h1 className="font-bold text-sm text-slate-900 tracking-tight">{currentCompany.name}</h1>
+                    <h1 className="font-bold text-sm text-ink tracking-tight">{currentCompany.name}</h1>
                     {currentCompany.address.map((line, i) => (
-                        <p key={i} className="text-slate-600">{line}</p>
+                        <p key={i} className="text-quiet">{line}</p>
                     ))}
-                    <p className="text-slate-600">
+                    <p className="text-quiet">
                         Phone: {currentCompany.phone}
                         {currentCompany.cin && <span className="ml-2 font-mono">CIN: {currentCompany.cin}</span>}
                     </p>
                 </div>
                 <div className="flex-shrink-0 ml-4 flex items-center justify-end">
-                    <img 
-                        src={AVANA_LOGO_DATA_URL} 
-                        alt="Avana Logo" 
-                        className="h-10 w-auto max-w-[125px] object-contain block" 
+                    <img
+                        src={AVANA_LOGO_DATA_URL}
+                        alt="Avana Logo"
+                        className="h-10 w-auto max-w-[125px] object-contain block"
                         style={{
                             printColorAdjust: 'exact',
                             WebkitPrintColorAdjust: 'exact',
@@ -149,44 +149,44 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
 
             {/* ── 2. Document Title ── */}
             <div className="text-center my-1.5">
-                <h2 className="font-bold uppercase tracking-wider text-[11pt] text-slate-900 inline-block border-b-2 border-slate-900 pb-0.5">
+                <h2 className="font-bold uppercase tracking-wider text-[11pt] text-ink inline-block border-b-2 border-line pb-0.5">
                     Declaration Cum Undertaking
                 </h2>
-                <p className="text-[8pt] text-slate-500 uppercase tracking-widest mt-0.5">
+                <p className="text-[8pt] text-quiet uppercase tracking-widest mt-0.5">
                     IT Asset Handover & Acceptable Usage Policy
                 </p>
             </div>
 
             {/* ── 3. Employee & Allocation Details Table ── */}
             <div className="mb-2.5">
-                <table className="w-full border-collapse border border-slate-300 text-[8.5pt]">
+                <table className="w-full border-collapse border border-line text-[8.5pt]">
                     <tbody>
-                        <tr className="border-b border-slate-200 bg-slate-50">
-                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Employee Name:</td>
-                            <td className="py-1 px-2.5 font-bold text-slate-900 w-[32%]">{user.name}</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600 w-[18%]">Assigned Date:</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-900 w-[32%]">{assignedDate || today}</td>
+                        <tr className="border-b border-line bg-canvas">
+                            <td className="py-1 px-2.5 font-semibold text-quiet w-[18%]">Employee Name:</td>
+                            <td className="py-1 px-2.5 font-bold text-ink w-[32%]">{user.name}</td>
+                            <td className="py-1 px-2.5 font-semibold text-quiet w-[18%]">Assigned Date:</td>
+                            <td className="py-1 px-2.5 font-semibold text-ink w-[32%]">{assignedDate || today}</td>
                         </tr>
-                        <tr className="border-b border-slate-200">
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Employee ID / Dept:</td>
-                            <td className="py-1 px-2.5 text-slate-800">
+                        <tr className="border-b border-line">
+                            <td className="py-1 px-2.5 font-semibold text-quiet">Employee ID / Dept:</td>
+                            <td className="py-1 px-2.5 text-ink">
                                 {user.employeeId && <span className="font-mono font-semibold mr-1">[{user.employeeId}]</span>}
                                 {deptName}
                             </td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Contact Number:</td>
-                            <td className="py-1 px-2.5 text-slate-800">{user.mobile || 'N/A'}</td>
+                            <td className="py-1 px-2.5 font-semibold text-quiet">Contact Number:</td>
+                            <td className="py-1 px-2.5 text-ink">{user.mobile || 'N/A'}</td>
                         </tr>
-                        <tr className="border-b border-slate-200 bg-slate-50">
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">{deviceType} Asset ID:</td>
-                            <td className="py-1 px-2.5 font-mono font-bold text-slate-900">{laptop.assetId}</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Work Location:</td>
-                            <td className="py-1 px-2.5 text-slate-800">{branchLocation}</td>
+                        <tr className="border-b border-line bg-canvas">
+                            <td className="py-1 px-2.5 font-semibold text-quiet">{deviceType} Asset ID:</td>
+                            <td className="py-1 px-2.5 font-mono font-bold text-ink">{laptop.assetId}</td>
+                            <td className="py-1 px-2.5 font-semibold text-quiet">Work Location:</td>
+                            <td className="py-1 px-2.5 text-ink">{branchLocation}</td>
                         </tr>
                         <tr>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Issuing Entity:</td>
-                            <td className="py-1 px-2.5 text-slate-800">{companyCode} — {currentCompany.name.replace(' Pvt. Ltd.', '')}</td>
-                            <td className="py-1 px-2.5 font-semibold text-slate-600">Issued Condition:</td>
-                            <td className="py-1 px-2.5 font-bold text-slate-900">{laptop.condition || 'Good'} (1 Unit)</td>
+                            <td className="py-1 px-2.5 font-semibold text-quiet">Issuing Entity:</td>
+                            <td className="py-1 px-2.5 text-ink">{companyCode} — {currentCompany.name.replace(' Pvt. Ltd.', '')}</td>
+                            <td className="py-1 px-2.5 font-semibold text-quiet">Issued Condition:</td>
+                            <td className="py-1 px-2.5 font-bold text-ink">{laptop.condition || 'Good'} (1 Unit)</td>
                         </tr>
                     </tbody>
                 </table>
@@ -194,23 +194,23 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
 
             {/* ── 4. Technical Specifications Table (Balanced 2-Column Paired Layout) ── */}
             <div className="mb-2.5">
-                <div className="flex justify-between items-center bg-slate-800 text-white px-2.5 py-1 rounded-t">
+                <div className="flex justify-between items-center bg-strong text-on-strong px-2.5 py-1 rounded-t">
                     <span className="font-bold text-[8.5pt] uppercase tracking-wider">Technical Specifications & Hardware Details</span>
                     <span className="text-[7.5pt] opacity-80">Serial No: <strong className="font-mono">{laptop.serialNumber || 'N/A'}</strong></span>
                 </div>
-                <table className="w-full border-collapse border border-slate-300 text-[8pt]">
+                <table className="w-full border-collapse border border-line text-[8pt]">
                     <tbody>
                         {pairedSpecs.map(([col1, col2], index) => (
-                            <tr key={index} className={`border-b border-slate-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}`}>
-                                <td className="py-1 px-2 font-semibold text-slate-600 w-[18%]">{col1.label}:</td>
-                                <td className="py-1 px-2 text-slate-900 font-medium w-[32%] border-r border-slate-200">{col1.value || '—'}</td>
+                            <tr key={index} className={`border-b border-line ${index % 2 === 0 ? 'bg-surface' : 'bg-canvas/60'}`}>
+                                <td className="py-1 px-2 font-semibold text-quiet w-[18%]">{col1.label}:</td>
+                                <td className="py-1 px-2 text-ink font-medium w-[32%] border-r border-line">{col1.value || '—'}</td>
                                 {col2 ? (
                                     <>
-                                        <td className="py-1 px-2 font-semibold text-slate-600 w-[18%]">{col2.label}:</td>
-                                        <td className="py-1 px-2 text-slate-900 font-medium w-[32%]">{col2.value || '—'}</td>
+                                        <td className="py-1 px-2 font-semibold text-quiet w-[18%]">{col2.label}:</td>
+                                        <td className="py-1 px-2 text-ink font-medium w-[32%]">{col2.value || '—'}</td>
                                     </>
                                 ) : (
-                                    <td colSpan={2} className="py-1 px-2 text-slate-400 italic">—</td>
+                                    <td colSpan={2} className="py-1 px-2 text-quiet italic">—</td>
                                 )}
                             </tr>
                         ))}
@@ -219,11 +219,11 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
             </div>
 
             {/* ── 5. Terms and Conditions ── */}
-            <div className="mb-2.5 p-2 bg-slate-50 rounded border border-slate-200 text-[7.8pt] leading-tight">
-                <p className="font-bold text-slate-900 mb-1 uppercase tracking-wide text-[8pt]">
+            <div className="mb-2.5 p-2 bg-canvas rounded border border-line text-[7.8pt] leading-tight">
+                <p className="font-bold text-ink mb-1 uppercase tracking-wide text-[8pt]">
                     Terms & Conditions of Asset Allocation:
                 </p>
-                <ol className="list-decimal list-inside space-y-0.5 text-slate-700 pl-0.5">
+                <ol className="list-decimal list-inside space-y-0.5 text-ink pl-0.5">
                     <li>The {deviceType.toLowerCase()} issued is solely for official and authorized company business purposes.</li>
                     <li>The employee shall be fully accountable for the safe custody, theft, loss, or accidental damage of the property.</li>
                     <li>Any additional software or hardware required must be communicated via email and approved by the IT Department.</li>
@@ -235,48 +235,48 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
             </div>
 
             {/* ── 6. Acknowledgment & Dual Signature Block ── */}
-            <footer className="pt-2 border-t-2 border-slate-900 text-[8.5pt]">
-                <p className="text-[8pt] text-slate-700 mb-2 italic">
+            <footer className="pt-2 border-t-2 border-line text-[8.5pt]">
+                <p className="text-[8pt] text-ink mb-2 italic">
                     "I, the undersigned, hereby acknowledge receipt of the {deviceType.toLowerCase()} detailed above in {laptop.condition ? `${laptop.condition} working condition` : 'complete and satisfactory working condition'}, and agree to abide by all the terms, security guidelines, and policies specified herein."
                 </p>
                 <div className="flex justify-between items-end gap-6">
                     {/* Left: Employee Signature */}
                     <div className="flex-1">
-                        <p className="font-bold text-[8.5pt] text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-0.5 mb-1.5">
+                        <p className="font-bold text-[8.5pt] text-ink uppercase tracking-wider border-b border-line pb-0.5 mb-1.5">
                             Employee Acknowledgment
                         </p>
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[8pt]">
                             <div>
-                                <span className="text-slate-500 block text-[7.5pt]">Signature:</span>
-                                <div className="h-5 border-b border-slate-400 w-full"></div>
+                                <span className="text-quiet block text-[7.5pt]">Signature:</span>
+                                <div className="h-5 border-b border-line w-full"></div>
                             </div>
                             <div>
-                                <span className="text-slate-500 block text-[7.5pt]">Employee Name:</span>
-                                <p className="font-bold text-slate-900 pt-0.5 truncate">{user.name}</p>
+                                <span className="text-quiet block text-[7.5pt]">Employee Name:</span>
+                                <p className="font-bold text-ink pt-0.5 truncate">{user.name}</p>
                             </div>
                             <div>
-                                <span className="text-slate-500 block text-[7.5pt]">Received Date:</span>
-                                <div className="h-5 border-b border-slate-400 w-full"></div>
+                                <span className="text-quiet block text-[7.5pt]">Received Date:</span>
+                                <div className="h-5 border-b border-line w-full"></div>
                             </div>
                             <div>
-                                <span className="text-slate-500 block text-[7.5pt]">Place / Branch:</span>
-                                <p className="font-medium text-slate-800 pt-0.5">{branchLocation}</p>
+                                <span className="text-quiet block text-[7.5pt]">Place / Branch:</span>
+                                <p className="font-medium text-ink pt-0.5">{branchLocation}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Right: IT Authorization & QR Code */}
-                    <div className="flex items-end gap-3 flex-shrink-0 pl-4 border-l border-slate-200">
+                    <div className="flex items-end gap-3 flex-shrink-0 pl-4 border-l border-line">
                         <div className="text-right text-[8pt]">
-                            <p className="font-bold text-[8.5pt] text-slate-900 uppercase tracking-wider mb-1">
+                            <p className="font-bold text-[8.5pt] text-ink uppercase tracking-wider mb-1">
                                 Authorized Signatory
                             </p>
-                            <div className="h-5 border-b border-slate-400 w-32 ml-auto mb-1"></div>
-                            <p className="text-[7.5pt] text-slate-500">IT Department / Avana</p>
+                            <div className="h-5 border-b border-line w-32 ml-auto mb-1"></div>
+                            <p className="text-[7.5pt] text-quiet">IT Department / Avana</p>
                         </div>
-                        <div className="text-center flex-shrink-0 bg-white p-1 rounded border border-slate-200 shadow-sm">
+                        <div className="text-center flex-shrink-0 bg-surface p-1 rounded border border-line shadow-sm">
                             <canvas ref={qrCodeRef} style={{ width: '64px', height: '64px', display: 'block' }}></canvas>
-                            <p className="text-[7pt] font-mono text-slate-700 font-bold mt-0.5">{laptop.assetId}</p>
+                            <p className="text-[7pt] font-mono text-ink font-bold mt-0.5">{laptop.assetId}</p>
                         </div>
                     </div>
                 </div>
@@ -285,4 +285,4 @@ const DeclarationForm: React.FC<DeclarationFormProps> = ({ user, laptop, assigne
     );
 };
 
-export default DeclarationForm;
+export default DeclarationForm;

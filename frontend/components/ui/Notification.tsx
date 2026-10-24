@@ -1,37 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NotificationType } from '../../types';
-
-interface NotificationProps {
-    notification: NotificationType | null;
-    onClear: () => void;
-}
-
+interface NotificationProps { notification: NotificationType | null; onClear: () => void; }
 const Notification: React.FC<NotificationProps> = ({ notification, onClear }) => {
-    const [isVisible, setIsVisible] = useState(false);
-
+    const clear = useRef(onClear);
+    clear.current = onClear;
     useEffect(() => {
-        if (notification) {
-            setIsVisible(true);
-            const timer = setTimeout(() => {
-                setIsVisible(false);
-                // Wait for animation to finish before clearing
-                setTimeout(onClear, 300);
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [notification, onClear]);
-
+        if (!notification || notification.type === 'error') return;
+        const timer = setTimeout(() => clear.current(), 6000);
+        return () => clearTimeout(timer);
+    }, [notification]);
     if (!notification) return null;
-
-    const baseStyle = "fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-lg z-[70] transition-all duration-300 transform";
-    const typeStyles = { success: 'bg-green-500', error: 'bg-red-500' };
-    const visibilityStyles = isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12';
-    
+    const error = notification.type === 'error';
     return (
-        <div className={`${baseStyle} ${typeStyles[notification.type] || 'bg-gray-800'} ${visibilityStyles}`}>
-            {notification.message}
+        <div role={error ? 'alert' : 'status'} aria-live={error ? 'assertive' : 'polite'} aria-atomic="true"
+            className="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-[80] max-h-[40dvh] overflow-y-auto flex items-start gap-3 bg-strong text-on-strong px-4 py-3 rounded-xl shadow-lg border border-accent">
+            <span aria-hidden="true" className="font-bold text-lg">{error ? '!' : '✓'}</span>
+            <div className="min-w-0 flex-1"><p className="font-semibold text-sm">{error ? 'Action needed' : 'Success'}</p><p className="text-sm break-words mt-0.5">{notification.message}</p></div>
+            <button type="button" onClick={onClear} aria-label="Dismiss notification" className="shrink-0 p-2 rounded-lg border border-line">×</button>
         </div>
     );
 };
-
 export default Notification;

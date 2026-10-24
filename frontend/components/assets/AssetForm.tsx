@@ -18,7 +18,7 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
     const inputId = id || name;
     return (
         <div>
-            <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <label htmlFor={inputId} className="block text-sm font-medium text-ink">{label}</label>
             <input
                 id={inputId}
                 name={name}
@@ -27,9 +27,9 @@ const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label:
                 data-1p-ignore="true"
                 data-form-type="other"
                 {...props}
-                className={`mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:border-red-500 focus:ring-red-500'}`}
+                className={`mt-1 block w-full px-3 py-2 bg-surface  border rounded-md text-sm shadow-sm placeholder-quiet  focus:outline-none focus:ring-1 text-ink  ${error ? 'border-line focus:border-line focus:ring-accent' : 'border-line  focus:border-line focus:ring-accent'}`}
             />
-            {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="mt-1 text-xs text-ink">{error}</p>}
         </div>
     );
 };
@@ -38,7 +38,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
     const selectId = id || name;
     return (
         <div>
-            <label htmlFor={selectId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <label htmlFor={selectId} className="block text-sm font-medium text-ink">{label}</label>
             <select
                 id={selectId}
                 name={name}
@@ -47,7 +47,7 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
                 data-1p-ignore="true"
                 data-form-type="other"
                 {...props}
-                className="mt-1 block w-full pl-3 pr-10 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 text-slate-900 dark:text-slate-100"
+                className="mt-1 block w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:bg-canvas disabled:text-quiet disabled:border-line text-ink"
             >
                 {children}
             </select>
@@ -59,7 +59,7 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
     const textareaId = id || name;
     return (
         <div>
-            <label htmlFor={textareaId} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+            <label htmlFor={textareaId} className="block text-sm font-medium text-ink">{label}</label>
             <textarea
                 id={textareaId}
                 name={name}
@@ -69,7 +69,7 @@ const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> &
                 data-form-type="other"
                 {...props}
                 rows={3}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink"
             ></textarea>
         </div>
     );
@@ -82,7 +82,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     const [isSubmitting, setIsSubmitting] = useState(false);
     const initialFormState: any = {
         id: 0, assetId: '', assetCode: '', name: '', category: 'Laptop', brand: '', model: '', serialNumber: '', location: '', company: 'AMD',
-        status: 'Available', condition: 'Good', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '', 
+        status: 'Available', condition: 'Good', assigneeId: '', assigneeType: null, purchaseId: '', manufacturer: '', remarks: '',
         warrantyType: 'Years', warrantyYears: '', warrantyStartDate: '', warrantyEndDate: '',
         specs: { os: '', storage: '', ram: '', processor: '', color: '', chargerAdapter: '', graphics: '', memoryTechnology: '', battery: '', dimensions: '', audio: '', displaySize: '', itemWeight: '', software: '' }
     };
@@ -117,7 +117,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 const fullSpecs = { ...initialFormState.specs, ...rawSpecs };
                 const standardSpecKeys = Object.keys(initialFormState.specs);
                 const customSpecEntries = Object.entries(fullSpecs).filter(([key]) => !standardSpecKeys.includes(key));
-    
+
                 setCustomFields(customSpecEntries.map(([fieldName, fieldValue], index) => ({
                     id: Date.now() + index,
                     fieldName,
@@ -127,7 +127,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 const isCustom = assetType === 'Device' && !STANDARD_DEVICE_TYPES.includes(asset.category);
                 setIsOtherDeviceType(isCustom);
                 setCustomDeviceType(isCustom ? asset.category : '');
-    
+
                 setFormData({
                     ...initialFormState,
                     ...asset,
@@ -136,7 +136,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     assigneeId: asset.assigneeId || '',
                     serialNumber: ''
                 });
-    
+
                 setQuantity(1);
                 setSerialNumbers([{ value: asset.serialNumber || (asset.specs as any)?.serviceTag || '', error: undefined }]);
             } else { // Creating a brand new, empty asset
@@ -194,7 +194,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
         let newQuantity = parseInt(e.target.value, 10);
         if (isNaN(newQuantity) || newQuantity < 1) newQuantity = 1;
         if (newQuantity > 50) newQuantity = 50; // Limit to 50 assets at a time
-        
+
         setQuantity(newQuantity);
         setSerialNumbers(currentSerials => {
             const newSerials = [...currentSerials];
@@ -220,7 +220,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation for serial numbers
         const seenSerials = new Set();
         let isValid = true;
@@ -271,8 +271,8 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 derivedLocation = d?.name || 'Department';
             }
 
-            const finalData = { 
-                ...formData, 
+            const finalData = {
+                ...formData,
                 location: derivedLocation,
                 category: effectiveCategory,
                 purchaseId: formData.purchaseId ? Number(formData.purchaseId) : null,
@@ -291,7 +291,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
             } else {
                 finalSpecs = {};
             }
-            
+
             finalData.specs = finalSpecs;
             finalData.serialNumber = serialNumbers[i].value.trim();
             if(!asset || !asset.id){
@@ -299,7 +299,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
             }
             assetsToSave.push(finalData);
         }
-        
+
         try {
             setIsSubmitting(true);
             await onSave(assetsToSave);
@@ -323,9 +323,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? `Edit ${asset.name}` : `Add New ${assetType}`} maxWidth="max-w-4xl">
             <form onSubmit={handleSubmit} autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="space-y-6">
-                
+
                 <fieldset>
-                    <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Core Information</legend>
+                    <legend className="text-lg font-semibold text-ink mb-4">Core Information</legend>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput label="Asset Name" type="text" name="name" value={formData.name} onChange={handleChange} required />
                         <FormSelect label="Company" name="company" value={formData.company} onChange={handleChange} disabled={!!purchaseDate || isEditing}>
@@ -364,13 +364,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     </div>
                 </fieldset>
 
-                 <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                    <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Asset & Serial Numbers</legend>
+                 <fieldset className="mt-6 border-t border-line pt-6">
+                    <legend className="text-lg font-semibold text-ink mb-4">Asset & Serial Numbers</legend>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput label="Asset Code (e.g., LAP for Laptop)" type="text" name="assetCode" value={formData.assetCode} onChange={handleChange} maxLength={3} required disabled={isEditing} />
                          {purchaseDate && <FormInput label="Purchase Date" type="date" value={purchaseDate} readOnly />}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Serial Number(s)</label>
+                            <label className="block text-sm font-medium text-ink">Serial Number(s)</label>
                             <div className="mt-1 space-y-2 max-h-40 overflow-y-auto pr-2">
                                 {serialNumbers.map((sn, index) => (
                                     <FormInput
@@ -389,12 +389,12 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                     </div>
                 </fieldset>
 
-                <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                    <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Status & Assignment</legend>
+                <fieldset className="mt-6 border-t border-line pt-6">
+                    <legend className="text-lg font-semibold text-ink mb-4">Status & Assignment</legend>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
                          <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
-                            <input type="text" value={formData.status} className="mt-1 block w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm" readOnly />
+                            <label className="block text-sm font-medium text-ink">Status</label>
+                            <input aria-label="Status" type="text" value={formData.status} className="mt-1 block w-full px-3 py-2 bg-muted border-line rounded-md shadow-sm text-sm" readOnly />
                         </div>
                         <FormSelect label="Physical Condition" name="condition" value={formData.condition || 'Good'} onChange={handleChange} required>
                             <option value="Brand New">Brand New</option>
@@ -418,9 +418,9 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                         )}
                     </div>
                 </fieldset>
-                
-                <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                    <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Warranty Details</legend>
+
+                <fieldset className="mt-6 border-t border-line pt-6">
+                    <legend className="text-lg font-semibold text-ink mb-4">Warranty Details</legend>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <FormSelect label="Warranty Type" name="warrantyType" value={formData.warrantyType} onChange={handleChange}>
                                 <option value="None">No Warranty</option>
@@ -443,39 +443,39 @@ const AssetForm: React.FC<AssetFormProps> = ({ isOpen, onClose, onSave, asset, a
                 </fieldset>
 
                 {(assetType === 'Device' || isOtherDeviceType || ['Laptop', 'Desktop', 'Server', 'Tablet', 'Mobile', 'Device'].includes(formData.category)) && (
-                    <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                        <legend className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Device Specifications</legend>
+                    <fieldset className="mt-6 border-t border-line pt-6">
+                        <legend className="text-lg font-semibold text-ink mb-4">Device Specifications</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                              {Object.keys(initialFormState.specs).map(key => (
                                  <div key={key}>
-                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
-                                     <input type="text" name={key} value={(formData.specs as any)[key] || ''} onChange={handleSpecChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                                     <label className="block text-sm font-medium text-ink capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
+                                     <input type="text" name={key} value={(formData.specs as any)[key] || ''} onChange={handleSpecChange} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                                  </div>
                              ))}
                         </div>
-                        <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                            <h4 className="text-md font-semibold text-slate-700 dark:text-slate-200 mb-4">Custom Specifications</h4>
+                        <div className="mt-6 border-t border-line pt-6">
+                            <h4 className="text-md font-semibold text-ink mb-4">Custom Specifications</h4>
                             <div className="space-y-3">
                                 {customFields.map((field) => (
                                     <div key={field.id} className="flex items-center gap-2">
-                                        <input type="text" name="fieldName" value={field.fieldName} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Name (e.g. GPU)" className="w-1/2 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"/>
-                                        <input type="text" name="fieldValue" value={field.fieldValue} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Value (e.g. NVIDIA RTX 3080)" className="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100"/>
-                                        <button type="button" onClick={() => removeCustomField(field.id)} className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 rounded-full hover:bg-red-200 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">{ICONS.remove}</button>
+                                        <input type="text" name="fieldName" value={field.fieldName} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Name (e.g. GPU)" className="w-1/2 px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink"/>
+                                        <input type="text" name="fieldValue" value={field.fieldValue} onChange={(e) => handleCustomFieldChange(field.id, e)} placeholder="Field Value (e.g. NVIDIA RTX 3080)" className="flex-1 px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink"/>
+                                        <button type="button" onClick={() => removeCustomField(field.id)} className="flex-shrink-0 flex items-center justify-center w-8 h-8 bg-surface text-ink rounded-full hover:bg-surface">{ICONS.remove}</button>
                                     </div>
                                 ))}
                             </div>
-                            <button type="button" onClick={addCustomField} className="mt-4 text-sm font-medium text-brand-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1"><span className="w-5 h-5">{ICONS.add}</span> Add Custom Field</button>
+                            <button type="button" onClick={addCustomField} className="mt-4 text-sm font-medium text-ink hover:text-ink flex items-center gap-1"><span className="w-5 h-5">{ICONS.add}</span> Add Custom Field</button>
                         </div>
                     </fieldset>
                 )}
-                
-                <fieldset className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
+
+                <fieldset className="mt-6 border-t border-line pt-6">
                      <FormTextarea label="Remarks" name="remarks" value={formData.remarks} onChange={handleChange} />
                 </fieldset>
 
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-6 gap-3">
-                    <button type="button" onClick={onClose} className="w-full sm:w-auto justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
-                    <button type="submit" disabled={isSubmitting} className={`w-full sm:w-auto justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95 flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <button type="button" onClick={onClose} className="w-full sm:w-auto justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95 flex items-center">Cancel</button>
+                    <button type="submit" disabled={isSubmitting} className={`w-full sm:w-auto justify-center bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium transition-all duration-200 active:scale-95 flex items-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         {isSubmitting ? 'Saving...' : 'Save Asset'}
                     </button>
                 </div>

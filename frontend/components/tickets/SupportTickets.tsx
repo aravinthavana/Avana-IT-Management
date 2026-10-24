@@ -1,3 +1,4 @@
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -45,7 +46,7 @@ const CANNED_RESPONSES = [
 const SupportTickets: React.FC = () => {
     const { tickets, setTickets, getHeaders, setNotification, assets, navigate, users, kbArticles = [] } = useAppContext();
     const { user } = useAuth();
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [comments, setComments] = useState<TicketComment[]>([]);
@@ -75,7 +76,7 @@ const SupportTickets: React.FC = () => {
     const [commentAttachments, setCommentAttachments] = useState<TicketAttachment[]>([]);
     const [isUploadingTicketFile, setIsUploadingTicketFile] = useState(false);
     const [isUploadingCommentFile, setIsUploadingCommentFile] = useState(false);
-    
+
     const ticketFileInputRef = useRef<HTMLInputElement>(null);
     const commentFileInputRef = useRef<HTMLInputElement>(null);
     const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -83,6 +84,12 @@ const SupportTickets: React.FC = () => {
     const scrollToBottom = () => {
         commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    const createDialogRef = useDialogAccessibility(isModalOpen, () => setIsModalOpen(false));
+    const detailDialogRef = useDialogAccessibility(Boolean(selectedTicket), () => setSelectedTicket(null));
+    const previewDialogRef = useDialogAccessibility(Boolean(selectedKbPreview), () => setSelectedKbPreview(null));
+    const resolutionDialogRef = useDialogAccessibility(resolvingTicketId !== null, () => setResolvingTicketId(null));
+    const deleteDialogRef = useDialogAccessibility(deletingTicketId !== null, () => setDeletingTicketId(null));
 
     useEffect(() => {
         scrollToBottom();
@@ -409,22 +416,22 @@ const SupportTickets: React.FC = () => {
 
     const getPriorityColor = (p: string) => {
         switch (p) {
-            case 'Urgent': return 'text-brand-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50';
-            case 'High': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50';
-            case 'Medium': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
-            default: return 'text-slate-600 bg-slate-100 dark:bg-slate-900/30 dark:text-slate-400 border border-slate-200 dark:border-slate-800';
+            case 'Urgent': return 'text-ink bg-surface   border border-line ';
+            case 'High': return 'text-ink bg-surface   border border-line ';
+            case 'Medium': return 'text-ink bg-surface   border border-line ';
+            default: return 'text-quiet bg-muted   border border-line ';
         }
     };
 
     const getStatusColor = (s: string) => {
         switch (s) {
-            case 'Open': return 'text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
-            case 'In Progress': return 'text-blue-700 bg-blue-100 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200 dark:border-blue-800';
-            case 'Waiting on User': return 'text-amber-700 bg-amber-100 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-800';
-            case 'Waiting on Vendor': return 'text-purple-700 bg-purple-100 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-200 dark:border-purple-800';
-            case 'Resolved': return 'text-teal-700 bg-teal-100 dark:bg-teal-950/60 dark:text-teal-400 border border-teal-200 dark:border-teal-800';
-            case 'Closed': return 'text-slate-500 bg-slate-100 dark:bg-slate-800/60 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
-            default: return 'text-slate-600 bg-slate-100 dark:bg-slate-800 border border-slate-200';
+            case 'Open': return 'text-ink bg-surface   border border-line ';
+            case 'In Progress': return 'text-ink bg-surface   border border-line ';
+            case 'Waiting on User': return 'text-ink bg-surface   border border-line ';
+            case 'Waiting on Vendor': return 'text-ink bg-surface   border border-line ';
+            case 'Resolved': return 'text-ink bg-surface   border border-line ';
+            case 'Closed': return 'text-quiet bg-muted   border border-line ';
+            default: return 'text-quiet bg-muted  border border-line';
         }
     };
 
@@ -433,27 +440,27 @@ const SupportTickets: React.FC = () => {
         const compUpper = company.toUpperCase();
         if (compUpper.includes('MEDICAL') || compUpper.includes('AMD')) {
             return (
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800" title="Avana Medical Devices">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-surface text-ink border border-line" title="Avana Medical Devices">
                     AMD
                 </span>
             );
         }
         if (compUpper.includes('SURGICAL') || compUpper.includes('ASSP')) {
             return (
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800" title="Avana Surgical System India">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-surface text-ink border border-line" title="Avana Surgical System India">
                     ASSP
                 </span>
             );
         }
         if (compUpper.includes('TECHNOLOGY') || compUpper.includes('ATS')) {
             return (
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" title="Avana Technology Services">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider uppercase bg-surface text-ink border border-line" title="Avana Technology Services">
                     ATS
                 </span>
             );
         }
         return (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-muted text-ink border border-line">
                 {company.slice(0, 4)}
             </span>
         );
@@ -471,21 +478,21 @@ const SupportTickets: React.FC = () => {
         if (diffDays >= 7) {
             return {
                 label: `Stale (${diffDays}d)`,
-                color: 'text-red-700 bg-red-50 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/50',
-                dot: 'bg-red-500'
+                color: 'text-ink bg-surface border-line   ',
+                dot: 'bg-olive'
             };
         }
         if (diffDays >= 3) {
             return {
                 label: `Idle (${diffDays}d)`,
-                color: 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50',
-                dot: 'bg-amber-500'
+                color: 'text-ink bg-surface border-line   ',
+                dot: 'bg-olive'
             };
         }
         return {
             label: 'Active (<48h)',
-            color: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50',
-            dot: 'bg-emerald-500'
+            color: 'text-ink bg-surface border-line   ',
+            dot: 'bg-olive'
         };
     };
 
@@ -509,7 +516,7 @@ const SupportTickets: React.FC = () => {
     const matchingKbArticles = useMemo(() => {
         const term = formData.subject.trim().toLowerCase();
         if (term.length < 3 || !kbArticles || kbArticles.length === 0) return [];
-        return kbArticles.filter(a => 
+        return kbArticles.filter(a =>
             a.title.toLowerCase().includes(term) ||
             a.category.toLowerCase().includes(term) ||
             (a.content && a.content.toLowerCase().includes(term))
@@ -532,7 +539,7 @@ const SupportTickets: React.FC = () => {
                 const s = searchTerm.toLowerCase().trim();
                 const rawNumeric = s.replace(/^#?tkt-?/i, '');
                 const formattedId = formatTicketId(t.id).toLowerCase();
-                const matchesSearch = 
+                const matchesSearch =
                     t.subject.toLowerCase().includes(s) ||
                     t.category.toLowerCase().includes(s) ||
                     (t.user?.name && t.user.name.toLowerCase().includes(s)) ||
@@ -541,7 +548,7 @@ const SupportTickets: React.FC = () => {
                     formattedId.includes(s);
                 if (!matchesSearch) return false;
             }
-            
+
             // Status filter
             if (statusFilter === 'Waiting') {
                 if (t.status !== 'Waiting on User' && t.status !== 'Waiting on Vendor') return false;
@@ -586,16 +593,16 @@ const SupportTickets: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Support Tickets</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        {isAdmin 
-                            ? 'Helpdesk operations console: track, assign, and resolve IT technical support requests.' 
+                    <h2 className="text-2xl font-bold text-ink">Support Tickets</h2>
+                    <p className="text-quiet text-sm">
+                        {isAdmin
+                            ? 'Helpdesk operations console: track, assign, and resolve IT technical support requests.'
                             : 'Submit and track your IT technical support requests and view live resolution updates.'}
                     </p>
                 </div>
-                <button 
-                    onClick={() => setIsModalOpen(true)} 
-                    className="bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-brand-600/20 font-bold"
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-accent text-on-strong px-5 py-2.5 rounded-xl hover:bg-accent transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-strong/15 font-bold"
                 >
                     {ICONS.add} New Ticket
                 </button>
@@ -605,136 +612,136 @@ const SupportTickets: React.FC = () => {
             {isAdmin ? (
                 /* Admin: 5-Card Helpdesk Operations Triage Bar */
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-                    <div 
-                        onClick={() => setStatusFilter('All')} 
+                    <div
+                        onClick={() => setStatusFilter('All')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'All' 
-                                ? 'bg-brand-50 border-brand-300 dark:bg-red-950/20 dark:border-brand-600/50 shadow-sm ring-2 ring-brand-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'All'
+                                ? 'bg-surface border-accent   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Total Active</p>
-                        <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{activeTicketsCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">In queue / open</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-quiet">Total Active</p>
+                        <p className="text-2xl font-black text-ink mt-1">{activeTicketsCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">In queue / open</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter('In Progress')} 
+                    <div
+                        onClick={() => setStatusFilter('In Progress')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'In Progress' 
-                                ? 'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700 shadow-sm ring-2 ring-blue-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'In Progress'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">In Progress</p>
-                        <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{inProgressCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Being worked on</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-ink">In Progress</p>
+                        <p className="text-2xl font-black text-ink mt-1">{inProgressCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">Being worked on</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter('Waiting')} 
+                    <div
+                        onClick={() => setStatusFilter('Waiting')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Waiting' 
-                                ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm ring-2 ring-amber-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Waiting'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Waiting</p>
-                        <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{waitingCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">User / Vendor ball</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-ink">Waiting</p>
+                        <p className="text-2xl font-black text-ink mt-1">{waitingCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">User / Vendor ball</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter('Stale')} 
+                    <div
+                        onClick={() => setStatusFilter('Stale')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Stale' 
-                                ? 'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-700 shadow-sm ring-2 ring-red-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Stale'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <p className="text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">Stale (7d+)</p>
-                            {staleCount > 0 && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+                            <p className="text-[11px] font-black uppercase tracking-wider text-ink">Stale (7d+)</p>
+                            {staleCount > 0 && <span className="w-2 h-2 rounded-full bg-olive"></span>}
                         </div>
-                        <p className="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{staleCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Needs attention</p>
+                        <p className="text-2xl font-black text-ink mt-1">{staleCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">Needs attention</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter('Resolved')} 
+                    <div
+                        onClick={() => setStatusFilter('Resolved')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Resolved' 
-                                ? 'bg-teal-50 border-teal-300 dark:bg-teal-950/30 dark:border-teal-700 shadow-sm ring-2 ring-teal-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Resolved'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Resolved</p>
-                        <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">{resolvedCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Completed tickets</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-ink">Resolved</p>
+                        <p className="text-2xl font-black text-ink mt-1">{resolvedCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">Completed tickets</p>
                     </div>
                 </div>
             ) : (
                 /* Regular Employee: Simplified 3-Card Summary */
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <div 
-                        onClick={() => setStatusFilter(statusFilter === 'Active' ? 'All' : 'Active')} 
+                    <div
+                        onClick={() => setStatusFilter(statusFilter === 'Active' ? 'All' : 'Active')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Active' 
-                                ? 'bg-brand-50 border-brand-300 dark:bg-red-950/20 dark:border-brand-600/50 shadow-sm ring-2 ring-brand-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Active'
+                                ? 'bg-surface border-accent   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Active Requests</p>
-                        <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{activeTicketsCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Under review &amp; in progress with IT</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-quiet">Active Requests</p>
+                        <p className="text-2xl font-black text-ink mt-1">{activeTicketsCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">Under review &amp; in progress with IT</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter(statusFilter === 'Waiting on User' ? 'All' : 'Waiting on User')} 
+                    <div
+                        onClick={() => setStatusFilter(statusFilter === 'Waiting on User' ? 'All' : 'Waiting on User')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Waiting on User' 
-                                ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm ring-2 ring-amber-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Waiting on User'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Awaiting Your Reply</p>
+                            <p className="text-[11px] font-black uppercase tracking-wider text-ink">Awaiting Your Reply</p>
                             {waitingOnUserCount > 0 && (
-                                <span className="px-2 py-0.5 bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 text-[10px] font-black rounded-full border border-amber-300 dark:border-amber-800 animate-pulse">
+                                <span className="px-2 py-0.5 bg-surface text-ink text-[10px] font-black rounded-full border border-line animate-pulse">
                                     Action Needed
                                 </span>
                             )}
                         </div>
-                        <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{waitingOnUserCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">IT technician requested additional info</p>
+                        <p className="text-2xl font-black text-ink mt-1">{waitingOnUserCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">IT technician requested additional info</p>
                     </div>
 
-                    <div 
-                        onClick={() => setStatusFilter(statusFilter === 'Resolved' ? 'All' : 'Resolved')} 
+                    <div
+                        onClick={() => setStatusFilter(statusFilter === 'Resolved' ? 'All' : 'Resolved')}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            statusFilter === 'Resolved' 
-                                ? 'bg-teal-50 border-teal-300 dark:bg-teal-950/30 dark:border-teal-700 shadow-sm ring-2 ring-teal-500/20' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            statusFilter === 'Resolved'
+                                ? 'bg-surface border-line   shadow-sm ring-2 ring-accent/20'
+                                : 'bg-surface  border-line  hover:border-line '
                         }`}
                     >
-                        <p className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">Resolved Requests</p>
-                        <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">{resolvedCount}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Successfully solved by IT</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-ink">Resolved Requests</p>
+                        <p className="text-2xl font-black text-ink mt-1">{resolvedCount}</p>
+                        <p className="text-[11px] text-quiet mt-0.5">Successfully solved by IT</p>
                     </div>
                 </div>
             )}
 
             {/* Manager / Scope Tabs */}
             {(user?.role === 'Admin' || isManager) && (
-                <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl w-fit">
+                <div className="flex gap-2 p-1 bg-muted rounded-xl w-fit">
                     {user?.role === 'Admin' ? (
                         <>
                             <button
                                 onClick={() => setTeamViewTab('all')}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     teamViewTab === 'all'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        ? 'bg-surface  text-ink  shadow-sm'
+                                        : 'text-quiet hover:text-ink '
                                 }`}
                             >
                                 All Organization Tickets ({tickets.length})
@@ -743,8 +750,8 @@ const SupportTickets: React.FC = () => {
                                 onClick={() => setTeamViewTab('my')}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     teamViewTab === 'my'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        ? 'bg-surface  text-ink  shadow-sm'
+                                        : 'text-quiet hover:text-ink '
                                 }`}
                             >
                                 Assigned to Me / Logged by Me
@@ -756,8 +763,8 @@ const SupportTickets: React.FC = () => {
                                 onClick={() => setTeamViewTab('all')}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     teamViewTab === 'all'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        ? 'bg-surface  text-ink  shadow-sm'
+                                        : 'text-quiet hover:text-ink '
                                 }`}
                             >
                                 All Accessible ({tickets.length})
@@ -766,8 +773,8 @@ const SupportTickets: React.FC = () => {
                                 onClick={() => setTeamViewTab('my')}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     teamViewTab === 'my'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        ? 'bg-surface  text-ink  shadow-sm'
+                                        : 'text-quiet hover:text-ink '
                                 }`}
                             >
                                 My Own Tickets
@@ -776,8 +783,8 @@ const SupportTickets: React.FC = () => {
                                 onClick={() => setTeamViewTab('team')}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     teamViewTab === 'team'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        ? 'bg-surface  text-ink  shadow-sm'
+                                        : 'text-quiet hover:text-ink '
                                 }`}
                             >
                                 👥 My Team&apos;s Tickets ({subordinatesTicketsCount})
@@ -788,10 +795,10 @@ const SupportTickets: React.FC = () => {
             )}
 
             {/* Search and Multi-Dimension Filters */}
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="bg-surface p-4 rounded-2xl border border-line space-y-3">
                 <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <div className="relative flex-1 w-full max-w-md">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-quiet">
                             {ICONS.search}
                         </span>
                         <input
@@ -799,12 +806,12 @@ const SupportTickets: React.FC = () => {
                             placeholder={isAdmin ? "Search by subject, category, user, root cause, or #TKT-0042..." : "Search your tickets by subject, category, or #TKT-0042..."}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
+                            className="w-full pl-10 pr-4 py-2 bg-canvas border border-line rounded-xl text-sm text-ink focus:outline-none focus:border-accent"
                         />
                     </div>
 
                     <div className="flex gap-1.5 flex-wrap w-full sm:w-auto items-center">
-                        {(isAdmin 
+                        {(isAdmin
                             ? [
                                 { id: 'All', label: 'All' },
                                 { id: 'Open', label: 'Open' },
@@ -826,13 +833,13 @@ const SupportTickets: React.FC = () => {
                                 onClick={() => setStatusFilter(item.id)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     statusFilter === item.id
-                                        ? 'bg-brand-600 text-white shadow-sm'
-                                        : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                                        ? 'bg-accent text-on-strong shadow-sm'
+                                        : 'bg-muted  text-quiet  hover:bg-muted '
                                 }`}
                             >
                                 {item.label}
                                 {!isAdmin && item.id === 'Waiting on User' && waitingOnUserCount > 0 && (
-                                    <span className="ml-1.5 px-1.5 py-0.2 bg-amber-500 text-white text-[10px] rounded-full">
+                                    <span className="ml-1.5 px-1.5 py-0.2 bg-olive text-on-strong text-[10px] rounded-full">
                                         {waitingOnUserCount}
                                     </span>
                                 )}
@@ -842,18 +849,18 @@ const SupportTickets: React.FC = () => {
                 </div>
 
                 {/* Dropdown Filters Row */}
-                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-                    <span className="font-black text-slate-400 uppercase tracking-widest text-[10px]">
+                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-line text-xs">
+                    <span className="font-black text-quiet uppercase tracking-widest text-[10px]">
                         Filters:
                     </span>
 
                     {/* Category Filter */}
                     <div className="flex items-center gap-1.5">
-                        <span className="text-slate-500 font-medium">Category:</span>
+                        <span className="text-quiet font-medium">Category:</span>
                         <select
                             value={categoryFilter}
                             onChange={e => setCategoryFilter(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                            className="bg-canvas border border-line rounded-lg px-2.5 py-1 text-ink font-bold outline-none"
                         >
                             <option value="All">All Categories</option>
                             {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -862,11 +869,11 @@ const SupportTickets: React.FC = () => {
 
                     {/* Priority Filter */}
                     <div className="flex items-center gap-1.5">
-                        <span className="text-slate-500 font-medium">Priority:</span>
+                        <span className="text-quiet font-medium">Priority:</span>
                         <select
                             value={priorityFilter}
                             onChange={e => setPriorityFilter(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                            className="bg-canvas border border-line rounded-lg px-2.5 py-1 text-ink font-bold outline-none"
                         >
                             <option value="All">All Priorities</option>
                             {priorities.map(p => <option key={p} value={p}>{p}</option>)}
@@ -876,11 +883,11 @@ const SupportTickets: React.FC = () => {
                     {/* Company Filter - Only visible to Admins managing multiple group companies */}
                     {isAdmin && (
                         <div className="flex items-center gap-1.5">
-                            <span className="text-slate-500 font-medium">Company:</span>
+                            <span className="text-quiet font-medium">Company:</span>
                             <select
                                 value={companyFilter}
                                 onChange={e => setCompanyFilter(e.target.value)}
-                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 font-bold outline-none"
+                                className="bg-canvas border border-line rounded-lg px-2.5 py-1 text-ink font-bold outline-none"
                             >
                                 <option value="All">All Companies</option>
                                 <option value="AMD">AMD (Medical Devices)</option>
@@ -892,7 +899,7 @@ const SupportTickets: React.FC = () => {
 
                     {/* Reset Filters */}
                     {hasActiveFilters && (
-                        <button 
+                        <button
                             onClick={() => {
                                 setStatusFilter('All');
                                 setCategoryFilter('All');
@@ -900,7 +907,7 @@ const SupportTickets: React.FC = () => {
                                 setCompanyFilter('All');
                                 setSearchTerm('');
                             }}
-                            className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950/40 rounded-lg transition-all ml-auto"
+                            className="text-xs font-bold text-ink hover:text-ink flex items-center gap-1 px-2.5 py-1 bg-surface rounded-lg transition-all ml-auto"
                         >
                             ✕ Reset Filters
                         </button>
@@ -909,46 +916,46 @@ const SupportTickets: React.FC = () => {
             </div>
 
             {/* Tickets Table */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+            <div className="bg-surface rounded-2xl shadow-sm border border-line overflow-hidden">
+                <div tabIndex={0} role="region" aria-label="Support tickets table; scroll horizontally for more columns" className="overflow-x-auto">
+                    <table className="w-full min-w-[640px] text-left">
+                        <thead className="bg-canvas border-b border-line">
                             <tr>
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Ticket</th>
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest">Ticket</th>
+                                <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest">
                                     {isAdmin ? 'Status & Aging' : 'Status'}
                                 </th>
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Priority</th>
+                                <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest">Priority</th>
                                 {(user?.role === 'Admin' || isManager) && (
-                                    <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Employee & Company</th>
+                                    <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest">Employee & Company</th>
                                 )}
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest">
                                     {isAdmin ? 'Assigned IT' : 'IT Technician'}
                                 </th>
-                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                                <th className="px-6 py-4 text-xs font-black text-quiet uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        <tbody className="divide-y divide-line">
                             {filteredTickets.map(ticket => {
                                 const aging = getTicketAging(ticket);
                                 return (
-                                    <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
+                                    <tr key={ticket.id} className="hover:bg-canvas transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono text-xs font-black text-brand-600 dark:text-red-400">
+                                                <span className="font-mono text-xs font-black text-ink">
                                                     {formatTicketId(ticket.id)}
                                                 </span>
-                                                <p className="font-bold text-slate-800 dark:text-white truncate max-w-xs">{ticket.subject}</p>
+                                                <p className="font-bold text-ink truncate max-w-xs">{ticket.subject}</p>
                                                 {ticket.attachments && parseAttachments(ticket.attachments).length > 0 && (
-                                                    <span className="text-xs text-slate-400" title="Has attachments">📎</span>
+                                                    <span className="text-xs text-quiet" title="Has attachments">📎</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                <span className="text-xs text-quiet">
                                                     {ticket.category} &bull; {new Date(ticket.createdAt).toLocaleDateString()}
                                                 </span>
                                                 {ticket.resolutionNotes && (
-                                                    <span className="text-[10px] bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 font-bold px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800" title="Has resolution summary">
+                                                    <span className="text-[10px] bg-surface text-ink font-bold px-1.5 py-0.5 rounded border border-line" title="Has resolution summary">
                                                         ✓ Root Cause Logged
                                                     </span>
                                                 )}
@@ -975,36 +982,36 @@ const SupportTickets: React.FC = () => {
                                         {(user?.role === 'Admin' || isManager) && (
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{ticket.user?.name || 'Unknown'}</p>
+                                                    <p className="text-sm font-bold text-ink">{ticket.user?.name || 'Unknown'}</p>
                                                     {getCompanyBadge(ticket.user?.company)}
                                                 </div>
-                                                <p className="text-xs text-slate-400">
+                                                <p className="text-xs text-quiet">
                                                     {(ticket.user as any)?.department?.name || ticket.user?.email || 'Employee'}
                                                 </p>
                                             </td>
                                         )}
                                         <td className="px-6 py-4">
                                             {ticket.assignedTo ? (
-                                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg">
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink bg-muted px-2.5 py-1 rounded-lg">
                                                     👤 {ticket.assignedTo.name}
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-slate-400 italic">Unassigned</span>
+                                                <span className="text-xs text-quiet italic">Unassigned</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button 
-                                                    onClick={() => setSelectedTicket(ticket)} 
-                                                    className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                <button
+                                                    onClick={() => setSelectedTicket(ticket)}
+                                                    className="p-2 text-quiet hover:text-ink rounded-lg hover:bg-surface transition-all"
                                                     title="View Discussion & Details"
                                                 >
                                                     {ICONS.view}
                                                 </button>
                                                 {user?.role === 'Admin' && (
-                                                    <button 
-                                                        onClick={() => setDeletingTicketId(ticket.id)} 
-                                                        className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                    <button
+                                                        onClick={() => setDeletingTicketId(ticket.id)}
+                                                        className="p-2 text-quiet hover:text-ink rounded-lg hover:bg-surface transition-all"
                                                         title="Delete Ticket"
                                                     >
                                                         {ICONS.delete}
@@ -1017,7 +1024,7 @@ const SupportTickets: React.FC = () => {
                             })}
                             {filteredTickets.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-quiet italic">
                                         No support tickets match your filters.
                                     </td>
                                 </tr>
@@ -1029,14 +1036,14 @@ const SupportTickets: React.FC = () => {
 
             {/* New Ticket Modal with Live Knowledge Base Deflection */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                <div ref={createDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Create support ticket" className="fixed inset-0 bg-strong/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in max-h-[calc(100dvh-1rem)] flex flex-col">
+                        <div className="px-8 py-6 border-b border-line flex justify-between items-center shrink-0">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white">New Support Request</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Submit technical issue to IT Helpdesk</p>
+                                <h3 className="text-xl font-black text-ink">New Support Request</h3>
+                                <p className="text-xs text-quiet mt-0.5">Submit technical issue to IT Helpdesk</p>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">
+                            <button aria-label="Close dialog" onClick={() => setIsModalOpen(false)} className="text-quiet hover:text-quiet transition-colors p-2 hover:bg-muted rounded-xl">
                                 {ICONS.close}
                             </button>
                         </div>
@@ -1044,15 +1051,15 @@ const SupportTickets: React.FC = () => {
                             <div className="p-8 space-y-5 overflow-y-auto">
                                 {/* Admin: Log on behalf of employee */}
                                 {user?.role === 'Admin' && (
-                                    <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <div className="bg-canvas p-4 rounded-2xl border border-line space-y-3">
                                         <div>
-                                            <label className="block text-xs font-black text-brand-600 dark:text-red-400 mb-1.5 uppercase tracking-wider">
+                                            <label className="block text-xs font-black text-ink mb-1.5 uppercase tracking-wider">
                                                 👤 Log Ticket On Behalf Of (Walk-in / Phone Support)
                                             </label>
-                                            <select 
-                                                value={formData.targetUserId} 
-                                                onChange={e => setFormData({ ...formData, targetUserId: e.target.value, assetId: '' })} 
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-800 dark:text-white text-sm outline-none focus:border-brand-500"
+                                            <select aria-label="👤 Log Ticket On Behalf Of (Walk-in / Phone Support)"
+                                                value={formData.targetUserId}
+                                                onChange={e => setFormData({ ...formData, targetUserId: e.target.value, assetId: '' })}
+                                                className="w-full bg-surface border border-line rounded-xl px-4 py-2.5 text-ink text-sm outline-none focus:border-accent"
                                             >
                                                 <option value="">Self ({user?.name || 'IT Admin'})</option>
                                                 {users.filter(u => u.status === 'Active' && u.id !== user?.id).map(u => (
@@ -1061,19 +1068,19 @@ const SupportTickets: React.FC = () => {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <p className="text-[10px] text-slate-400 mt-1">
+                                            <p className="text-[10px] text-quiet mt-1">
                                                 Selecting an employee links this ticket directly to their account and emails them updates.
                                             </p>
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-black text-slate-600 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                                            <label className="block text-xs font-black text-quiet mb-1.5 uppercase tracking-wider">
                                                 🛠️ Assign IT Technician (Optional)
                                             </label>
-                                            <select 
-                                                value={formData.assignedToId} 
-                                                onChange={e => setFormData({ ...formData, assignedToId: e.target.value })} 
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-800 dark:text-white text-sm outline-none focus:border-brand-500"
+                                            <select aria-label="🛠️ Assign IT Technician (Optional)"
+                                                value={formData.assignedToId}
+                                                onChange={e => setFormData({ ...formData, assignedToId: e.target.value })}
+                                                className="w-full bg-surface border border-line rounded-xl px-4 py-2.5 text-ink text-sm outline-none focus:border-accent"
                                             >
                                                 <option value="">General Support Queue (Unassigned)</option>
                                                 {supportAdmins.map(admin => (
@@ -1087,26 +1094,26 @@ const SupportTickets: React.FC = () => {
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Subject</label>
-                                    <input 
-                                        required 
-                                        value={formData.subject} 
-                                        onChange={e => setFormData({ ...formData, subject: e.target.value })} 
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none placeholder:text-slate-400" 
-                                        placeholder="Brief summary of the issue (e.g. Outlook crashing, VPN error)..." 
+                                    <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Subject</label>
+                                    <input aria-label="Subject"
+                                        required
+                                        value={formData.subject}
+                                        onChange={e => setFormData({ ...formData, subject: e.target.value })}
+                                        className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none placeholder:text-quiet"
+                                        placeholder="Brief summary of the issue (e.g. Outlook crashing, VPN error)..."
                                     />
                                 </div>
 
                                 {/* Instant Self-Service Knowledge Base Deflection Box */}
                                 {matchingKbArticles.length > 0 && (
-                                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 space-y-2.5 animate-fade-in">
+                                    <div className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 animate-fade-in">
                                         <div className="flex items-center gap-2">
                                             <span className="text-base">💡</span>
-                                            <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                            <span className="text-xs font-black uppercase tracking-wider text-ink">
                                                 Instant Self-Service Solutions ({matchingKbArticles.length})
                                             </span>
                                         </div>
-                                        <p className="text-xs text-amber-900/80 dark:text-amber-200/80">
+                                        <p className="text-xs text-ink">
                                             These verified guides might fix your problem immediately without waiting:
                                         </p>
                                         <div className="flex flex-col gap-1.5 pt-1">
@@ -1115,17 +1122,17 @@ const SupportTickets: React.FC = () => {
                                                     key={article.id}
                                                     type="button"
                                                     onClick={() => setSelectedKbPreview(article)}
-                                                    className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/90 rounded-xl border border-amber-200/60 dark:border-amber-800/40 text-left hover:border-amber-400 hover:shadow-sm transition-all group"
+                                                    className="flex items-center justify-between p-2.5 bg-surface rounded-xl border border-line/60 text-left hover:border-line hover:shadow-sm transition-all group"
                                                 >
                                                     <div className="flex items-center gap-2 truncate">
-                                                        <span className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-brand-600 dark:group-hover:text-red-400">
+                                                        <span className="text-xs font-bold text-ink group-hover:text-ink">
                                                             📄 {article.title}
                                                         </span>
-                                                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded font-medium">
+                                                        <span className="text-[10px] px-1.5 py-0.5 bg-muted text-quiet rounded font-medium">
                                                             {article.category}
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs font-bold text-brand-600 dark:text-red-400 ml-2 shrink-0 group-hover:underline">
+                                                    <span className="text-xs font-bold text-ink ml-2 shrink-0 group-hover:underline">
                                                         Read Guide &rarr;
                                                     </span>
                                                 </button>
@@ -1136,21 +1143,21 @@ const SupportTickets: React.FC = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Category</label>
-                                        <select 
-                                            value={formData.category} 
-                                            onChange={e => setFormData({ ...formData, category: e.target.value })} 
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none text-sm"
+                                        <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Category</label>
+                                        <select aria-label="Category"
+                                            value={formData.category}
+                                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none text-sm"
                                         >
                                             {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Priority</label>
-                                        <select 
-                                            value={formData.priority} 
-                                            onChange={e => setFormData({ ...formData, priority: e.target.value as any })} 
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none text-sm"
+                                        <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Priority</label>
+                                        <select aria-label="Priority"
+                                            value={formData.priority}
+                                            onChange={e => setFormData({ ...formData, priority: e.target.value as any })}
+                                            className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none text-sm"
                                         >
                                             {priorities.map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
@@ -1158,11 +1165,11 @@ const SupportTickets: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Related Asset (Optional)</label>
-                                    <select 
-                                        value={formData.assetId} 
-                                        onChange={e => setFormData({ ...formData, assetId: e.target.value })} 
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none text-sm"
+                                    <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Related Asset (Optional)</label>
+                                    <select aria-label="Related Asset (Optional)"
+                                        value={formData.assetId}
+                                        onChange={e => setFormData({ ...formData, assetId: e.target.value })}
+                                        className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none text-sm"
                                     >
                                         <option value="">No specific asset</option>
                                         {(() => {
@@ -1233,28 +1240,28 @@ const SupportTickets: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">Description</label>
-                                    <textarea 
-                                        required 
-                                        rows={4} 
-                                        value={formData.description} 
-                                        onChange={e => setFormData({ ...formData, description: e.target.value })} 
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl px-5 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-red-600/20 transition-all outline-none placeholder:text-slate-400" 
-                                        placeholder="Provide specific details about the issue..." 
+                                    <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Description</label>
+                                    <textarea aria-label="Description"
+                                        required
+                                        rows={4}
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none placeholder:text-quiet"
+                                        placeholder="Provide specific details about the issue..."
                                     />
                                 </div>
 
                                 {/* Attachments section */}
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight">
+                                        <label className="block text-sm font-black text-ink uppercase tracking-tight">
                                             Attachments (Screenshots / Logs)
                                         </label>
                                         <button
                                             type="button"
                                             onClick={() => ticketFileInputRef.current?.click()}
                                             disabled={isUploadingTicketFile}
-                                            className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-red-400 flex items-center gap-1"
+                                            className="text-xs font-bold text-ink hover:text-ink flex items-center gap-1"
                                         >
                                             {isUploadingTicketFile ? 'Uploading...' : '+ Add File'}
                                         </button>
@@ -1270,12 +1277,12 @@ const SupportTickets: React.FC = () => {
                                     {ticketAttachments.length > 0 ? (
                                         <div className="flex flex-wrap gap-2 pt-1">
                                             {ticketAttachments.map((att, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs">
-                                                    <span className="truncate max-w-[180px] font-medium text-slate-700 dark:text-slate-200">{att.name}</span>
+                                                <div key={idx} className="flex items-center gap-2 bg-muted border border-line px-3 py-1.5 rounded-xl text-xs">
+                                                    <span className="truncate max-w-[180px] font-medium text-ink">{att.name}</span>
                                                     <button
                                                         type="button"
                                                         onClick={() => setTicketAttachments(prev => prev.filter((_, i) => i !== idx))}
-                                                        className="text-slate-400 hover:text-red-600 font-bold ml-1"
+                                                        className="text-quiet hover:text-ink font-bold ml-1"
                                                     >
                                                         &times;
                                                     </button>
@@ -1283,27 +1290,27 @@ const SupportTickets: React.FC = () => {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div 
+                                        <div
                                             onClick={() => ticketFileInputRef.current?.click()}
-                                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-center cursor-pointer hover:border-brand-500 transition-colors"
+                                            className="border-2 border-dashed border-line rounded-2xl p-4 text-center cursor-pointer hover:border-accent transition-colors"
                                         >
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">Click to upload screenshots, PDFs, or error logs (Up to 10MB)</p>
+                                            <p className="text-xs text-quiet">Click to upload screenshots, PDFs, or error logs (Up to 10MB)</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-4 shrink-0">
-                                <button 
-                                    type="button" 
-                                    onClick={() => setIsModalOpen(false)} 
-                                    className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-3 rounded-2xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]"
+                            <div className="px-8 py-6 border-t border-line bg-canvas flex gap-4 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 bg-muted text-ink py-3 rounded-2xl font-bold hover:bg-muted transition-all active:scale-[0.98]"
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="submit" 
-                                    disabled={submittingTicket || isUploadingTicketFile} 
-                                    className="flex-1 bg-brand-600 text-white py-3 rounded-2xl font-bold hover:bg-brand-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-xl shadow-brand-600/20"
+                                <button
+                                    type="submit"
+                                    disabled={submittingTicket || isUploadingTicketFile}
+                                    className="flex-1 bg-accent text-on-strong py-3 rounded-2xl font-bold hover:bg-accent disabled:opacity-50 transition-all active:scale-[0.98] shadow-xl shadow-strong/15"
                                 >
                                     {submittingTicket ? 'Submitting & Dispatching...' : 'Submit Ticket'}
                                 </button>
@@ -1315,33 +1322,33 @@ const SupportTickets: React.FC = () => {
 
             {/* KB Article Quick Self-Service Reader Modal */}
             {selectedKbPreview && (
-                <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[85vh] flex flex-col">
-                        <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                <div ref={previewDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Knowledge base preview" className="fixed inset-0 bg-strong/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
+                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[85vh] flex flex-col">
+                        <div className="px-8 py-5 border-b border-line flex justify-between items-center shrink-0">
                             <div>
-                                <span className="text-[10px] font-black uppercase tracking-wider text-brand-600 dark:text-red-400">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-ink">
                                     Knowledge Base &bull; {selectedKbPreview.category}
                                 </span>
-                                <h3 className="text-lg font-black text-slate-800 dark:text-white">{selectedKbPreview.title}</h3>
+                                <h3 className="text-lg font-black text-ink">{selectedKbPreview.title}</h3>
                             </div>
-                            <button 
-                                onClick={() => setSelectedKbPreview(null)} 
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl"
+                            <button aria-label="Close dialog"
+                                onClick={() => setSelectedKbPreview(null)}
+                                className="text-quiet hover:text-quiet p-2 hover:bg-muted rounded-xl"
                             >
                                 {ICONS.close}
                             </button>
                         </div>
                         <div className="p-8 overflow-y-auto space-y-4">
-                            <div 
-                                className="prose dark:prose-invert max-w-none text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                            <div
+                                className="prose dark:prose-invert max-w-none text-sm text-ink leading-relaxed"
                                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedKbPreview.content) }}
                             />
                         </div>
-                        <div className="px-8 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 flex justify-between items-center shrink-0">
+                        <div className="px-8 py-4 border-t border-line bg-canvas flex justify-between items-center shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setSelectedKbPreview(null)}
-                                className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                                className="text-xs font-bold text-quiet hover:text-ink"
                             >
                                 &larr; Continue Submitting Ticket
                             </button>
@@ -1355,7 +1362,7 @@ const SupportTickets: React.FC = () => {
                                         type: 'success'
                                     });
                                 }}
-                                className="px-4 py-2 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 hover:bg-teal-700 transition-all"
+                                className="px-4 py-2 bg-olive text-on-strong font-bold text-xs rounded-xl shadow-md shadow-strong/15 hover:bg-olive transition-all"
                             >
                                 ✓ This Solved My Problem! (Close Request)
                             </button>
@@ -1366,32 +1373,32 @@ const SupportTickets: React.FC = () => {
 
             {/* Ticket Detail & Discussion Modal */}
             {selectedTicket && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in max-h-[92vh] flex flex-col">
+                <div ref={detailDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Support ticket details" className="fixed inset-0 bg-strong/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in max-h-[calc(100dvh-1rem)] flex flex-col">
                         {/* Header */}
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                        <div className="px-8 py-6 border-b border-line flex justify-between items-center shrink-0">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-mono text-xs font-black text-brand-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/50">
+                                    <span className="font-mono text-xs font-black text-ink bg-surface px-2 py-0.5 rounded-md border border-line">
                                         {formatTicketId(selectedTicket.id)}
                                     </span>
                                     {getCompanyBadge(selectedTicket.user?.company)}
                                 </div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white">{selectedTicket.subject}</h3>
+                                <h3 className="text-xl font-black text-ink">{selectedTicket.subject}</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 {user?.role === 'Admin' && (
-                                    <button 
-                                        onClick={() => setDeletingTicketId(selectedTicket.id)} 
-                                        className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                                    <button
+                                        onClick={() => setDeletingTicketId(selectedTicket.id)}
+                                        className="text-quiet hover:text-ink p-2 hover:bg-surface rounded-xl transition-all"
                                         title="Delete Ticket"
                                     >
                                         {ICONS.delete}
                                     </button>
                                 )}
-                                <button 
-                                    onClick={() => setSelectedTicket(null)} 
-                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl"
+                                <button aria-label="Close dialog"
+                                    onClick={() => setSelectedTicket(null)}
+                                    className="text-quiet hover:text-quiet transition-colors p-2 hover:bg-muted rounded-xl"
                                 >
                                     {ICONS.close}
                                 </button>
@@ -1401,33 +1408,33 @@ const SupportTickets: React.FC = () => {
                         {/* Modal Body */}
                         <div className="p-8 space-y-6 overflow-y-auto">
                             {/* Key Metadata Grid */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-canvas p-4 rounded-2xl border border-line">
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                    <p className="text-[10px] font-black text-quiet uppercase tracking-widest mb-1">Status</p>
                                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-block ${getStatusColor(selectedTicket.status)}`}>
                                         {selectedTicket.status}
                                     </span>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Priority</p>
+                                    <p className="text-[10px] font-black text-quiet uppercase tracking-widest mb-1">Priority</p>
                                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-block ${getPriorityColor(selectedTicket.priority)}`}>
                                         {selectedTicket.priority}
                                     </span>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Category</p>
-                                    <p className="font-bold text-slate-800 dark:text-white text-sm">{selectedTicket.category}</p>
+                                    <p className="text-[10px] font-black text-quiet uppercase tracking-widest mb-1">Category</p>
+                                    <p className="font-bold text-ink text-sm">{selectedTicket.category}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Submitted By</p>
-                                    <p className="font-bold text-slate-800 dark:text-white text-sm">{selectedTicket.user?.name || 'Employee'}</p>
+                                    <p className="text-[10px] font-black text-quiet uppercase tracking-widest mb-1">Submitted By</p>
+                                    <p className="font-bold text-ink text-sm">{selectedTicket.user?.name || 'Employee'}</p>
                                 </div>
                             </div>
 
                             {/* Assignee & Resolution Timestamps */}
                             <div className="flex flex-wrap gap-4 text-xs">
                                 <div>
-                                    <span className="text-slate-400 font-medium">Assigned IT Technician: </span>
+                                    <span className="text-quiet font-medium">Assigned IT Technician: </span>
                                     {user?.role === 'Admin' ? (
                                         <select
                                             value={selectedTicket.assignedToId || ''}
@@ -1450,7 +1457,7 @@ const SupportTickets: React.FC = () => {
                                                     setNotification({ message: 'Failed to update assignment', type: 'error' });
                                                 }
                                             }}
-                                            className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 font-bold text-slate-700 dark:text-slate-300 outline-none ml-1.5"
+                                            className="bg-muted border border-line rounded-lg px-2 py-1 font-bold text-ink outline-none ml-1.5"
                                         >
                                             <option value="">Unassigned</option>
                                             {supportAdmins.map(a => (
@@ -1458,7 +1465,7 @@ const SupportTickets: React.FC = () => {
                                             ))}
                                         </select>
                                     ) : (
-                                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                                        <span className="font-bold text-ink">
                                             {selectedTicket.assignedTo?.name || 'Unassigned'}
                                         </span>
                                     )}
@@ -1466,8 +1473,8 @@ const SupportTickets: React.FC = () => {
 
                                 {selectedTicket.resolvedAt && (
                                     <div>
-                                        <span className="text-slate-400 font-medium">Resolved On: </span>
-                                        <span className="font-bold text-teal-600 dark:text-teal-400">
+                                        <span className="text-quiet font-medium">Resolved On: </span>
+                                        <span className="font-bold text-ink">
                                             {new Date(selectedTicket.resolvedAt).toLocaleString()}
                                         </span>
                                     </div>
@@ -1476,13 +1483,13 @@ const SupportTickets: React.FC = () => {
 
                             {/* Resolution Notes / Root Cause Box */}
                             {selectedTicket.resolutionNotes && (
-                                <div className="bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 p-4 rounded-2xl">
+                                <div className="bg-surface border border-line p-4 rounded-2xl">
                                     <div className="flex items-center gap-2 mb-1.5">
-                                        <span className="text-teal-800 dark:text-teal-300 font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                        <span className="text-ink font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
                                             ✅ Resolution Summary & Root Cause
                                         </span>
                                     </div>
-                                    <p className="text-sm text-teal-950 dark:text-teal-200 whitespace-pre-wrap leading-relaxed font-medium">
+                                    <p className="text-sm text-ink whitespace-pre-wrap leading-relaxed font-medium">
                                         {selectedTicket.resolutionNotes}
                                     </p>
                                 </div>
@@ -1493,19 +1500,19 @@ const SupportTickets: React.FC = () => {
                                 const relatedAsset = assets.find(a => a.id === selectedTicket.assetId);
                                 return relatedAsset ? (
                                     <div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Related Asset</p>
+                                        <p className="text-xs font-black text-quiet uppercase tracking-widest mb-2">Related Asset</p>
                                         <button
                                             onClick={() => { setSelectedTicket(null); navigate('assets'); }}
-                                            className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group w-full text-left"
+                                            className="flex items-center gap-3 bg-canvas border border-line rounded-xl px-4 py-3 hover:border-line hover:bg-surface transition-all group w-full text-left"
                                         >
-                                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center text-brand-600 dark:text-red-400 flex-shrink-0">
+                                            <div className="w-8 h-8 bg-surface rounded-lg flex items-center justify-center text-ink flex-shrink-0">
                                                 {ICONS.assets || '💻'}
                                             </div>
                                             <div className="text-left">
-                                                <p className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-brand-600 dark:group-hover:text-red-400 transition-colors">
+                                                <p className="font-bold text-ink text-sm group-hover:text-ink transition-colors">
                                                     {relatedAsset.name}
                                                 </p>
-                                                <p className="text-xs text-slate-500 font-mono">{relatedAsset.assetId}</p>
+                                                <p className="text-xs text-quiet font-mono">{relatedAsset.assetId}</p>
                                             </div>
                                         </button>
                                     </div>
@@ -1514,14 +1521,14 @@ const SupportTickets: React.FC = () => {
 
                             {/* Description & Attachments */}
                             <div>
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Issue Description</p>
-                                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-800">
+                                <p className="text-xs font-black text-quiet uppercase tracking-widest mb-2">Issue Description</p>
+                                <div className="bg-canvas p-4 rounded-2xl text-ink whitespace-pre-wrap leading-relaxed border border-line">
                                     {selectedTicket.description}
                                 </div>
-                                
+
                                 {selectedTicket.attachments && parseAttachments(selectedTicket.attachments).length > 0 && (
                                     <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Ticket Attachments</p>
+                                        <p className="text-xs font-black text-quiet uppercase tracking-widest">Ticket Attachments</p>
                                         <div className="flex flex-wrap gap-2">
                                             {parseAttachments(selectedTicket.attachments).map((att, idx) => (
                                                 <a
@@ -1529,10 +1536,10 @@ const SupportTickets: React.FC = () => {
                                                     href={att.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl text-xs font-medium text-brand-600 dark:text-red-400 hover:underline"
+                                                    className="flex items-center gap-2 bg-muted border border-line px-3 py-2 rounded-xl text-xs font-medium text-ink hover:underline"
                                                 >
                                                     <span>📎 {att.name}</span>
-                                                    <span className="text-[10px] text-slate-400">({(att.size / 1024).toFixed(1)} KB)</span>
+                                                    <span className="text-[10px] text-quiet">({(att.size / 1024).toFixed(1)} KB)</span>
                                                 </a>
                                             ))}
                                         </div>
@@ -1541,9 +1548,9 @@ const SupportTickets: React.FC = () => {
                             </div>
 
                             {/* Discussion Thread */}
-                            <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
+                            <div className="pt-6 border-t border-line">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                                    <h4 className="text-sm font-black text-ink uppercase tracking-wider flex items-center gap-2">
                                         💬 Discussion & Activity ({comments.length})
                                     </h4>
                                 </div>
@@ -1552,11 +1559,11 @@ const SupportTickets: React.FC = () => {
                                 <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                                     {loadingComments && (
                                         <div className="flex justify-center py-4">
-                                            <span className="animate-pulse text-xs text-slate-400 font-medium">Loading messages...</span>
+                                            <span className="animate-pulse text-xs text-quiet font-medium">Loading messages...</span>
                                         </div>
                                     )}
                                     {!loadingComments && comments.length === 0 && (
-                                        <p className="text-xs text-center text-slate-400 font-medium italic py-4">
+                                        <p className="text-xs text-center text-quiet font-medium italic py-4">
                                             No comments yet. Start the discussion below.
                                         </p>
                                     )}
@@ -1564,53 +1571,53 @@ const SupportTickets: React.FC = () => {
                                         const isAuthorAdmin = c.user?.role === 'Admin';
                                         const isMe = Boolean(
                                             user && (
-                                                c.userId === user.id || 
-                                                c.user?.id === user.id || 
+                                                c.userId === user.id ||
+                                                c.user?.id === user.id ||
                                                 (c.user?.email && user?.email && c.user.email.toLowerCase() === user.email.toLowerCase())
                                             )
                                         );
                                         const commentAtts = parseAttachments(c.attachments);
                                         const isInternal = c.isInternal;
-                                        
+
                                         return (
                                             <div key={c.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                                                 <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                    <span className={`font-bold text-[10px] uppercase tracking-wide ${isMe ? 'text-brand-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                    <span className={`font-bold text-[10px] uppercase tracking-wide ${isMe ? 'text-ink ' : 'text-quiet '}`}>
                                                         {isMe ? 'You' : (c.user?.name || 'User')}
                                                     </span>
                                                     {isAuthorAdmin && (
-                                                        <span className="px-1.5 py-0.5 bg-red-100 text-brand-600 dark:bg-red-950/60 dark:text-red-400 rounded text-[9px] font-black uppercase">
+                                                        <span className="px-1.5 py-0.5 bg-surface text-ink rounded text-[9px] font-black uppercase">
                                                             IT Admin
                                                         </span>
                                                     )}
                                                     {isInternal && (
-                                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 rounded text-[9px] font-black uppercase flex items-center gap-1">
+                                                        <span className="px-2 py-0.5 bg-surface text-ink border border-line rounded text-[9px] font-black uppercase flex items-center gap-1">
                                                             🔒 Internal IT Note
                                                         </span>
                                                     )}
-                                                    <span className="text-[9px] font-medium text-slate-400">
+                                                    <span className="text-[9px] font-medium text-quiet">
                                                         {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div className={`p-3.5 rounded-2xl max-w-[85%] sm:max-w-[75%] shadow-sm text-left ${
                                                     isInternal
-                                                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-800 ' + (isMe ? 'rounded-tr-xs' : 'rounded-tl-xs')
-                                                        : isMe 
-                                                            ? 'bg-brand-600 text-white rounded-tr-xs shadow-brand-600/10' 
-                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-xs'
+                                                        ? 'bg-surface  text-ink  border border-line  ' + (isMe ? 'rounded-tr-xs' : 'rounded-tl-xs')
+                                                        : isMe
+                                                            ? 'bg-accent text-on-strong rounded-tr-xs shadow-strong/15'
+                                                            : 'bg-muted  text-ink  border border-line  rounded-tl-xs'
                                                 }`}>
                                                     <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                                                        isInternal 
-                                                            ? 'text-amber-900 dark:text-amber-200' 
-                                                            : isMe ? 'text-white' : 'text-slate-700 dark:text-slate-300'
+                                                        isInternal
+                                                            ? 'text-ink '
+                                                            : isMe ? 'text-on-strong' : 'text-ink '
                                                     }`}>
                                                         {c.message}
                                                     </p>
-                                                    
+
                                                     {/* Comment Attachments */}
                                                     {commentAtts.length > 0 && (
-                                                        <div className="flex flex-wrap gap-2 pt-2 mt-2 border-t border-black/10 dark:border-white/10">
+                                                        <div className="flex flex-wrap gap-2 pt-2 mt-2 border-t border-line/10">
                                                             {commentAtts.map((att, idx) => (
                                                                 <a
                                                                     key={idx}
@@ -1619,8 +1626,8 @@ const SupportTickets: React.FC = () => {
                                                                     rel="noopener noreferrer"
                                                                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity ${
                                                                         isMe && !isInternal
-                                                                            ? 'bg-black/20 text-white' 
-                                                                            : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-brand-600 dark:text-red-400'
+                                                                            ? 'bg-strong/20 text-on-strong'
+                                                                            : 'bg-surface  border border-line  text-ink '
                                                                     }`}
                                                                 >
                                                                     <span>📎 {att.name}</span>
@@ -1640,12 +1647,12 @@ const SupportTickets: React.FC = () => {
                                 <form onSubmit={handleAddComment} className="space-y-3">
                                     {/* 1-Click Quick Canned Responses Bar (Visible to Admins) */}
                                     {user?.role === 'Admin' && (
-                                        <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                                        <div className="space-y-1.5 bg-canvas p-3 rounded-2xl border border-line">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider flex items-center gap-1">
+                                                <span className="text-[10px] font-black uppercase text-quiet tracking-wider flex items-center gap-1">
                                                     ⚡ 1-Click IT Quick Replies
                                                 </span>
-                                                <span className="text-[10px] text-slate-400">Clicking inserts response into message</span>
+                                                <span className="text-[10px] text-quiet">Clicking inserts response into message</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 {CANNED_RESPONSES.map((item, idx) => (
@@ -1653,7 +1660,7 @@ const SupportTickets: React.FC = () => {
                                                         key={idx}
                                                         type="button"
                                                         onClick={() => setNewComment(item.text)}
-                                                        className="text-[11px] font-bold px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-all active:scale-95 shadow-2xs"
+                                                        className="text-[11px] font-bold px-2.5 py-1 bg-surface hover:bg-surface hover:text-ink text-ink rounded-lg border border-line transition-all active:scale-95 shadow-2xs"
                                                         title={item.text}
                                                     >
                                                         {item.title}
@@ -1666,17 +1673,17 @@ const SupportTickets: React.FC = () => {
                                     {/* Admin-only Internal Note toggle */}
                                     {user?.role === 'Admin' && (
                                         <div className="flex items-center justify-between px-1">
-                                            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-700 dark:text-amber-400 select-none">
-                                                <input 
+                                            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-ink select-none">
+                                                <input
                                                     type="checkbox"
                                                     checked={isInternalComment}
                                                     onChange={e => setIsInternalComment(e.target.checked)}
-                                                    className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                                                    className="rounded text-ink focus:ring-accent w-4 h-4 cursor-pointer"
                                                 />
                                                 <span>🔒 Internal IT Note (Admin Only — Hidden from Employee)</span>
                                             </label>
                                             {isInternalComment && (
-                                                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 italic">
+                                                <span className="text-[11px] font-medium text-ink italic">
                                                     Will not dispatch Outlook email to user
                                                 </span>
                                             )}
@@ -1689,19 +1696,19 @@ const SupportTickets: React.FC = () => {
                                             value={newComment}
                                             onChange={e => setNewComment(e.target.value)}
                                             placeholder={isInternalComment ? "Add a private IT note (only visible to admins)..." : "Add a reply to the ticket or use a quick reply above..."}
-                                            className={`flex-1 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none transition-colors ${
+                                            className={`flex-1 rounded-xl px-4 py-2.5 text-sm text-ink  focus:outline-none transition-colors ${
                                                 isInternalComment
-                                                    ? 'bg-amber-50/70 dark:bg-amber-950/20 border-2 border-amber-400 focus:border-amber-500'
-                                                    : 'bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-brand-500'
+                                                    ? 'bg-surface/70  border-2 border-line focus:border-line'
+                                                    : 'bg-canvas  border border-line  focus:border-accent'
                                             }`}
                                         />
-                                        
+
                                         <button
                                             type="button"
                                             onClick={() => commentFileInputRef.current?.click()}
                                             disabled={isUploadingCommentFile}
                                             title="Attach File"
-                                            className="p-2.5 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl transition-all"
+                                            className="p-2.5 bg-muted hover:bg-muted text-quiet rounded-xl transition-all"
                                         >
                                             📎
                                         </button>
@@ -1718,8 +1725,8 @@ const SupportTickets: React.FC = () => {
                                             disabled={submittingComment || (!newComment.trim() && commentAttachments.length === 0)}
                                             className={`px-5 py-2.5 font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 shrink-0 ${
                                                 isInternalComment
-                                                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
-                                                    : 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-600/20'
+                                                    ? 'bg-olive hover:bg-olive text-on-strong shadow-strong/15'
+                                                    : 'bg-accent hover:bg-accent text-on-strong shadow-strong/15'
                                             } disabled:opacity-50`}
                                         >
                                             {submittingComment ? 'Sending...' : isInternalComment ? '🔒 Post Private' : 'Send'}
@@ -1729,12 +1736,12 @@ const SupportTickets: React.FC = () => {
                                     {commentAttachments.length > 0 && (
                                         <div className="flex flex-wrap gap-2 pt-1">
                                             {commentAttachments.map((att, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-lg text-xs">
-                                                    <span className="truncate max-w-[150px] font-medium text-slate-700 dark:text-slate-200">{att.name}</span>
+                                                <div key={idx} className="flex items-center gap-2 bg-muted border border-line px-3 py-1 rounded-lg text-xs">
+                                                    <span className="truncate max-w-[150px] font-medium text-ink">{att.name}</span>
                                                     <button
                                                         type="button"
                                                         onClick={() => setCommentAttachments(prev => prev.filter((_, i) => i !== idx))}
-                                                        className="text-slate-400 hover:text-red-600 font-bold"
+                                                        className="text-quiet hover:text-ink font-bold"
                                                     >
                                                         &times;
                                                     </button>
@@ -1747,19 +1754,19 @@ const SupportTickets: React.FC = () => {
 
                             {/* Status Change Toolbar (Admin Only) */}
                             {user?.role === 'Admin' && (
-                                <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                                <div className="pt-6 border-t border-line">
+                                    <p className="text-xs font-black text-quiet uppercase tracking-widest mb-3">
                                         Update Ticket Status
                                     </p>
                                     <div className="flex flex-wrap gap-2.5">
                                         {statuses.map(s => (
-                                            <button 
-                                                key={s} 
-                                                onClick={() => handleUpdateStatus(selectedTicket.id, s)} 
+                                            <button
+                                                key={s}
+                                                onClick={() => handleUpdateStatus(selectedTicket.id, s)}
                                                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
-                                                    selectedTicket.status === s 
-                                                        ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20' 
-                                                        : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                                                    selectedTicket.status === s
+                                                        ? 'bg-accent text-on-strong shadow-md shadow-strong/15'
+                                                        : 'bg-muted  text-ink  hover:bg-muted '
                                                 }`}
                                             >
                                                 {s === 'Resolved' ? '✓ Mark Resolved' : s}
@@ -1775,52 +1782,52 @@ const SupportTickets: React.FC = () => {
 
             {/* Resolution Modal */}
             {resolvingTicketId !== null && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in flex flex-col">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <div ref={resolutionDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Resolve support ticket" className="fixed inset-0 bg-strong/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in flex flex-col">
+                        <div className="px-8 py-6 border-b border-line flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white">
+                                <h3 className="text-xl font-black text-ink">
                                     Resolve {formatTicketId(resolvingTicketId)}
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Capture root cause & solution for employee</p>
+                                <p className="text-xs text-quiet mt-0.5">Capture root cause & solution for employee</p>
                             </div>
-                            <button 
-                                onClick={() => setResolvingTicketId(null)} 
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl"
+                            <button aria-label="Close dialog"
+                                onClick={() => setResolvingTicketId(null)}
+                                className="text-quiet hover:text-quiet transition-colors p-2 hover:bg-muted rounded-xl"
                             >
                                 {ICONS.close}
                             </button>
                         </div>
                         <form onSubmit={handleConfirmResolve} className="p-8 space-y-4">
                             <div>
-                                <label className="block text-sm font-black text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-tight">
-                                    Resolution Summary / Root Cause <span className="text-red-500">*</span>
+                                <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">
+                                    Resolution Summary / Root Cause <span className="text-ink">*</span>
                                 </label>
-                                <textarea
+                                <textarea aria-label="Resolution Summary / Root Cause"
                                     required
                                     rows={4}
                                     value={resolutionNotesInput}
                                     onChange={e => setResolutionNotesInput(e.target.value)}
                                     placeholder="Explain how the issue was resolved (e.g. Replaced faulty HDMI dongle, cleared Outlook credential manager cache, issued new laptop charger)..."
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-brand-500 transition-all placeholder:text-slate-400"
+                                    className="w-full bg-canvas border border-line rounded-2xl px-4 py-3 text-sm text-ink focus:outline-none focus:border-accent transition-all placeholder:text-quiet"
                                 />
-                                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                <p className="text-xs text-quiet mt-1.5 leading-relaxed">
                                     This summary will be included in the resolution email notification dispatched to the employee and stored permanently in the audit history.
                                 </p>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-3">
+                            <div className="pt-4 border-t border-line flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setResolvingTicketId(null)}
-                                    className="flex-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 py-3 rounded-2xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all active:scale-[0.98]"
+                                    className="flex-1 bg-muted text-ink py-3 rounded-2xl font-bold hover:bg-muted transition-all active:scale-[0.98]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submittingResolution || !resolutionNotesInput.trim()}
-                                    className="flex-1 bg-teal-600 text-white py-3 rounded-2xl font-bold hover:bg-teal-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-teal-600/20"
+                                    className="flex-1 bg-olive text-on-strong py-3 rounded-2xl font-bold hover:bg-olive disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-strong/15"
                                 >
                                     {submittingResolution ? 'Resolving...' : 'Confirm & Resolve'}
                                 </button>
@@ -1832,16 +1839,16 @@ const SupportTickets: React.FC = () => {
 
             {/* Delete Confirmation Modal */}
             {deletingTicketId !== null && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in p-6 space-y-4">
-                        <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
+                <div ref={deleteDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Confirm ticket deletion" className="fixed inset-0 bg-strong/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in p-6 space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-surface text-ink flex items-center justify-center mx-auto">
                             {ICONS.delete}
                         </div>
                         <div className="text-center space-y-1.5">
-                            <h3 className="text-lg font-black text-slate-800 dark:text-white">
+                            <h3 className="text-lg font-black text-ink">
                                 Delete {formatTicketId(deletingTicketId)}?
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            <p className="text-xs text-quiet leading-relaxed">
                                 Are you sure you want to delete this ticket? All discussion messages, internal notes, and attachments will be permanently removed. This action cannot be undone.
                             </p>
                         </div>
@@ -1850,7 +1857,7 @@ const SupportTickets: React.FC = () => {
                                 type="button"
                                 onClick={() => setDeletingTicketId(null)}
                                 disabled={isDeletingTicket}
-                                className="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                                className="flex-1 bg-muted text-ink py-2.5 rounded-xl font-bold text-sm hover:bg-muted transition-all"
                             >
                                 Cancel
                             </button>
@@ -1858,7 +1865,7 @@ const SupportTickets: React.FC = () => {
                                 type="button"
                                 onClick={handleConfirmDeleteTicket}
                                 disabled={isDeletingTicket}
-                                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-md shadow-red-600/20"
+                                className="flex-1 bg-olive text-on-strong py-2.5 rounded-xl font-bold text-sm hover:bg-olive transition-all shadow-md shadow-strong/15"
                             >
                                 {isDeletingTicket ? 'Deleting...' : 'Delete Permanently'}
                             </button>

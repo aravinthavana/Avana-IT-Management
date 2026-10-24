@@ -51,7 +51,7 @@ const UserProfile: React.FC = () => {
             });
             if (!res.ok) throw new Error((await res.json()).error);
             const updated = await res.json();
-            
+
             setCurrentUser(updated);
             setPassword('');
             setConfirmPassword('');
@@ -63,81 +63,81 @@ const UserProfile: React.FC = () => {
             setIsSubmitting(false);
         }
     };
-    
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
             <div className="md:col-span-1 space-y-6">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm text-center">
-                    <img src={currentUser.avatar || defaultAvatar} alt="User Avatar" className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-white dark:border-slate-700 shadow-lg"/>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{currentUser.name}</h2>
-                    <p className="text-slate-500 dark:text-slate-400">{currentUser.email}</p>
-                    <p className="mt-4"><span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${currentUser.role === 'Admin' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'}`}>{currentUser.role}</span></p>
+                <div className="bg-surface p-6 rounded-xl shadow-sm text-center">
+                    <img src={currentUser.avatar || defaultAvatar} alt="User Avatar" className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-line shadow-lg"/>
+                    <h2 className="text-2xl font-bold text-ink">{currentUser.name}</h2>
+                    <p className="text-quiet">{currentUser.email}</p>
+                    <p className="mt-4"><span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${currentUser.role === 'Admin' ? 'bg-surface  text-ink ' : 'bg-muted  text-ink '}`}>{currentUser.role}</span></p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm">
-                    <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                <div className="bg-surface p-6 rounded-xl shadow-sm">
+                    <h3 className="font-semibold text-ink mb-4 flex items-center gap-2">
                         {ICONS.info} Account Status
                     </h3>
                     <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
-                            <span className="text-slate-500">Status</span>
-                            <span className="text-green-600 font-medium">Active</span>
+                            <span className="text-quiet">Status</span>
+                            <span className="text-ink font-medium">Active</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-slate-500">ID</span>
-                            <span className="text-slate-700 dark:text-slate-300 font-mono">#{currentUser.id}</span>
+                            <span className="text-quiet">ID</span>
+                            <span className="text-ink font-mono">#{currentUser.id}</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div className="md:col-span-2 space-y-6">
-                 <form onSubmit={handleUpdateProfile} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm space-y-4">
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Profile Information</h3>
+                 <form onSubmit={handleUpdateProfile} className="bg-surface p-6 rounded-xl shadow-sm space-y-4">
+                    <h3 className="text-xl font-semibold text-ink">Profile Information</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
-                            <input id="fullName" name="fullName" type="text" value={name} onChange={(e) => setName(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-brand-500 focus:ring-brand-500'}`} />
+                            <label htmlFor="fullName" className="block text-sm font-medium text-ink">Full Name</label>
+                            <input id="fullName" name="fullName" type="text" value={name} onChange={(e) => setName(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-ink  ${currentUser.role === 'User' ? 'bg-canvas  border-line  cursor-not-allowed' : 'bg-surface  border-line  focus:border-accent focus:ring-accent'}`} />
                         </div>
                         <div>
-                            <label htmlFor="profileEmail" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-                            <input id="profileEmail" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-slate-900 dark:text-slate-100 ${currentUser.role === 'User' ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-brand-500 focus:ring-brand-500'}`} />
+                            <label htmlFor="profileEmail" className="block text-sm font-medium text-ink">Email Address</label>
+                            <input id="profileEmail" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={currentUser.role === 'User'} className={`mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 text-ink  ${currentUser.role === 'User' ? 'bg-canvas  border-line  cursor-not-allowed' : 'bg-surface  border-line  focus:border-accent focus:ring-accent'}`} />
                         </div>
                         <div>
-                            <label htmlFor="mobile" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Mobile Number</label>
-                            <input id="mobile" name="mobile" type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="mobile" className="block text-sm font-medium text-ink">Mobile Number</label>
+                            <input id="mobile" name="mobile" type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                         <div>
-                            <label htmlFor="jobTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Job Title</label>
-                            <input id="jobTitle" name="jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="jobTitle" className="block text-sm font-medium text-ink">Job Title</label>
+                            <input id="jobTitle" name="jobTitle" type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                         <div>
-                            <label htmlFor="company" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Company</label>
-                            <input id="company" name="company" type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="company" className="block text-sm font-medium text-ink">Company</label>
+                            <input id="company" name="company" type="text" value={company} onChange={(e) => setCompany(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                         <div>
-                            <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Employee ID</label>
-                            <input id="employeeId" name="employeeId" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="employeeId" className="block text-sm font-medium text-ink">Employee ID</label>
+                            <input id="employeeId" name="employeeId" type="text" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                     </div>
 
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 pt-4 border-t border-slate-100 dark:border-slate-700">Security</h3>
+                    <h3 className="text-xl font-semibold text-ink pt-4 border-t border-line">Security</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">
-                            <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
-                            <input id="currentPassword" name="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Required if changing password" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="currentPassword" className="block text-sm font-medium text-ink">Current Password</label>
+                            <input id="currentPassword" name="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Required if changing password" className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                         <div>
-                            <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
-                            <input id="newPassword" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="newPassword" className="block text-sm font-medium text-ink">New Password</label>
+                            <input id="newPassword" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
-                            <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-ink">Confirm New Password</label>
+                            <input id="confirmPassword" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
                         </div>
                     </div>
 
                     <div className="flex justify-end pt-6">
-                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-brand-600 text-white px-8 py-2.5 rounded-xl hover:bg-brand-700 font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md">
+                        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-accent text-on-strong px-8 py-2.5 rounded-xl hover:bg-accent font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-md">
                             {isSubmitting ? 'Updating...' : 'Save All Changes'}
                         </button>
                     </div>

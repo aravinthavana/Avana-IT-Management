@@ -45,26 +45,26 @@ export default function DeclarationFormPreview() {
     if (!user || !laptop) {
         if (users.length === 0 || assets.length === 0) {
             return (
-                <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-center justify-center text-slate-800 dark:text-slate-100">
+                <div className="bg-muted min-h-screen flex items-center justify-center text-ink">
                     <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
                         <p className="font-semibold text-base font-body">Loading declaration form...</p>
                     </div>
                 </div>
             );
         }
         return (
-            <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex items-center justify-center text-slate-800 dark:text-slate-100">
+            <div className="bg-muted min-h-screen flex items-center justify-center text-ink">
                 <div className="text-center p-4">
                     <p className="font-semibold text-lg font-heading">Error: Could not find user or asset data for preview.</p>
-                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium text-sm">Go Back</button>
+                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium text-sm">Go Back</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-slate-200 dark:bg-slate-900 min-h-screen flex flex-col print:bg-white print:min-h-0">
+        <div className="bg-muted min-h-screen flex flex-col print:bg-surface print:min-h-0">
             <style>{`
                 @page {
                     size: A4 portrait;
@@ -85,7 +85,7 @@ export default function DeclarationFormPreview() {
                         height: auto !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        background-color: #ffffff !important;
+                        background-color: #d7d0bc !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -94,7 +94,7 @@ export default function DeclarationFormPreview() {
                         height: auto !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        background-color: #ffffff !important;
+                        background-color: #d7d0bc !important;
                     }
                     header.no-print,
                     nav.no-print,
@@ -105,7 +105,7 @@ export default function DeclarationFormPreview() {
                     main {
                         padding: 0 !important;
                         margin: 0 !important;
-                        background: #ffffff !important;
+                        background: #d7d0bc !important;
                         display: block !important;
                         width: 100% !important;
                         height: auto !important;
@@ -138,28 +138,28 @@ export default function DeclarationFormPreview() {
                 }
             `}</style>
 
-            <header className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 px-4 py-3 flex justify-between items-center shadow-sm no-print">
-                <button 
-                    onClick={() => setPreviewTarget(null)} 
-                    className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center text-sm font-medium transition-colors"
+            <header className="bg-surface/90 backdrop-blur-sm border-b border-line sticky top-0 z-10 px-4 py-3 flex justify-between items-center shadow-sm no-print">
+                <button
+                    onClick={() => setPreviewTarget(null)}
+                    className="bg-muted text-ink px-3 py-1.5 rounded-lg hover:bg-muted flex items-center text-sm font-medium transition-colors"
                 >
                     &larr; <span className="ml-1.5">Back</span>
                 </button>
                 <div className="text-center">
-                    <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Declaration Form Preview</h2>
-                    <p className="text-xs text-slate-400 font-mono hidden sm:block">{laptop.assetId} &bull; {user.name}</p>
+                    <h2 className="text-base font-bold text-ink">Declaration Form Preview</h2>
+                    <p className="text-xs text-quiet font-mono hidden sm:block">{laptop.assetId} &bull; {user.name}</p>
                 </div>
-                <button 
-                    onClick={handlePrint} 
-                    className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-semibold transition-all active:scale-95 shadow-md shadow-brand-600/20 cursor-pointer"
+                <button
+                    onClick={handlePrint}
+                    className="bg-accent text-on-strong px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 text-sm font-semibold transition-all active:scale-95 shadow-md shadow-strong/15 cursor-pointer"
                 >
                     {ICONS.print}
                     <span>Print / Save PDF</span>
                 </button>
             </header>
 
-            <main className="flex-1 overflow-auto p-4 sm:p-8 bg-slate-600/60 dark:bg-slate-950 flex justify-center items-start">
-                <div className="declaration-container shadow-2xl rounded-sm overflow-hidden bg-white max-w-[210mm] w-full box-border">
+            <main className="flex-1 overflow-auto p-4 sm:p-8 bg-strong/60 flex justify-center items-start">
+                <div className="declaration-container shadow-2xl rounded-sm overflow-hidden bg-surface max-w-[210mm] w-full box-border">
                     <DeclarationForm user={user} laptop={laptop} assignedDate={formattedAssignedDate} />
                 </div>
             </main>

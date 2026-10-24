@@ -161,16 +161,16 @@ const SelfAuditsList: React.FC = () => {
             if (!assignedUser) return;
 
             // Find any active audit for this asset/user
-            const activeAudit = selfAudits.find(a => 
-                a.assetId === asset.id && 
-                a.userId === targetUserId && 
+            const activeAudit = selfAudits.find(a =>
+                a.assetId === asset.id &&
+                a.userId === targetUserId &&
                 (a.status === 'Requested' || a.status === 'Pending Review')
             );
 
             // Find most recent completed audit
-            const lastAudit = selfAudits.find(a => 
-                a.assetId === asset.id && 
-                a.userId === targetUserId && 
+            const lastAudit = selfAudits.find(a =>
+                a.assetId === asset.id &&
+                a.userId === targetUserId &&
                 a.status === 'Approved'
             );
 
@@ -293,8 +293,8 @@ const SelfAuditsList: React.FC = () => {
                 const updated = await res.json();
                 setSelfAudits(selfAudits.map(a => a.id === updated.id ? updated : a));
                 setNotification({
-                    message: status === 'Approved' 
-                        ? 'Self-audit approved & verified!' 
+                    message: status === 'Approved'
+                        ? 'Self-audit approved & verified!'
                         : 'Self-audit rejected. Feedback emailed to employee.',
                     type: 'success'
                 });
@@ -331,7 +331,7 @@ const SelfAuditsList: React.FC = () => {
         const discrepancies = declarations.filter(d => !d.systemRecordsOk).length;
         const pending = declarations.filter(d => d.status !== 'Reconciled').length;
         const reconciled = declarations.filter(d => d.status === 'Reconciled').length;
-        
+
         let ghostCount = 0;
         declarations.forEach(d => {
             try {
@@ -471,9 +471,9 @@ const SelfAuditsList: React.FC = () => {
             }
 
             const data = await res.json();
-            setNotification({ 
-                message: data.message || `Added "${accName}" to ${reconcileAccDeclaration.user?.name}'s profile accessories!`, 
-                type: 'success' 
+            setNotification({
+                message: data.message || `Added "${accName}" to ${reconcileAccDeclaration.user?.name}'s profile accessories!`,
+                type: 'success'
             });
             setReconcileAccDeclaration(null);
             setReconcileAccItem(null);
@@ -512,9 +512,9 @@ const SelfAuditsList: React.FC = () => {
             }
 
             const data = await res.json();
-            setNotification({ 
-                message: data.message || `Saved ${itemsToReconcile.length} accessories to ${declaration.user?.name}'s profile!`, 
-                type: 'success' 
+            setNotification({
+                message: data.message || `Saved ${itemsToReconcile.length} accessories to ${declaration.user?.name}'s profile!`,
+                type: 'success'
             });
             fetchDeclarations();
         } catch (error: any) {
@@ -529,25 +529,25 @@ const SelfAuditsList: React.FC = () => {
             {/* Header & Tab Selector */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
+                    <h2 className="text-2xl font-bold text-ink flex items-center gap-2.5">
                         <span>Equipment Self-Audits</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-quiet font-semibold uppercase tracking-wider">
                             Targeted Fleet Verification
                         </span>
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-quiet mt-1">
                         Selectively assign verification requests, inspect hardware health checklists, and escalate defects.
                     </p>
                 </div>
 
                 {isAdmin && (
-                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-700/60 rounded-xl">
+                    <div className="flex items-center gap-1.5 p-1 bg-muted rounded-xl">
                         <button
                             onClick={() => setActiveTab('queue')}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                                 activeTab === 'queue'
-                                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    ? 'bg-surface  text-ink  shadow-sm'
+                                    : 'text-quiet  hover:text-ink '
                             }`}
                         >
                             Audit Queue ({metrics.pendingReview})
@@ -556,14 +556,14 @@ const SelfAuditsList: React.FC = () => {
                             onClick={() => setActiveTab('reconcile')}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                                 activeTab === 'reconcile'
-                                    ? 'bg-purple-600 text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    ? 'bg-olive text-on-strong shadow-sm'
+                                    : 'text-quiet  hover:text-ink '
                             }`}
                         >
                             <span>Asset Reconciliation</span>
                             {reconcileMetrics.ghostCount > 0 && (
                                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                                    activeTab === 'reconcile' ? 'bg-white text-purple-700' : 'bg-purple-600 text-white'
+                                    activeTab === 'reconcile' ? 'bg-surface text-ink' : 'bg-olive text-on-strong'
                                 }`}>
                                     {reconcileMetrics.ghostCount} Ghost
                                 </span>
@@ -573,8 +573,8 @@ const SelfAuditsList: React.FC = () => {
                             onClick={() => setActiveTab('assign')}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                                 activeTab === 'assign'
-                                    ? 'bg-brand-600 text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    ? 'bg-accent text-on-strong shadow-sm'
+                                    : 'text-quiet  hover:text-ink '
                             }`}
                         >
                             <span>+</span>
@@ -589,41 +589,41 @@ const SelfAuditsList: React.FC = () => {
                 <div className="space-y-6">
                     {/* KPI Summary Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Audits</span>
-                            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{metrics.total}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-quiet uppercase tracking-wider">Total Audits</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{metrics.total}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Awaiting IT Review</span>
-                            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{metrics.pendingReview}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Awaiting IT Review</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingReview}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Waiting on Employee</span>
-                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{metrics.requested}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Waiting on Employee</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{metrics.requested}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Approved</span>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{metrics.approved}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Approved</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{metrics.approved}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm col-span-2 sm:col-span-1">
-                            <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Rejected</span>
-                            <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{metrics.rejected}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm col-span-2 sm:col-span-1">
+                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Rejected</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{metrics.rejected}</p>
                         </div>
                     </div>
 
                     {/* Filter Bar */}
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm space-y-4">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             {/* Status Tabs */}
-                            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl">
+                            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted rounded-xl">
                                 {(['All', 'Pending Review', 'Requested', 'Approved', 'Rejected'] as const).map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => setQueueStatusFilter(tab)}
                                         className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                             queueStatusFilter === tab
-                                                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                                ? 'bg-surface  text-ink  shadow-sm'
+                                                : 'text-quiet  hover:text-ink '
                                         }`}
                                     >
                                         {tab === 'Pending Review' ? 'Needs Review' : tab === 'Requested' ? 'Pending Submission' : tab}
@@ -634,7 +634,7 @@ const SelfAuditsList: React.FC = () => {
                             {/* Search and Company filter */}
                             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                                 <div className="relative flex-1 md:w-64">
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet pointer-events-none">
                                         {ICONS.search}
                                     </span>
                                     <input
@@ -642,7 +642,7 @@ const SelfAuditsList: React.FC = () => {
                                         value={queueSearch}
                                         onChange={(e) => setQueueSearch(e.target.value)}
                                         placeholder="Search employee, asset, notes..."
-                                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-white placeholder-slate-400"
+                                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-canvas border border-line rounded-xl focus:ring-2 focus:ring-accent text-ink placeholder-quiet"
                                     />
                                 </div>
 
@@ -650,7 +650,7 @@ const SelfAuditsList: React.FC = () => {
                                     <select
                                         value={queueCompany}
                                         onChange={(e) => setQueueCompany(e.target.value)}
-                                        className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500 font-medium"
+                                        className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink focus:ring-2 focus:ring-accent font-medium"
                                     >
                                         <option value="All">All Companies</option>
                                         <option value="AMD">AMD</option>
@@ -663,10 +663,10 @@ const SelfAuditsList: React.FC = () => {
                     </div>
 
                     {/* Audits Table */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                                <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 text-xs uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-line overflow-hidden">
+                        <div tabIndex={0} role="region" aria-label="Self audits table; scroll horizontally for more columns" className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-quiet">
+                                <thead className="bg-canvas text-ink text-xs uppercase tracking-wider font-semibold border-b border-line">
                                     <tr>
                                         <th className="px-5 py-3.5">Audit Date / Deadline</th>
                                         <th className="px-5 py-3.5">Employee</th>
@@ -677,10 +677,10 @@ const SelfAuditsList: React.FC = () => {
                                         <th className="px-5 py-3.5 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tbody className="divide-y divide-line">
                                     {filteredQueueAudits.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="text-center py-12 text-slate-400">
+                                            <td colSpan={7} className="text-center py-12 text-quiet">
                                                 No self-audits match your filters.
                                             </td>
                                         </tr>
@@ -689,38 +689,38 @@ const SelfAuditsList: React.FC = () => {
                                             const icon = ASSET_ICONS[audit.asset?.category || ''] || ASSET_ICONS.default;
 
                                             return (
-                                                <tr key={audit.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition-colors">
+                                                <tr key={audit.id} className="hover:bg-canvas/80 transition-colors">
                                                     {/* Date & Deadline */}
                                                     <td className="px-5 py-4 whitespace-nowrap text-xs">
                                                         {audit.status === 'Requested' ? (
                                                             <div>
-                                                                <span className="font-semibold text-amber-600 dark:text-amber-400">Due: {audit.dueDate ? new Date(audit.dueDate).toLocaleDateString() : 'Pending'}</span>
-                                                                <p className="text-[11px] text-slate-400 mt-0.5">Requested on {audit.requestedAt ? new Date(audit.requestedAt).toLocaleDateString() : new Date(audit.auditDate).toLocaleDateString()}</p>
+                                                                <span className="font-semibold text-ink">Due: {audit.dueDate ? new Date(audit.dueDate).toLocaleDateString() : 'Pending'}</span>
+                                                                <p className="text-[11px] text-quiet mt-0.5">Requested on {audit.requestedAt ? new Date(audit.requestedAt).toLocaleDateString() : new Date(audit.auditDate).toLocaleDateString()}</p>
                                                             </div>
                                                         ) : (
                                                             <div>
-                                                                <span className="font-medium text-slate-800 dark:text-white">{audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : new Date(audit.auditDate).toLocaleDateString()}</span>
-                                                                {audit.dueDate && <p className="text-[11px] text-slate-400">Deadline: {new Date(audit.dueDate).toLocaleDateString()}</p>}
+                                                                <span className="font-medium text-ink">{audit.submittedAt ? new Date(audit.submittedAt).toLocaleDateString() : new Date(audit.auditDate).toLocaleDateString()}</span>
+                                                                {audit.dueDate && <p className="text-[11px] text-quiet">Deadline: {new Date(audit.dueDate).toLocaleDateString()}</p>}
                                                             </div>
                                                         )}
                                                     </td>
 
                                                     {/* Employee */}
                                                     <td className="px-5 py-4">
-                                                        <div className="font-semibold text-slate-900 dark:text-white text-xs">
+                                                        <div className="font-semibold text-ink text-xs">
                                                             {audit.user?.name || 'Unknown'}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400 truncate max-w-[130px]">
+                                                        <div className="text-[11px] text-quiet truncate max-w-[130px]">
                                                             {audit.user?.email}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mt-0.5">
                                                             {audit.user?.company && (
-                                                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-medium">
+                                                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface text-ink font-medium">
                                                                     {audit.user.company}
                                                                 </span>
                                                             )}
                                                             {audit.user?.department?.name && (
-                                                                <span className="text-[10px] text-slate-400">
+                                                                <span className="text-[10px] text-quiet">
                                                                     {audit.user.department.name}
                                                                 </span>
                                                             )}
@@ -730,14 +730,14 @@ const SelfAuditsList: React.FC = () => {
                                                     {/* Asset */}
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 p-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 shrink-0">
+                                                            <div className="w-6 h-6 p-1 rounded bg-muted text-quiet shrink-0">
                                                                 {icon}
                                                             </div>
                                                             <div>
-                                                                <p className="font-semibold text-xs text-slate-900 dark:text-white">
+                                                                <p className="font-semibold text-xs text-ink">
                                                                     {audit.asset?.name || 'Device'}
                                                                 </p>
-                                                                <p className="font-mono text-[11px] text-slate-400">
+                                                                <p className="font-mono text-[11px] text-quiet">
                                                                     {audit.asset?.assetId}
                                                                 </p>
                                                             </div>
@@ -747,20 +747,20 @@ const SelfAuditsList: React.FC = () => {
                                                     {/* Health & Condition */}
                                                     <td className="px-5 py-4 text-xs">
                                                         {audit.status === 'Requested' ? (
-                                                            <span className="text-slate-400 italic">Not submitted yet</span>
+                                                            <span className="text-quiet italic">Not submitted yet</span>
                                                         ) : (
                                                             <div>
                                                                 <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                                                                    audit.condition === 'Good' 
-                                                                        ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                                                                    audit.condition === 'Good'
+                                                                        ? 'bg-surface text-ink  '
                                                                         : audit.condition === 'Minor Scratches'
-                                                                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
-                                                                            : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border border-red-200 dark:border-red-800'
+                                                                            ? 'bg-surface text-ink  '
+                                                                            : 'bg-surface text-ink   border border-line '
                                                                 }`}>
                                                                     {audit.condition || 'Reported'}
                                                                 </span>
                                                                 {audit.location && (
-                                                                    <p className="text-[11px] text-slate-400 mt-0.5">Loc: {audit.location}</p>
+                                                                    <p className="text-[11px] text-quiet mt-0.5">Loc: {audit.location}</p>
                                                                 )}
                                                             </div>
                                                         )}
@@ -769,25 +769,25 @@ const SelfAuditsList: React.FC = () => {
                                                     {/* Photo Proof */}
                                                     <td className="px-5 py-4 whitespace-nowrap">
                                                         {audit.imageUrl ? (
-                                                            <div 
+                                                            <div
                                                                 onClick={() => setSelectedAudit(audit)}
-                                                                className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 cursor-pointer hover:scale-105 transition-transform"
+                                                                className="w-10 h-10 rounded-lg overflow-hidden border border-line cursor-pointer hover:scale-105 transition-transform"
                                                                 title="Click to view full photo"
                                                             >
                                                                 <img src={audit.imageUrl} alt="Proof" className="w-full h-full object-cover" />
                                                             </div>
                                                         ) : (
-                                                            <span className="text-xs text-slate-400 italic">No image</span>
+                                                            <span className="text-xs text-quiet italic">No image</span>
                                                         )}
                                                     </td>
 
                                                     {/* Status Badge */}
                                                     <td className="px-5 py-4 whitespace-nowrap">
                                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                            audit.status === 'Approved' ? 'bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800' :
-                                                            audit.status === 'Rejected' ? 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800' :
-                                                            audit.status === 'Requested' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800' :
-                                                            'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                                            audit.status === 'Approved' ? 'bg-surface text-ink   border border-line ' :
+                                                            audit.status === 'Rejected' ? 'bg-surface text-ink   border border-line ' :
+                                                            audit.status === 'Requested' ? 'bg-surface text-ink   border border-line ' :
+                                                            'bg-surface text-ink   border border-line '
                                                         }`}>
                                                             {audit.status === 'Requested' ? 'Pending Submission' : audit.status}
                                                         </span>
@@ -798,14 +798,14 @@ const SelfAuditsList: React.FC = () => {
                                                         {audit.status === 'Pending Review' && isAdmin && (
                                                             <button
                                                                 onClick={() => setSelectedAudit(audit)}
-                                                                className="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                                                className="px-3 py-1 bg-accent hover:bg-accent text-on-strong rounded-lg text-xs font-bold transition-colors shadow-sm"
                                                             >
                                                                 Review Audit
                                                             </button>
                                                         )}
                                                         <button
                                                             onClick={() => setSelectedAudit(audit)}
-                                                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors inline-block"
+                                                            className="p-1.5 text-quiet hover:text-quiet rounded-lg hover:bg-muted transition-colors inline-block"
                                                             title="View Details"
                                                         >
                                                             <span className="w-4 h-4 block">{ICONS.view}</span>
@@ -826,30 +826,30 @@ const SelfAuditsList: React.FC = () => {
             {activeTab === 'assign' && (
                 <div className="space-y-6">
                     {/* Top Dispatcher Header & Info Banner */}
-                    <div className="p-4 bg-brand-50/60 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-900/40 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="p-4 bg-surface/60 border border-accent rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                            <h3 className="font-bold text-sm text-ink flex items-center gap-2">
                                 <span>🎯 Manual Audit Assignment Roster</span>
                             </h3>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-quiet mt-0.5">
                                 Select specific employees with assigned equipment to request an audit. Unselected employees and top executives will not receive any banners or reminders.
                             </p>
                         </div>
                         <button
                             onClick={() => setIsAssignModalOpen(true)}
                             disabled={selectedAssignKeys.size === 0}
-                            className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 shrink-0"
+                            className="px-5 py-2.5 bg-accent hover:bg-accent disabled:opacity-50 text-on-strong rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 shrink-0"
                         >
                             <span>Assign Self-Audit ({selectedAssignKeys.size})</span>
                         </button>
                     </div>
 
                     {/* Roster Filter Bar */}
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-3 flex-1">
                             {/* Search */}
                             <div className="relative flex-1 min-w-[200px] max-w-xs">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet pointer-events-none">
                                     {ICONS.search}
                                 </span>
                                 <input
@@ -857,7 +857,7 @@ const SelfAuditsList: React.FC = () => {
                                     value={assignSearch}
                                     onChange={(e) => setAssignSearch(e.target.value)}
                                     placeholder="Filter by name, title, asset..."
-                                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-white"
+                                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-canvas border border-line rounded-xl focus:ring-2 focus:ring-accent text-ink"
                                 />
                             </div>
 
@@ -865,7 +865,7 @@ const SelfAuditsList: React.FC = () => {
                             <select
                                 value={assignCompany}
                                 onChange={(e) => setAssignCompany(e.target.value)}
-                                className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200"
+                                className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink"
                             >
                                 <option value="All">All Companies</option>
                                 <option value="AMD">AMD</option>
@@ -877,7 +877,7 @@ const SelfAuditsList: React.FC = () => {
                             <select
                                 value={assignAuditStatusFilter}
                                 onChange={(e) => setAssignAuditStatusFilter(e.target.value as any)}
-                                className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200"
+                                className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink"
                             >
                                 <option value="All">All Audit Histories</option>
                                 <option value="Never">Never Audited</option>
@@ -889,7 +889,7 @@ const SelfAuditsList: React.FC = () => {
                         <div className="flex items-center gap-2 text-xs">
                             <button
                                 onClick={handleSelectAllFiltered}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold transition-colors"
+                                className="px-3 py-1.5 rounded-lg border border-line text-ink hover:bg-canvas font-semibold transition-colors"
                             >
                                 {selectedAssignKeys.size === filteredRoster.length && filteredRoster.length > 0 ? 'Deselect All' : `Select All Filtered (${filteredRoster.length})`}
                             </button>
@@ -897,17 +897,17 @@ const SelfAuditsList: React.FC = () => {
                     </div>
 
                     {/* Roster Table */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                                <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 text-xs uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
+                    <div className="bg-surface rounded-2xl shadow-sm border border-line overflow-hidden">
+                        <div tabIndex={0} role="region" aria-label="Self audits table; scroll horizontally for more columns" className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-quiet">
+                                <thead className="bg-canvas text-ink text-xs uppercase tracking-wider font-semibold border-b border-line">
                                     <tr>
                                         <th className="w-12 px-5 py-3.5 text-center">
                                             <input
                                                 type="checkbox"
                                                 checked={filteredRoster.length > 0 && selectedAssignKeys.size === filteredRoster.length}
                                                 onChange={handleSelectAllFiltered}
-                                                className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500"
+                                                className="w-4 h-4 rounded text-ink focus:ring-accent"
                                             />
                                         </th>
                                         <th className="px-5 py-3.5">Employee</th>
@@ -916,10 +916,10 @@ const SelfAuditsList: React.FC = () => {
                                         <th className="px-5 py-3.5">Active Audit Status</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tbody className="divide-y divide-line">
                                     {filteredRoster.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="text-center py-12 text-slate-400">
+                                            <td colSpan={5} className="text-center py-12 text-quiet">
                                                 No assigned equipment found matching filters.
                                             </td>
                                         </tr>
@@ -934,8 +934,8 @@ const SelfAuditsList: React.FC = () => {
                                                     onClick={() => toggleAssignSelection(key)}
                                                     className={`transition-colors cursor-pointer ${
                                                         isSelected
-                                                            ? 'bg-brand-50/50 dark:bg-brand-950/30'
-                                                            : 'hover:bg-slate-50/80 dark:hover:bg-slate-700/40'
+                                                            ? 'bg-surface/50 '
+                                                            : 'hover:bg-canvas/80 '
                                                     }`}
                                                 >
                                                     <td className="px-5 py-4 text-center" onClick={e => e.stopPropagation()}>
@@ -943,25 +943,25 @@ const SelfAuditsList: React.FC = () => {
                                                             type="checkbox"
                                                             checked={isSelected}
                                                             onChange={() => toggleAssignSelection(key)}
-                                                            className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500"
+                                                            className="w-4 h-4 rounded text-ink focus:ring-accent"
                                                         />
                                                     </td>
 
                                                     <td className="px-5 py-4">
-                                                        <div className="font-semibold text-slate-900 dark:text-white text-xs">
+                                                        <div className="font-semibold text-ink text-xs">
                                                             {u.name}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400">
+                                                        <div className="text-[11px] text-quiet">
                                                             {u.jobTitle ? `${u.jobTitle} • ` : ''}{u.email}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mt-0.5">
                                                             {u.company && (
-                                                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-medium">
+                                                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface text-ink font-medium">
                                                                     {u.company}
                                                                 </span>
                                                             )}
                                                             {u.department?.name && (
-                                                                <span className="text-[10px] text-slate-400">
+                                                                <span className="text-[10px] text-quiet">
                                                                     {u.department.name}
                                                                 </span>
                                                             )}
@@ -969,25 +969,25 @@ const SelfAuditsList: React.FC = () => {
                                                     </td>
 
                                                     <td className="px-5 py-4">
-                                                        <div className="font-semibold text-xs text-slate-900 dark:text-white">
+                                                        <div className="font-semibold text-xs text-ink">
                                                             {a.name}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        <div className="text-[11px] text-quiet">
                                                             Tag: <span className="font-mono">{a.assetId}</span> &bull; {a.category}
                                                         </div>
                                                     </td>
 
                                                     <td className="px-5 py-4 text-xs whitespace-nowrap">
                                                         {a.lastAuditedAt ? (
-                                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                            <span className="text-ink font-medium">
                                                                 {new Date(a.lastAuditedAt).toLocaleDateString()}
                                                             </span>
                                                         ) : lastAudit?.submittedAt ? (
-                                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                            <span className="text-ink font-medium">
                                                                 {new Date(lastAudit.submittedAt).toLocaleDateString()}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-amber-600 dark:text-amber-400 font-medium text-[11px]">
+                                                            <span className="text-ink font-medium text-[11px]">
                                                                 Never Audited
                                                             </span>
                                                         )}
@@ -997,13 +997,13 @@ const SelfAuditsList: React.FC = () => {
                                                         {activeAudit ? (
                                                             <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                                                                 activeAudit.status === 'Requested'
-                                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
-                                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                                                                    ? 'bg-surface text-ink  '
+                                                                    : 'bg-surface text-ink  '
                                                             }`}>
                                                                 {activeAudit.status === 'Requested' ? 'Audit Requested' : 'Submitted (Review Pending)'}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-slate-400 text-[11px] italic">No active audit</span>
+                                                            <span className="text-quiet text-[11px] italic">No active audit</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -1022,41 +1022,41 @@ const SelfAuditsList: React.FC = () => {
                 <div className="space-y-6 animate-fade-in">
                     {/* KPI Metrics */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Declarations</span>
-                            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{reconcileMetrics.total}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-quiet uppercase tracking-wider">Total Declarations</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{reconcileMetrics.total}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-purple-200 dark:border-purple-900/50 shadow-sm bg-purple-50/20">
-                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm bg-surface/20">
+                            <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
                                 <span>👻 Ghost Assets Declared</span>
                             </span>
-                            <p className="text-2xl font-bold text-purple-700 dark:text-purple-300 mt-1">{reconcileMetrics.ghostCount}</p>
+                            <p className="text-2xl font-bold text-ink mt-1">{reconcileMetrics.ghostCount}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm bg-amber-50/20">
-                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Discrepancies Reported</span>
-                            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{reconcileMetrics.discrepancies}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm bg-surface/20">
+                            <span className="text-xs font-bold text-ink uppercase tracking-wider">Discrepancies Reported</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{reconcileMetrics.discrepancies}</p>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <span className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">Reconciled Cleanly</span>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{reconcileMetrics.reconciled}</p>
+                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
+                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Reconciled Cleanly</span>
+                            <p className="text-2xl font-bold text-ink mt-1">{reconcileMetrics.reconciled}</p>
                         </div>
                     </div>
 
                     {/* Filter / Search bar */}
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                    <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
                         <div className="flex-1 flex flex-wrap items-center gap-3">
                             <input
                                 type="text"
                                 value={reconcileSearch}
                                 onChange={(e) => setReconcileSearch(e.target.value)}
                                 placeholder="Search by employee, items, or discrepancy remarks..."
-                                className="w-full sm:w-72 px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                className="w-full sm:w-72 px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl focus:ring-2 focus:ring-accent text-ink"
                             />
 
                             <select
                                 value={reconcileStatusFilter}
                                 onChange={(e) => setReconcileStatusFilter(e.target.value as any)}
-                                className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200"
+                                className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink"
                             >
                                 <option value="All">All Statuses</option>
                                 <option value="Pending Review">Pending Review</option>
@@ -1066,7 +1066,7 @@ const SelfAuditsList: React.FC = () => {
                             <select
                                 value={reconcileCompany}
                                 onChange={(e) => setReconcileCompany(e.target.value)}
-                                className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200"
+                                className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink"
                             >
                                 <option value="All">All Companies</option>
                                 <option value="AMD">AMD</option>
@@ -1078,7 +1078,7 @@ const SelfAuditsList: React.FC = () => {
                         <button
                             onClick={fetchDeclarations}
                             disabled={isLoadingDeclarations}
-                            className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-end sm:self-auto"
+                            className="px-3.5 py-1.5 bg-muted hover:bg-muted text-ink rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-end sm:self-auto"
                         >
                             <span>🔄</span>
                             <span>{isLoadingDeclarations ? 'Refreshing...' : 'Refresh'}</span>
@@ -1088,7 +1088,7 @@ const SelfAuditsList: React.FC = () => {
                     {/* Declarations List */}
                     <div className="space-y-4">
                         {filteredDeclarations.length === 0 ? (
-                            <div className="p-12 text-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 text-sm">
+                            <div className="p-12 text-center bg-surface rounded-2xl border border-line text-quiet text-sm">
                                 No asset declarations found matching filters.
                             </div>
                         ) : (
@@ -1101,18 +1101,18 @@ const SelfAuditsList: React.FC = () => {
                                 return (
                                     <div
                                         key={dec.id}
-                                        className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 transition-all hover:border-brand-300 dark:hover:border-slate-600"
+                                        className="p-5 rounded-2xl bg-surface border border-line shadow-sm space-y-4 transition-all hover:border-accent"
                                     >
-                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-line">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold text-sm">
+                                                <div className="w-10 h-10 rounded-xl bg-surface text-ink flex items-center justify-center font-bold text-sm">
                                                     {dec.user?.name?.charAt(0) || 'U'}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                                                    <h4 className="font-bold text-ink text-sm">
                                                         {dec.user?.name}
                                                     </h4>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    <p className="text-xs text-quiet">
                                                         {dec.user?.email} &bull; {dec.user?.company || 'AMD'} &bull; {dec.user?.department?.name || 'Department'}
                                                     </p>
                                                 </div>
@@ -1121,16 +1121,16 @@ const SelfAuditsList: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                     dec.systemRecordsOk
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 animate-pulse'
+                                                        ? 'bg-surface text-ink  '
+                                                        : 'bg-surface text-ink   animate-pulse'
                                                 }`}>
                                                     {dec.systemRecordsOk ? '✅ Records Matched' : '⚠️ Discrepancy Reported'}
                                                 </span>
 
                                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                     dec.status === 'Reconciled'
-                                                        ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                                        ? 'bg-muted text-ink  '
+                                                        : 'bg-surface text-ink  '
                                                 }`}>
                                                     {dec.status}
                                                 </span>
@@ -1138,7 +1138,7 @@ const SelfAuditsList: React.FC = () => {
                                                 {dec.status !== 'Reconciled' && (
                                                     <button
                                                         onClick={() => handleReconcileDeclaration(dec.id)}
-                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all"
+                                                        className="px-3 py-1 bg-olive hover:bg-olive text-on-strong rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all"
                                                     >
                                                         Mark Reconciled
                                                     </button>
@@ -1148,7 +1148,7 @@ const SelfAuditsList: React.FC = () => {
 
                                         {/* Discrepancy Remarks Callout */}
                                         {dec.discrepancyNotes && (
-                                            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-xs text-amber-900 dark:text-amber-200">
+                                            <div className="p-3.5 bg-surface border border-line rounded-xl text-xs text-ink">
                                                 <strong>Employee Discrepancy Remarks:</strong> &ldquo;{dec.discrepancyNotes}&rdquo;
                                             </div>
                                         )}
@@ -1162,7 +1162,7 @@ const SelfAuditsList: React.FC = () => {
 
                                                 return (
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                                                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                        <div className="text-[11px] font-bold text-quiet uppercase tracking-wider">
                                                             Declared Equipment ({items.length} items)
                                                         </div>
                                                         {unreconciledPeripherals.length > 0 && (
@@ -1170,7 +1170,7 @@ const SelfAuditsList: React.FC = () => {
                                                                 type="button"
                                                                 disabled={isBulkReconcilingId === dec.id}
                                                                 onClick={() => handleBulkReconcileAllPeripherals(dec, unreconciledPeripherals)}
-                                                                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
+                                                                className="px-2.5 py-1 bg-surface hover:bg-surface text-ink border border-line rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
                                                                 title="Adds all declared accessories straight into employee profile without creating Asset IDs"
                                                             >
                                                                 <span>🎧</span>
@@ -1187,68 +1187,68 @@ const SelfAuditsList: React.FC = () => {
                                                         key={item.id}
                                                         className={`p-3 rounded-xl border text-xs flex flex-col justify-between ${
                                                             item.reconciled || item.userAccessoryId
-                                                                ? 'bg-blue-50/20 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900/40'
+                                                                ? 'bg-surface/20  border-line '
                                                                 : item.convertedAssetId
-                                                                ? 'bg-green-50/20 dark:bg-green-950/10 border-green-200 dark:border-green-900/40'
+                                                                ? 'bg-surface/20  border-line '
                                                                 : item.isGhost
-                                                                ? 'bg-purple-50/40 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800/40'
-                                                                : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                                                                ? 'bg-surface/40  border-line '
+                                                                : 'bg-canvas  border-line '
                                                         }`}
                                                     >
                                                         <div>
                                                             <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                                <span className="font-bold text-slate-900 dark:text-white">
+                                                                <span className="font-bold text-ink">
                                                                     {item.name}
                                                                 </span>
                                                                 {item.convertedAssetTag ? (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-green-600 text-white shrink-0 flex items-center gap-1">
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-olive text-on-strong shrink-0 flex items-center gap-1">
                                                                         <span>🏷️</span> {item.convertedAssetTag}
                                                                     </span>
                                                                 ) : (item.reconciled || item.userAccessoryId) ? (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 shrink-0 flex items-center gap-1">
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-surface text-ink shrink-0 flex items-center gap-1">
                                                                         <span>🎧</span> Profile Accessory
                                                                     </span>
                                                                 ) : item.isGhost ? (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-purple-600 text-white shrink-0">
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-olive text-on-strong shrink-0">
                                                                         Ghost Asset
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0">
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-muted text-ink shrink-0">
                                                                         Matched
                                                                     </span>
                                                                 )}
                                                             </div>
 
-                                                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                            <p className="text-[11px] text-quiet">
                                                                 {item.category} {item.brand ? `• ${item.brand}` : ''} {item.serialNumber ? `• SN: ${item.serialNumber}` : ''}
                                                             </p>
-                                                            <p className="text-[10px] text-slate-400 mt-0.5">
-                                                                Condition: <span className="font-semibold text-slate-700 dark:text-slate-300">{item.condition || 'Good'}</span> &bull; {item.location || 'Head Office'}
+                                                            <p className="text-[10px] text-quiet mt-0.5">
+                                                                Condition: <span className="font-semibold text-ink">{item.condition || 'Good'}</span> &bull; {item.location || 'Head Office'}
                                                             </p>
                                                         </div>
 
                                                         {/* Photo Proof thumbnail & Actions */}
-                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-line">
                                                             {item.imageUrl ? (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setImagePreviewUrl(item.imageUrl!)}
-                                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-brand-600 hover:text-brand-700"
+                                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-ink hover:text-ink"
                                                                 >
-                                                                    <img src={item.imageUrl} alt="Proof" className="w-6 h-6 rounded object-cover border border-slate-300" />
+                                                                    <img src={item.imageUrl} alt="Proof" className="w-6 h-6 rounded object-cover border border-line" />
                                                                     <span>Proof</span>
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-[10px] text-slate-400 italic">No photo</span>
+                                                                <span className="text-[10px] text-quiet italic">No photo</span>
                                                             )}
 
                                                             <div className="flex items-center justify-end gap-1.5 ml-auto">
                                                                 {(item.reconciled || item.userAccessoryId) ? (
-                                                                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                                                    <span className="text-[11px] text-ink font-bold flex items-center gap-1">
                                                                         ✓ In Profile
                                                                     </span>
                                                                 ) : item.convertedAssetId ? (
-                                                                    <span className="text-[11px] text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
+                                                                    <span className="text-[11px] text-ink font-bold flex items-center gap-1">
                                                                         ✓ Tagged
                                                                     </span>
                                                                 ) : isPeripheralCategory(item.category) ? (
@@ -1256,7 +1256,7 @@ const SelfAuditsList: React.FC = () => {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleOpenReconcileAccModal(dec, item)}
-                                                                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                                                            className="px-2.5 py-1 bg-olive hover:bg-olive active:scale-95 text-on-strong rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
                                                                             title="Record in employee profile checklist without generating an Asset Tag"
                                                                         >
                                                                             <span>🎧 Add to Profile</span>
@@ -1265,7 +1265,7 @@ const SelfAuditsList: React.FC = () => {
                                                                             type="button"
                                                                             onClick={() => handleOpenConvertModal(dec, item)}
                                                                             title="Only if this requires a physical barcode asset tag"
-                                                                            className="px-2 py-1 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 rounded-lg text-[10px] font-medium transition-all"
+                                                                            className="px-2 py-1 text-quiet hover:text-ink rounded-lg text-[10px] font-medium transition-all"
                                                                         >
                                                                             Tag ID
                                                                         </button>
@@ -1275,7 +1275,7 @@ const SelfAuditsList: React.FC = () => {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleOpenConvertModal(dec, item)}
-                                                                            className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                                                            className="px-2.5 py-1 bg-olive hover:bg-olive active:scale-95 text-on-strong rounded-lg text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
                                                                         >
                                                                             <span>✨ 1-Click Register</span>
                                                                         </button>
@@ -1283,7 +1283,7 @@ const SelfAuditsList: React.FC = () => {
                                                                             type="button"
                                                                             onClick={() => handleOpenReconcileAccModal(dec, item)}
                                                                             title="Add as un-tagged accessory instead"
-                                                                            className="px-2 py-1 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 rounded-lg text-[10px] font-medium transition-all"
+                                                                            className="px-2 py-1 text-quiet hover:text-ink rounded-lg text-[10px] font-medium transition-all"
                                                                         >
                                                                             Profile
                                                                         </button>
@@ -1305,72 +1305,72 @@ const SelfAuditsList: React.FC = () => {
 
             {/* Comprehensive Review Modal */}
             {selectedAudit && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedAudit(null)}>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-strong/50 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedAudit(null)}>
+                    <div className="bg-surface rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-line flex flex-col max-h-[calc(100dvh-1rem)]" onClick={e => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
+                        <div className="p-5 border-b border-line flex justify-between items-center bg-canvas">
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                <h3 className="text-lg font-bold text-ink">
                                     Review Self-Audit: {selectedAudit.asset?.name || 'Equipment'}
                                 </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                <p className="text-xs text-quiet mt-0.5">
                                     Submitted by {selectedAudit.user?.name || 'User'} &bull; Asset Tag: <span className="font-mono font-bold">{selectedAudit.asset?.assetId}</span>
                                 </p>
                             </div>
-                            <button onClick={() => setSelectedAudit(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                            <button aria-label="Close dialog" onClick={() => setSelectedAudit(null)} className="text-quiet hover:text-quiet p-1">
                                 {ICONS.close}
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300">
+                        <div className="p-6 overflow-y-auto space-y-5 text-xs text-ink">
                             {/* Overview Cards */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-                                    <span className="text-slate-400 text-[10px] uppercase font-bold">Location</span>
-                                    <p className="font-bold text-slate-900 dark:text-white text-xs mt-0.5">{selectedAudit.location || 'Not specified'}</p>
+                                <div className="p-3 rounded-xl bg-canvas border border-line">
+                                    <span className="text-quiet text-[10px] uppercase font-bold">Location</span>
+                                    <p className="font-bold text-ink text-xs mt-0.5">{selectedAudit.location || 'Not specified'}</p>
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-                                    <span className="text-slate-400 text-[10px] uppercase font-bold">Physical Condition</span>
-                                    <p className="font-bold text-slate-900 dark:text-white text-xs mt-0.5">{selectedAudit.condition || 'Not specified'}</p>
+                                <div className="p-3 rounded-xl bg-canvas border border-line">
+                                    <span className="text-quiet text-[10px] uppercase font-bold">Physical Condition</span>
+                                    <p className="font-bold text-ink text-xs mt-0.5">{selectedAudit.condition || 'Not specified'}</p>
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-                                    <span className="text-slate-400 text-[10px] uppercase font-bold">Tag Verified</span>
-                                    <p className="font-mono font-bold text-slate-900 dark:text-white text-xs mt-0.5">{selectedAudit.scannedAssetId || 'N/A'}</p>
+                                <div className="p-3 rounded-xl bg-canvas border border-line">
+                                    <span className="text-quiet text-[10px] uppercase font-bold">Tag Verified</span>
+                                    <p className="font-mono font-bold text-ink text-xs mt-0.5">{selectedAudit.scannedAssetId || 'N/A'}</p>
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-                                    <span className="text-slate-400 text-[10px] uppercase font-bold">Status</span>
-                                    <p className="font-bold text-slate-900 dark:text-white text-xs mt-0.5">{selectedAudit.status}</p>
+                                <div className="p-3 rounded-xl bg-canvas border border-line">
+                                    <span className="text-quiet text-[10px] uppercase font-bold">Status</span>
+                                    <p className="font-bold text-ink text-xs mt-0.5">{selectedAudit.status}</p>
                                 </div>
                             </div>
 
                             {/* Hardware health checks */}
                             <div>
-                                <h4 className="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider mb-2">
+                                <h4 className="font-bold text-ink text-xs uppercase tracking-wider mb-2">
                                     Hardware Component Verification
                                 </h4>
                                 {(() => {
                                     const checks = parseChecks(selectedAudit.hardwareChecks);
                                     return (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 text-xs">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-canvas rounded-xl border border-line text-xs">
                                             <div className="flex items-center gap-1.5">
-                                                <span className={checks.screenOk ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{checks.screenOk ? '✓' : '✗'}</span>
+                                                <span className={checks.screenOk ? 'text-ink font-bold' : 'text-ink font-bold'}>{checks.screenOk ? '✓' : '✗'}</span>
                                                 <span>Screen / Display</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={checks.keyboardOk ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{checks.keyboardOk ? '✓' : '✗'}</span>
+                                                <span className={checks.keyboardOk ? 'text-ink font-bold' : 'text-ink font-bold'}>{checks.keyboardOk ? '✓' : '✗'}</span>
                                                 <span>Keyboard / Touchpad</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={checks.batteryOk ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{checks.batteryOk ? '✓' : '✗'}</span>
+                                                <span className={checks.batteryOk ? 'text-ink font-bold' : 'text-ink font-bold'}>{checks.batteryOk ? '✓' : '✗'}</span>
                                                 <span>Battery Backup</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={checks.chargerOk ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{checks.chargerOk ? '✓' : '✗'}</span>
+                                                <span className={checks.chargerOk ? 'text-ink font-bold' : 'text-ink font-bold'}>{checks.chargerOk ? '✓' : '✗'}</span>
                                                 <span>Power Adapter</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={checks.bodyOk ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{checks.bodyOk ? '✓' : '✗'}</span>
+                                                <span className={checks.bodyOk ? 'text-ink font-bold' : 'text-ink font-bold'}>{checks.bodyOk ? '✓' : '✗'}</span>
                                                 <span>Chassis / Hinges</span>
                                             </div>
                                         </div>
@@ -1381,10 +1381,10 @@ const SelfAuditsList: React.FC = () => {
                             {/* Employee remarks */}
                             {(selectedAudit.userRemarks || selectedAudit.remarks) && (
                                 <div>
-                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider mb-1">
+                                    <h4 className="font-bold text-ink text-xs uppercase tracking-wider mb-1">
                                         Employee Notes
                                     </h4>
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 whitespace-pre-wrap">
+                                    <div className="p-3 bg-canvas rounded-xl border border-line whitespace-pre-wrap">
                                         {selectedAudit.userRemarks || selectedAudit.remarks}
                                     </div>
                                 </div>
@@ -1393,10 +1393,10 @@ const SelfAuditsList: React.FC = () => {
                             {/* Photo Proof */}
                             {selectedAudit.imageUrl && (
                                 <div>
-                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider mb-1.5">
+                                    <h4 className="font-bold text-ink text-xs uppercase tracking-wider mb-1.5">
                                         Photo Proof
                                     </h4>
-                                    <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 flex justify-center max-h-72">
+                                    <div className="rounded-xl overflow-hidden border border-line bg-strong flex justify-center max-h-72">
                                         <img src={selectedAudit.imageUrl} alt="Audit Proof" className="max-h-72 object-contain" />
                                     </div>
                                 </div>
@@ -1404,34 +1404,34 @@ const SelfAuditsList: React.FC = () => {
 
                             {/* Reviewer inputs (if actionable) */}
                             {isAdmin && selectedAudit.status === 'Pending Review' && (
-                                <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                <div className="space-y-3 pt-2 border-t border-line">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                        <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                             Admin Verification Notes (Optional)
                                         </label>
-                                        <input
+                                        <input aria-label="Admin Verification Notes (Optional)"
                                             type="text"
                                             value={adminRemarks}
                                             onChange={e => setAdminRemarks(e.target.value)}
                                             placeholder="e.g., Verified physical condition and serial tag."
-                                            className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100"
+                                            className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs focus:ring-2 focus:ring-accent text-ink"
                                         />
                                     </div>
 
                                     {/* Defect escalation toggle */}
-                                    <div className="p-3 bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl">
+                                    <div className="p-3 bg-surface/70 border border-line rounded-xl">
                                         <label className="flex items-start gap-2.5 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={createTicket}
                                                 onChange={e => setCreateTicket(e.target.checked)}
-                                                className="w-4 h-4 rounded text-red-600 focus:ring-red-500 mt-0.5"
+                                                className="w-4 h-4 rounded text-ink focus:ring-accent mt-0.5"
                                             />
                                             <div>
-                                                <span className="font-bold text-red-900 dark:text-red-200 block text-xs">
+                                                <span className="font-bold text-ink block text-xs">
                                                     Escalate Defect to IT Support Ticket
                                                 </span>
-                                                <span className="text-[11px] text-red-700 dark:text-red-300 block mt-0.5">
+                                                <span className="text-[11px] text-ink block mt-0.5">
                                                     Automatically create an open high-priority support ticket linked to this asset and user for hardware repair or charger replacement.
                                                 </span>
                                             </div>
@@ -1442,10 +1442,10 @@ const SelfAuditsList: React.FC = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-end items-center gap-3">
+                        <div className="p-5 border-t border-line bg-canvas flex justify-end items-center gap-3">
                             <button
                                 onClick={() => setSelectedAudit(null)}
-                                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 rounded-xl transition-colors"
+                                className="px-4 py-2 text-xs font-semibold text-quiet hover:bg-muted rounded-xl transition-colors"
                             >
                                 Close
                             </button>
@@ -1455,14 +1455,14 @@ const SelfAuditsList: React.FC = () => {
                                     <button
                                         onClick={() => handleUpdateAuditStatus('Rejected')}
                                         disabled={isSubmittingReview}
-                                        className="px-4 py-2 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-xl transition-colors disabled:opacity-50"
+                                        className="px-4 py-2 text-xs font-bold text-ink bg-surface hover:bg-surface border border-line rounded-xl transition-colors disabled:opacity-50"
                                     >
                                         Reject
                                     </button>
                                     <button
                                         onClick={() => handleUpdateAuditStatus('Approved')}
                                         disabled={isSubmittingReview}
-                                        className="px-5 py-2 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors shadow-sm disabled:opacity-50"
+                                        className="px-5 py-2 text-xs font-bold text-on-strong bg-olive hover:bg-olive rounded-xl transition-colors shadow-sm disabled:opacity-50"
                                     >
                                         {isSubmittingReview ? 'Processing...' : 'Approve & Verify'}
                                     </button>
@@ -1483,20 +1483,20 @@ const SelfAuditsList: React.FC = () => {
 
             {/* Modal for 1-Click Ghost Asset Registration */}
             {convertingDeclaration && convertingItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => { setConvertingDeclaration(null); setConvertingItem(null); }}>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-purple-50 dark:bg-purple-950/40">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-strong/50 backdrop-blur-sm animate-fade-in" onClick={() => { setConvertingDeclaration(null); setConvertingItem(null); }}>
+                    <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-line flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-5 border-b border-line flex justify-between items-center bg-surface">
                             <div>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-purple-600 text-white">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-olive text-on-strong">
                                     Ghost Asset Registration
                                 </span>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                                <h3 className="text-base font-bold text-ink mt-1">
                                     Register &ldquo;{convertingItem.name}&rdquo; into Official Inventory
                                 </h3>
                             </div>
                             <button
                                 onClick={() => { setConvertingDeclaration(null); setConvertingItem(null); }}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
+                                className="text-quiet hover:text-quiet text-sm font-bold"
                             >
                                 ✕
                             </button>
@@ -1504,51 +1504,51 @@ const SelfAuditsList: React.FC = () => {
 
                         <div className="p-6 space-y-4">
                             {convertingItem.imageUrl && (
-                                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-40 bg-black flex items-center justify-center">
+                                <div className="rounded-xl overflow-hidden border border-line max-h-40 bg-strong flex items-center justify-center">
                                     <img src={convertingItem.imageUrl} alt="Declared Photo Proof" className="max-h-40 object-contain" />
                                 </div>
                             )}
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                                    <label className="block text-[11px] font-bold text-quiet uppercase tracking-wider mb-1">
                                         Assignee
                                     </label>
-                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                    <p className="text-xs font-bold text-ink">
                                         {convertingDeclaration.user?.name}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                                    <label className="block text-[11px] font-bold text-quiet uppercase tracking-wider mb-1">
                                         Reported Condition
                                     </label>
-                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                    <p className="text-xs font-bold text-ink">
                                         {convertingItem.condition || 'Good'}
                                     </p>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                                    Asset ID / Tag <span className="text-red-500">*</span>
+                                <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
+                                    Asset ID / Tag <span className="text-ink">*</span>
                                 </label>
-                                <input
+                                <input aria-label="Asset ID / Tag"
                                     type="text"
                                     value={convertAssetTag}
                                     onChange={(e) => setConvertAssetTag(e.target.value)}
-                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-mono font-bold text-brand-600 dark:text-brand-400"
+                                    className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-sm font-mono font-bold text-ink"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Company
                                     </label>
-                                    <select
+                                    <select aria-label="Company"
                                         value={convertCompany}
                                         onChange={(e) => setConvertCompany(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                     >
                                         <option value="AMD">AMD</option>
                                         <option value="ASSP">ASSP</option>
@@ -1557,13 +1557,13 @@ const SelfAuditsList: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Category
                                     </label>
-                                    <select
+                                    <select aria-label="Category"
                                         value={convertCategory}
                                         onChange={(e) => setConvertCategory(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                     >
                                         <option value="Laptop">Laptop</option>
                                         <option value="Desktop">Desktop</option>
@@ -1580,11 +1580,11 @@ const SelfAuditsList: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-end gap-3">
+                        <div className="p-4 border-t border-line bg-canvas flex flex-wrap justify-end gap-3">
                             <button
                                 type="button"
                                 onClick={() => { setConvertingDeclaration(null); setConvertingItem(null); }}
-                                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 rounded-xl"
+                                className="px-4 py-2 text-xs font-semibold text-quiet hover:bg-muted rounded-xl"
                             >
                                 Cancel
                             </button>
@@ -1592,7 +1592,7 @@ const SelfAuditsList: React.FC = () => {
                                 type="button"
                                 disabled={isConverting || !convertAssetTag.trim()}
                                 onClick={handleConfirmConvertGhost}
-                                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+                                className="px-5 py-2.5 bg-olive hover:bg-olive disabled:opacity-50 text-on-strong text-xs font-bold rounded-xl shadow-md shadow-strong/15 active:scale-95 transition-all flex items-center gap-1.5"
                             >
                                 {isConverting ? 'Registering...' : 'Confirm & Register into Inventory'}
                             </button>
@@ -1603,23 +1603,23 @@ const SelfAuditsList: React.FC = () => {
 
             {/* Modal for Adding Declared Peripheral to Profile Checklist (No Asset ID) */}
             {reconcileAccDeclaration && reconcileAccItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col" onClick={e => e.stopPropagation()}>
-                        <div className="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-blue-50 dark:bg-blue-950/40">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-strong/50 backdrop-blur-sm animate-fade-in" onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}>
+                    <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-line flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-5 border-b border-line flex justify-between items-center bg-surface">
                             <div>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-olive text-on-strong">
                                     Profile Peripheral Checklist
                                 </span>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                                <h3 className="text-base font-bold text-ink mt-1">
                                     Add &ldquo;{reconcileAccItem.name}&rdquo; to {reconcileAccDeclaration.user?.name}&apos;s Profile
                                 </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                <p className="text-xs text-quiet mt-0.5">
                                     Records peripheral directly onto employee profile without generating an Asset Tag.
                                 </p>
                             </div>
                             <button
                                 onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
+                                className="text-quiet hover:text-quiet text-sm font-bold"
                             >
                                 ✕
                             </button>
@@ -1627,20 +1627,20 @@ const SelfAuditsList: React.FC = () => {
 
                         <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
                             {reconcileAccItem.imageUrl && (
-                                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-36 bg-black flex items-center justify-center">
+                                <div className="rounded-xl overflow-hidden border border-line max-h-36 bg-strong flex items-center justify-center">
                                     <img src={reconcileAccItem.imageUrl} alt="Declared Photo Proof" className="max-h-36 object-contain" />
                                 </div>
                             )}
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                                        Category <span className="text-red-500">*</span>
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
+                                        Category <span className="text-ink">*</span>
                                     </label>
-                                    <select
+                                    <select aria-label="Category"
                                         value={accCategory}
                                         onChange={(e) => setAccCategory(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                     >
                                         <option value="Mouse">Mouse</option>
                                         <option value="Keyboard">Keyboard</option>
@@ -1656,14 +1656,14 @@ const SelfAuditsList: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                                        Item Name <span className="text-red-500">*</span>
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
+                                        Item Name <span className="text-ink">*</span>
                                     </label>
-                                    <input
+                                    <input aria-label="Item Name"
                                         type="text"
                                         value={accName}
                                         onChange={(e) => setAccName(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                         placeholder="e.g. Dell Optical Mouse"
                                     />
                                 </div>
@@ -1671,27 +1671,27 @@ const SelfAuditsList: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Brand / Make
                                     </label>
-                                    <input
+                                    <input aria-label="Brand / Make"
                                         type="text"
                                         value={accBrand}
                                         onChange={(e) => setAccBrand(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                         placeholder="e.g. Logitech, Dell"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Serial Number (Optional)
                                     </label>
-                                    <input
+                                    <input aria-label="Serial Number (Optional)"
                                         type="text"
                                         value={accSerial}
                                         onChange={(e) => setAccSerial(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                         placeholder="e.g. SN123456"
                                     />
                                 </div>
@@ -1699,9 +1699,9 @@ const SelfAuditsList: React.FC = () => {
 
                             {/* Optional Stock / Batch Link for Warranty */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1 flex items-center justify-between">
                                     <span>Link to Purchase Stock Batch (Optional)</span>
-                                    <span className="text-[10px] text-brand-600 dark:text-brand-400 font-normal">Auto-links Purchase Date & Warranty</span>
+                                    <span className="text-[10px] text-ink font-normal">Auto-links Purchase Date & Warranty</span>
                                 </label>
                                 <select
                                     value={selectedAccBatchId}
@@ -1716,7 +1716,7 @@ const SelfAuditsList: React.FC = () => {
                                             }
                                         }
                                     }}
-                                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                    className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                 >
                                     <option value="">No Batch Link (Legacy / Existing Employee Item)</option>
                                     {accessoryBatches.map(b => (
@@ -1726,11 +1726,11 @@ const SelfAuditsList: React.FC = () => {
                                     ))}
                                 </select>
                                 {selectedAccBatchId ? (
-                                    <p className="text-[11px] text-green-600 dark:text-green-400 mt-1 flex items-center gap-1 font-medium">
+                                    <p className="text-[11px] text-ink mt-1 flex items-center gap-1 font-medium">
                                         <span>🛡️</span> Purchase date & warranty tracking will be automatically linked from this stock batch!
                                     </p>
                                 ) : (
-                                    <p className="text-[11px] text-slate-400 mt-1">
+                                    <p className="text-[11px] text-quiet mt-1">
                                         Item will be recorded in checklist without warranty tracking.
                                     </p>
                                 )}
@@ -1738,13 +1738,13 @@ const SelfAuditsList: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Condition
                                     </label>
-                                    <select
+                                    <select aria-label="Condition"
                                         value={accCondition}
                                         onChange={(e) => setAccCondition(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                     >
                                         <option value="Good">Good</option>
                                         <option value="Minor Scratches">Minor Scratches</option>
@@ -1754,25 +1754,25 @@ const SelfAuditsList: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                                    <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1">
                                         Remarks / Notes
                                     </label>
-                                    <input
+                                    <input aria-label="Remarks / Notes"
                                         type="text"
                                         value={accNotes}
                                         onChange={(e) => setAccNotes(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-white"
+                                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-ink"
                                         placeholder="Optional notes"
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-end gap-3">
+                        <div className="p-4 border-t border-line bg-canvas flex flex-wrap justify-end gap-3">
                             <button
                                 type="button"
                                 onClick={() => { setReconcileAccDeclaration(null); setReconcileAccItem(null); }}
-                                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 rounded-xl"
+                                className="px-4 py-2 text-xs font-semibold text-quiet hover:bg-muted rounded-xl"
                             >
                                 Cancel
                             </button>
@@ -1780,7 +1780,7 @@ const SelfAuditsList: React.FC = () => {
                                 type="button"
                                 disabled={isReconcilingAcc || !accName.trim()}
                                 onClick={handleConfirmReconcileAcc}
-                                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+                                className="px-5 py-2.5 bg-olive hover:bg-olive disabled:opacity-50 text-on-strong text-xs font-bold rounded-xl shadow-md shadow-strong/15 active:scale-95 transition-all flex items-center gap-1.5"
                             >
                                 {isReconcilingAcc ? 'Saving...' : 'Save to Profile Accessories'}
                             </button>
@@ -1791,13 +1791,13 @@ const SelfAuditsList: React.FC = () => {
 
             {/* Photo Zoom Modal */}
             {imagePreviewUrl && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" onClick={() => setImagePreviewUrl(null)}>
-                    <div className="relative max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl bg-black" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-strong/80 backdrop-blur-md animate-fade-in" onClick={() => setImagePreviewUrl(null)}>
+                    <div className="relative max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl bg-strong" onClick={e => e.stopPropagation()}>
                         <img src={imagePreviewUrl} alt="Enlarged proof" className="max-w-full max-h-[85vh] object-contain" />
                         <button
                             type="button"
                             onClick={() => setImagePreviewUrl(null)}
-                            className="absolute top-3 right-3 px-3 py-1 bg-black/70 hover:bg-black text-white rounded-lg text-xs font-bold"
+                            className="absolute top-3 right-3 px-3 py-1 bg-strong/70 hover:bg-strong text-on-strong rounded-lg text-xs font-bold"
                         >
                             ✕ Close
                         </button>

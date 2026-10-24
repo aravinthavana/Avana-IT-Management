@@ -106,7 +106,7 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
         // 3. Format Subject and HTML Template
         const trackingTag = `[AVANA-TICKET #${ticketId}]`;
         const cleanSubject = ticketSubject.replace(/^(RE:\s*)+/i, '').trim();
-        const emailSubject = isReply 
+        const emailSubject = isReply
             ? `RE: ${trackingTag} ${cleanSubject}`
             : `${trackingTag} ${cleanSubject}`;
 
@@ -116,21 +116,21 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }
-    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .header { background: #0f172a; color: #ffffff; padding: 24px; text-align: left; }
-    .badge { display: inline-block; background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .title { font-size: 20px; font-weight: 800; margin: 12px 0 4px 0; color: #ffffff; }
-    .meta { font-size: 12px; color: #94a3b8; }
-    .content { padding: 24px; line-height: 1.6; font-size: 14px; color: #334155; }
-    .message-box { background: #f1f5f9; border-left: 4px solid #dc2626; padding: 16px; border-radius: 8px; margin: 16px 0; font-size: 14px; white-space: pre-wrap; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #d7d0bc; margin: 0; padding: 20px; color: #172025; }
+    .container { max-width: 600px; margin: 0 auto; background: #d7d0bc; border-radius: 16px; border: 1px solid #d7d0bc; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(23, 32, 37, 0.1); }
+    .header { background: #172025; color: #d7d0bc; padding: 24px; text-align: left; }
+    .badge { display: inline-block; background: #b27f0d; color: #172025; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .title { font-size: 20px; font-weight: 800; margin: 12px 0 4px 0; color: #d7d0bc; }
+    .meta { font-size: 12px; color: #aab2b2; }
+    .content { padding: 24px; line-height: 1.6; font-size: 14px; color: #404131; }
+    .message-box { background: #d7d0bc; border-left: 4px solid #b27f0d; padding: 16px; border-radius: 8px; margin: 16px 0; font-size: 14px; white-space: pre-wrap; }
     .info-grid { display: table; width: 100%; margin: 16px 0; border-collapse: collapse; }
     .info-row { display: table-row; }
-    .info-label { display: table-cell; padding: 6px 12px 6px 0; font-size: 12px; font-weight: 700; color: #64748b; width: 120px; text-transform: uppercase; }
-    .info-value { display: table-cell; padding: 6px 0; font-size: 13px; font-weight: 600; color: #1e293b; }
-    .attachments-box { margin-top: 20px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; font-size: 12px; color: #475569; }
-    .footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
-    .reply-hint { font-weight: 600; color: #0284c7; }
+    .info-label { display: table-cell; padding: 6px 12px 6px 0; font-size: 12px; font-weight: 700; color: #aab2b2; width: 120px; text-transform: uppercase; }
+    .info-value { display: table-cell; padding: 6px 0; font-size: 13px; font-weight: 600; color: #172025; }
+    .attachments-box { margin-top: 20px; padding: 12px; background: #d7d0bc; border: 1px dashed #d7d0bc; border-radius: 8px; font-size: 12px; color: #404131; }
+    .footer { padding: 16px 24px; background: #d7d0bc; border-top: 1px solid #d7d0bc; font-size: 11px; color: #aab2b2; text-align: center; }
+    .reply-hint { font-weight: 600; color: #aab2b2; }
   </style>
 </head>
 <body>
@@ -143,7 +143,7 @@ export async function sendTicketEmailViaGraph(options: SendEmailOptions): Promis
     <div class="content">
       <p>Hello <strong>${toName || 'Team'}</strong>,</p>
       <p>${isReply ? `<strong>${senderName}</strong> posted an update regarding this ticket:` : `A new IT support ticket has been submitted with the details below:`}</p>
-      
+
       <div class="message-box">${messageBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
 
       <div class="info-grid">
@@ -286,7 +286,7 @@ export function cleanOutlookEmailBody(bodyContent: string): string {
         quotedDivs.forEach(el => el.remove());
 
         let text = doc.body.textContent || '';
-        
+
         // Strip classic text separators
         const separators = [
             /-----Original Message-----/i,

@@ -132,21 +132,21 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     if (!user) {
         if (users.length === 0) {
             return (
-                <div className="flex items-center justify-center py-24 text-slate-500 dark:text-slate-400">
-                    <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+                <div className="flex items-center justify-center py-24 text-quiet">
+                    <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin mr-3"></div>
                     <span className="font-body text-sm">Loading user details...</span>
                 </div>
             );
         }
         return (
-            <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-md mx-auto my-12">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-heading">User Not Found</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-body">The requested user could not be located.</p>
-                <button onClick={onBack} className="mt-5 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 text-sm font-medium">&larr; Back to Users</button>
+            <div className="text-center p-8 bg-surface rounded-xl shadow-sm border border-line max-w-md mx-auto my-12">
+                <h2 className="text-xl font-bold text-ink font-heading">User Not Found</h2>
+                <p className="text-sm text-quiet mt-2 font-body">The requested user could not be located.</p>
+                <button onClick={onBack} className="mt-5 bg-accent text-on-strong px-4 py-2 rounded-lg hover:bg-accent text-sm font-medium">&larr; Back to Users</button>
             </div>
         );
     }
-    
+
     const handleAssignAsset = async (assetToAssign: Asset, condition: string) => {
         try {
             const res = await fetch(`${API_URL}/api/assets/${assetToAssign.id}`, {
@@ -165,7 +165,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             });
             if (!res.ok) throw new Error('Failed to assign asset');
             const updated = await res.json();
-            setAssets(prevAssets => prevAssets.map(asset => 
+            setAssets(prevAssets => prevAssets.map(asset =>
                 asset.id === assetToAssign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
             ));
             fetchAssetHistory();
@@ -179,7 +179,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
     const handleConfirmUnassign = async (updatedAssetData: { status: string, remarks: string, condition: string }) => {
         if (!assetToUnassign) return;
-        
+
         try {
             const res = await fetch(`${API_URL}/api/assets/${assetToUnassign.id}`, {
                 method: 'PUT',
@@ -197,7 +197,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             });
             if (!res.ok) throw new Error('Failed to unassign asset');
             const updated = await res.json();
-            setAssets(prevAssets => prevAssets.map(asset => 
+            setAssets(prevAssets => prevAssets.map(asset =>
                 asset.id === assetToUnassign.id ? { ...updated, specs: typeof updated.specs === 'string' ? JSON.parse(updated.specs) : updated.specs } : asset
             ));
             fetchAssetHistory();
@@ -229,20 +229,20 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
             {/* Return Accessory Confirmation Modal */}
             {returnAccessoryState && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 w-full max-w-sm">
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Return Accessory to IT Stock</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-strong/50 backdrop-blur-sm">
+                    <div className="bg-surface rounded-2xl shadow-2xl border border-line p-6 w-full max-w-sm">
+                        <h3 className="text-base font-bold text-ink mb-1">Return Accessory to IT Stock</h3>
+                        <p className="text-xs text-quiet mb-4">
                             This will mark the accessory as returned and restore 1 unit to the batch stock.
                         </p>
 
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Return Condition</label>
-                                <select
+                                <label className="block text-xs font-bold text-ink mb-1">Return Condition</label>
+                                <select aria-label="Return Condition"
                                     value={returnAccessoryState.condition}
                                     onChange={e => setReturnAccessoryState(prev => prev ? { ...prev, condition: e.target.value } : null)}
-                                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-line bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-accent"
                                 >
                                     <option>Good</option>
                                     <option>Fair</option>
@@ -250,13 +250,13 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Notes (optional)</label>
-                                <textarea
+                                <label className="block text-xs font-bold text-ink mb-1">Notes (optional)</label>
+                                <textarea aria-label="Notes (optional)"
                                     rows={2}
                                     value={returnAccessoryState.notes}
                                     onChange={e => setReturnAccessoryState(prev => prev ? { ...prev, notes: e.target.value } : null)}
                                     placeholder="Any damage, missing parts, reason for return…"
-                                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-line bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                                 />
                             </div>
                         </div>
@@ -265,14 +265,14 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             <button
                                 onClick={() => setReturnAccessoryState(null)}
                                 disabled={returnAccessoryState.submitting}
-                                className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                className="flex-1 py-2 rounded-lg border border-line text-sm font-semibold text-ink hover:bg-canvas transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleConfirmReturn}
                                 disabled={returnAccessoryState.submitting}
-                                className="flex-1 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors disabled:opacity-60"
+                                className="flex-1 py-2 rounded-lg bg-olive hover:bg-olive text-on-strong text-sm font-bold transition-colors disabled:opacity-60"
                             >
                                 {returnAccessoryState.submitting ? 'Returning…' : 'Confirm Return'}
                             </button>
@@ -282,18 +282,18 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
             )}
 
             {/* Sticky Header */}
-            <div className="sticky top-16 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b border-slate-200 dark:border-slate-800">
+            <div className="sticky top-16 bg-muted/80 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b border-line">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4 min-w-0">
-                        <button onClick={onBack} className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center text-sm transition-colors flex-shrink-0">
+                        <button onClick={onBack} className="bg-muted text-ink px-2 sm:px-3 py-1.5 rounded-lg hover:bg-muted flex items-center text-sm transition-colors flex-shrink-0">
                             &larr; <span className="hidden sm:inline ml-2 font-medium">Back</span>
                         </button>
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate" title={user.name}>{user.name}</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">ID: {user.employeeId}</p>
+                            <h2 className="text-lg font-bold text-ink truncate" title={user.name}>{user.name}</h2>
+                            <p className="text-xs text-quiet">ID: {user.employeeId}</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
+                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
                         {ICONS.add}
                         <span className="hidden sm:inline">Assign Asset</span>
                     </button>
@@ -302,32 +302,32 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
             <div className="space-y-6 pt-6">
                 {/* Minimalist Profile Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="bg-surface rounded-2xl p-6 border border-line shadow-sm">
                     {/* Header with Avatar & Primary Info */}
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-6 border-b border-slate-100 dark:border-slate-800 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pb-6 border-b border-line text-center sm:text-left">
                         {user.avatar ? (
-                            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex-shrink-0 object-cover"/>
+                            <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-2xl border border-line shadow-sm flex-shrink-0 object-cover"/>
                         ) : (
-                            <div className="w-20 h-20 rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center font-bold text-2xl bg-avana-dark text-white">
+                            <div className="w-20 h-20 rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center font-bold text-2xl bg-strong text-on-strong">
                                 {user.name?.charAt(0).toUpperCase()}
                             </div>
                         )}
                         <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{user.name}</h2>
+                                <h2 className="text-2xl font-bold text-ink">{user.name}</h2>
                                 {user.accountType && user.accountType !== 'Employee' && (
-                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300 font-semibold">
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface text-ink font-semibold">
                                         {user.accountType}
                                     </span>
                                 )}
-                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.role === 'Admin' ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300' : user.role === 'Manager' ? 'bg-avana-beige/60 text-avana-olive dark:bg-slate-800 dark:text-avana-beige' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
+                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.role === 'Admin' ? 'bg-surface text-ink  ' : user.role === 'Manager' ? 'bg-surface/60 text-quiet  ' : 'bg-muted text-ink  '}`}>
                                     {user.role || 'User'}
                                 </span>
-                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.status === 'Active' || !user.status ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${user.status === 'Active' || !user.status ? 'bg-surface text-ink  ' : 'bg-muted text-quiet  '}`}>
                                     {user.status || 'Active'}
                                 </span>
                             </div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-sm text-quiet mt-1">
                                 {user.jobTitle || 'Employee'} {user.department?.name ? `• ${user.department.name}` : ''} {user.company ? `• ${user.company}` : ''}
                             </p>
                         </div>
@@ -335,87 +335,87 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
                     {/* Responsive Grid of Details */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-6">
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Email</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block" title={user.email}>{user.email || 'N/A'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Email</span>
+                            <span className="text-sm font-semibold text-ink truncate block" title={user.email}>{user.email || 'N/A'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Employee ID</span>
-                            <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{user.employeeId || 'N/A'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Employee ID</span>
+                            <span className="text-sm font-mono font-semibold text-ink">{user.employeeId || 'N/A'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Mobile</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.mobile || 'N/A'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Mobile</span>
+                            <span className="text-sm font-semibold text-ink">{user.mobile || 'N/A'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Official Branch</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.branch?.name || 'Remote / Unassigned'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Official Branch</span>
+                            <span className="text-sm font-semibold text-ink">{user.branch?.name || 'Remote / Unassigned'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Work Location</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.location || 'N/A'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Work Location</span>
+                            <span className="text-sm font-semibold text-ink">{user.location || 'N/A'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Reporting Manager</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.manager?.name || 'N/A'}</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Reporting Manager</span>
+                            <span className="text-sm font-semibold text-ink">{user.manager?.name || 'N/A'}</span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Device Status</span>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Device Status</span>
                             <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-semibold mt-0.5 ${
-                                hasAssignedDevice ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
-                                isUsingOwnLaptop ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
-                                user.laptopStatus === 'Details Not Collected' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
-                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                hasAssignedDevice ? 'bg-surface text-ink  ' :
+                                isUsingOwnLaptop ? 'bg-surface text-ink  ' :
+                                user.laptopStatus === 'Details Not Collected' ? 'bg-surface text-ink   border border-line ' :
+                                'bg-muted text-ink  '
                             }`}>
-                                {hasAssignedDevice 
-                                    ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})` 
-                                    : isUsingOwnLaptop 
-                                    ? 'Uses Own Laptop (BYOD)' 
+                                {hasAssignedDevice
+                                    ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''})`
+                                    : isUsingOwnLaptop
+                                    ? 'Uses Own Laptop (BYOD)'
                                     : user.laptopStatus === 'Details Not Collected'
                                     ? 'Details Pending'
                                     : 'No Device Assigned'}
                             </span>
                         </div>
-                        <div className="bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Licenses</span>
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate block" title={user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}>
+                        <div className="bg-canvas/70 p-3 rounded-xl border border-line">
+                            <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Licenses</span>
+                            <span className="text-sm font-semibold text-ink truncate block" title={user.licenseAssignments && user.licenseAssignments.length > 0 ? user.licenseAssignments.map((la: any) => la.license?.name).join(', ') : 'None'}>
                                 {user.licenseAssignments && user.licenseAssignments.length > 0 ? `${user.licenseAssignments.length} License(s)` : 'None'}
                             </span>
                         </div>
                         {(user.workAddress || user.city || user.state || user.postalCode || user.country) && (
-                            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 bg-slate-50/70 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                                <span className="font-subheading text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Work Location Address</span>
-                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 bg-canvas/70 p-3 rounded-xl border border-line">
+                                <span className="font-subheading text-[10px] font-bold text-quiet uppercase tracking-wider block mb-0.5">Work Location Address</span>
+                                <span className="text-sm font-semibold text-ink">
                                     {[user.workAddress, user.city, user.state, user.postalCode, user.country].filter(Boolean).join(', ')}
                                 </span>
                             </div>
                         )}
                     </div>
                 </div>
-                
+
                 {/* 1. Onboarding Checklist Card */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                <div className="bg-surface p-6 rounded-xl shadow-md border border-line space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-line">
                         <div className="flex items-center gap-2.5">
-                            <span className="p-1.5 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-lg">
+                            <span className="p-1.5 bg-surface text-ink rounded-lg">
                                 {ICONS.onboarding}
                             </span>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Onboarding Checklist</h3>
-                                <p className="text-xs text-slate-500">Equipment allocation, M365 provisioning & dispatch tracking</p>
+                                <h3 className="text-lg font-bold text-ink">Employee Onboarding Checklist</h3>
+                                <p className="text-xs text-quiet">Equipment allocation, M365 provisioning & dispatch tracking</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                                user.onboardingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                                user.onboardingStatus === 'In Progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
-                                'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                                user.onboardingStatus === 'Completed' ? 'bg-surface text-ink  ' :
+                                user.onboardingStatus === 'In Progress' ? 'bg-surface text-ink  ' :
+                                'bg-surface text-ink  '
                             }`}>
                                 {user.onboardingStatus || 'Pending Onboarding'}
                             </span>
                             <button
                                 onClick={() => setIsOnboardingModalOpen(true)}
-                                className="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
+                                className="px-3 py-1 bg-accent hover:bg-accent text-on-strong rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
                             >
                                 ⚡ Launch Onboarding Wizard
                             </button>
@@ -423,45 +423,45 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.m365AccountCreated ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.m365AccountCreated ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.m365AccountCreated ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Created</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">M365 Account Created</p>
+                                <p className="text-xs text-quiet">
                                     {user.m365AccountCreated ? 'Provisioned in Microsoft 365 / Entra ID' : 'Account not created'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.m365LicenseAssigned ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.m365LicenseAssigned ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.m365LicenseAssigned ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 License Allocated</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">M365 License Allocated</p>
+                                <p className="text-xs text-quiet">
                                     {user.m365LicenseAssigned ? 'Active subscription seat linked' : 'No license allocated / not required'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                hasAssignedDevice ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
-                                isUsingOwnLaptop ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' :
-                                'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                hasAssignedDevice ? 'bg-surface text-ink  ' :
+                                isUsingOwnLaptop ? 'bg-surface text-ink  ' :
+                                'bg-muted  text-quiet'
                             }`}>
                                 {hasAssignedDevice || isUsingOwnLaptop ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware Allocation</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Hardware Allocation</p>
+                                <p className="text-xs text-quiet">
                                     {hasAssignedDevice ? `${userAssets[0]?.name || 'Device'} (${userAssets[0]?.assetId || ''}) Assigned` :
                                      isUsingOwnLaptop ? 'Uses Own Laptop (BYOD)' :
                                      'No Device Assigned'}
@@ -469,17 +469,17 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
                                 hasAssignedDevice
-                                    ? (user.softwareInstalled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
-                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
+                                    ? (user.softwareInstalled ? 'bg-surface text-ink   text-xs' : 'bg-muted  text-quiet text-xs')
+                                    : 'bg-muted  text-quiet  text-[10px]'
                             }`}>
                                 {hasAssignedDevice ? (user.softwareInstalled ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Software & Antivirus Installed</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Software & Antivirus Installed</p>
+                                <p className="text-xs text-quiet">
                                     {hasAssignedDevice
                                         ? (user.softwareInstalled ? 'Defender, Office 365, Teams, VPN configured' : 'Pending installation')
                                         : isUsingOwnLaptop
@@ -491,17 +491,17 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
                                 hasAssignedDevice
-                                    ? (user.hardwareTested ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
-                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
+                                    ? (user.hardwareTested ? 'bg-surface text-ink   text-xs' : 'bg-muted  text-quiet text-xs')
+                                    : 'bg-muted  text-quiet  text-[10px]'
                             }`}>
                                 {hasAssignedDevice ? (user.hardwareTested ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Hardware QA Diagnostics</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Hardware QA Diagnostics</p>
+                                <p className="text-xs text-quiet">
                                     {hasAssignedDevice
                                         ? (user.hardwareTested ? 'Display, keyboard, battery, camera/mic verified' : 'Diagnostic check pending')
                                         : isUsingOwnLaptop
@@ -513,17 +513,17 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
                                 (hasAssignedDevice || user.m365AccountCreated)
-                                    ? (user.credentialsHandedOver ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs')
-                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
+                                    ? (user.credentialsHandedOver ? 'bg-surface text-ink   text-xs' : 'bg-muted  text-quiet text-xs')
+                                    : 'bg-muted  text-quiet  text-[10px]'
                             }`}>
                                 {(hasAssignedDevice || user.m365AccountCreated) ? (user.credentialsHandedOver ? '✓' : '—') : 'N/A'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Credentials Handed Over</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Credentials Handed Over</p>
+                                <p className="text-xs text-quiet">
                                     {hasAssignedDevice
                                         ? (user.credentialsHandedOver ? 'Laptop PIN & login guidance shared' : 'Pending credential handover')
                                         : user.m365AccountCreated
@@ -539,16 +539,16 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                         try {
                             const d = typeof user.dispatchDetails === 'string' ? JSON.parse(user.dispatchDetails) : user.dispatchDetails;
                             return (
-                                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="p-3.5 bg-canvas rounded-lg border border-line text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div className="space-y-0.5">
-                                        <span className="font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                                        <span className="font-semibold text-ink flex items-center gap-1">
                                             {ICONS.truck} {d.mode === 'Courier' ? `Dispatched via ${d.courierName || 'Courier'}` : `Handover: ${d.mode || 'In-Person'}`}
                                         </span>
-                                        {d.dcNumber && <p className="font-mono text-slate-700 dark:text-slate-300">Delivery Challan (DC): <strong>{d.dcNumber}</strong></p>}
-                                        {d.docketNumber && <p className="font-mono text-slate-700 dark:text-slate-300">Docket / Tracking: <strong>{d.docketNumber}</strong></p>}
-                                        {d.shippingAddress && <p className="text-slate-500 truncate max-w-md">Address: {d.shippingAddress}</p>}
+                                        {d.dcNumber && <p className="font-mono text-ink">Delivery Challan (DC): <strong>{d.dcNumber}</strong></p>}
+                                        {d.docketNumber && <p className="font-mono text-ink">Docket / Tracking: <strong>{d.docketNumber}</strong></p>}
+                                        {d.shippingAddress && <p className="text-quiet truncate max-w-md">Address: {d.shippingAddress}</p>}
                                     </div>
-                                    <div className="text-right text-slate-400">
+                                    <div className="text-right text-quiet">
                                         {d.dispatchDate && <p>Date: {d.dispatchDate}</p>}
                                         {user.onboardingCompletedDate && <p>Completed: {new Date(user.onboardingCompletedDate).toLocaleDateString()}</p>}
                                     </div>
@@ -559,27 +559,27 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                 </div>
 
                 {/* 2. Offboarding Checklist Card */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-700">
+                <div className="bg-surface p-6 rounded-xl shadow-md border border-line space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-line">
                         <div className="flex items-center gap-2.5">
-                            <span className="p-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg">
+                            <span className="p-1.5 bg-surface text-ink rounded-lg">
                                 {ICONS.offboarding}
                             </span>
                             <div>
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Employee Offboarding Checklist</h3>
-                                <p className="text-xs text-slate-500">Asset return, data sanitization, license release & account exit clearance</p>
+                                <h3 className="text-lg font-bold text-ink">Employee Offboarding Checklist</h3>
+                                <p className="text-xs text-quiet">Asset return, data sanitization, license release & account exit clearance</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                                user.status === 'Inactive' || user.offboardingStatus === 'Completed' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' :
-                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                user.status === 'Inactive' || user.offboardingStatus === 'Completed' ? 'bg-muted text-ink  ' :
+                                'bg-surface text-ink  '
                             }`}>
                                 {user.status === 'Inactive' ? 'Account Inactive' : 'Active Employee'}
                             </span>
                             <button
                                 onClick={() => setIsOffboardingModalOpen(true)}
-                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
+                                className="px-3 py-1 bg-olive hover:bg-olive text-on-strong rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1"
                             >
                                 ⚡ Launch Offboarding Wizard
                             </button>
@@ -587,19 +587,19 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
                                 user.assetReturned
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs'
+                                    ? 'bg-surface text-ink   text-xs'
                                     : hasAssignedDevice
-                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs'
-                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
+                                    ? 'bg-muted  text-quiet text-xs'
+                                    : 'bg-muted  text-quiet  text-[10px]'
                             }`}>
                                 {user.assetReturned ? '✓' : hasAssignedDevice ? '—' : 'N/A'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Company Hardware Returned</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Company Hardware Returned</p>
+                                <p className="text-xs text-quiet">
                                     {user.assetReturned
                                         ? (user.assetReturnCondition ? `Condition: ${user.assetReturnCondition}` : 'Hardware received')
                                         : hasAssignedDevice
@@ -609,19 +609,19 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 font-bold ${
                                 user.deviceWiped
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs'
+                                    ? 'bg-surface text-ink   text-xs'
                                     : hasAssignedDevice
-                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 text-xs'
-                                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px]'
+                                    ? 'bg-muted  text-quiet text-xs'
+                                    : 'bg-muted  text-quiet  text-[10px]'
                             }`}>
                                 {user.deviceWiped ? '✓' : hasAssignedDevice ? '—' : 'N/A'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Device Wiped & Sanitized</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Device Wiped & Sanitized</p>
+                                <p className="text-xs text-quiet">
                                     {user.deviceWiped
                                         ? 'Factory reset completed, BitLocker erased'
                                         : hasAssignedDevice
@@ -631,57 +631,57 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.dataBackedUp ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.dataBackedUp ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.dataBackedUp ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">User Data Backed Up</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">User Data Backed Up</p>
+                                <p className="text-xs text-quiet">
                                     {user.dataBackedUp ? 'Synced to OneDrive / handed over to manager' : 'Data not backed up'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.m365LicenseRevoked ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.m365LicenseRevoked ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.m365LicenseRevoked ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Subscriptions Revoked</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Subscriptions Revoked</p>
+                                <p className="text-xs text-quiet">
                                     {user.m365LicenseRevoked ? 'Seats released back to available pool' : 'Subscriptions active'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.m365AccountDisabled ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.m365AccountDisabled ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.m365AccountDisabled ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">M365 Account Disabled</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">M365 Account Disabled</p>
+                                <p className="text-xs text-quiet">
                                     {user.m365AccountDisabled ? 'Sign-in blocked & cloud sessions revoked' : 'Active M365 account'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border border-line bg-canvas/50">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                                user.status === 'Inactive' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
+                                user.status === 'Inactive' ? 'bg-surface text-ink  ' : 'bg-muted  text-quiet'
                             }`}>
                                 {user.status === 'Inactive' ? '✓' : '—'}
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Portal Account Deactivated</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm font-semibold text-ink">Portal Account Deactivated</p>
+                                <p className="text-xs text-quiet">
                                     {user.status === 'Inactive' ? 'Account status set to Inactive' : 'Active user status'}
                                 </p>
                             </div>
@@ -693,15 +693,15 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                         try {
                             const rd = typeof user.assetReturnDocket === 'string' ? JSON.parse(user.assetReturnDocket) : user.assetReturnDocket;
                             return (
-                                <div className="p-3.5 bg-red-50/40 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/40 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="p-3.5 bg-surface/40 rounded-lg border border-line text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div className="space-y-0.5">
-                                        <span className="font-semibold text-red-700 dark:text-red-400 flex items-center gap-1">
+                                        <span className="font-semibold text-ink flex items-center gap-1">
                                             {ICONS.truck} {rd.mode === 'Courier' ? `Returned via ${rd.courier || 'Courier'}` : 'In-Person Return'}
                                         </span>
-                                        {rd.docketNo && <p className="font-mono text-slate-700 dark:text-slate-300">Return Docket: <strong>{rd.docketNo}</strong></p>}
-                                        {user.assetReturnRemarks && <p className="text-slate-500 truncate max-w-md">Remarks: {user.assetReturnRemarks}</p>}
+                                        {rd.docketNo && <p className="font-mono text-ink">Return Docket: <strong>{rd.docketNo}</strong></p>}
+                                        {user.assetReturnRemarks && <p className="text-quiet truncate max-w-md">Remarks: {user.assetReturnRemarks}</p>}
                                     </div>
-                                    <div className="text-right text-slate-400">
+                                    <div className="text-right text-quiet">
                                         {rd.returnDate && <p>Date: {new Date(rd.returnDate).toLocaleDateString()}</p>}
                                         {user.offboardingCompletedDate && <p>Completed: {new Date(user.offboardingCompletedDate).toLocaleDateString()}</p>}
                                     </div>
@@ -710,25 +710,25 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                         } catch { return null; }
                     })()}
                 </div>
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                <div className="bg-surface p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Assigned Assets ({userAssets.length})</h3>
+                        <h3 className="text-xl font-semibold text-ink">Assigned Assets ({userAssets.length})</h3>
                     </div>
 
                     <div className="space-y-3">
                         {userAssets.length > 0 ? (
                             userAssets.map(asset => (
-                                <div key={asset.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-slate-200 dark:border-slate-700/50">
+                                <div key={asset.id} className="bg-canvas p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-line">
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{asset.name}</p>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2">
+                                        <p className="font-semibold text-ink truncate">{asset.name}</p>
+                                        <p className="text-sm text-quiet flex flex-wrap items-center gap-x-2">
                                             <span className="font-mono">{asset.assetId}</span>
                                             <span className="hidden sm:inline">&bull;</span>
                                             <span className="font-mono">S/N: {asset.serialNumber}</span>
                                             {asset.status === 'Pending Handover' && (
                                                 <>
                                                     <span className="hidden sm:inline">&bull;</span>
-                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-surface text-ink border border-line flex items-center gap-1">
                                                         ⚠️ Pending Acknowledgment
                                                     </span>
                                                 </>
@@ -736,39 +736,39 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                         </p>
                                     </div>
                                     <div className="flex items-center justify-end gap-2 flex-shrink-0 self-start sm:self-center">
-                                        <button onClick={() => setSelectedAssetId(asset.id)} className="px-3 py-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold transition-colors">View</button>
+                                        <button onClick={() => setSelectedAssetId(asset.id)} className="px-3 py-1.5 rounded-md bg-muted text-ink hover:bg-muted text-xs font-semibold transition-colors">View</button>
                                         {(asset.category === 'Laptop' || asset.category === 'Desktop' || asset.assetId?.includes('-LAP-') || asset.assetId?.includes('-DES-')) && (
-                                            <button onClick={() => setPreviewTarget({ type: 'declaration', assetId: asset.id, userId: user.id })} className="px-3 py-1.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs font-semibold transition-colors" title="View / Print Declaration Form">Form</button>
+                                            <button onClick={() => setPreviewTarget({ type: 'declaration', assetId: asset.id, userId: user.id })} className="px-3 py-1.5 rounded-md bg-muted text-ink hover:bg-muted text-xs font-semibold transition-colors" title="View / Print Declaration Form">Form</button>
                                         )}
-                                        <button onClick={() => setAssetToUnassign(asset)} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-500" title="Unassign Asset">
+                                        <button onClick={() => setAssetToUnassign(asset)} className="p-2 text-quiet rounded-full hover:bg-surface hover:text-ink" title="Unassign Asset">
                                             {ICONS.unassign}
                                         </button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-gray-500 dark:text-gray-400 text-center py-4">No assets are currently assigned to this user.</p>
+                            <p className="text-quiet text-center py-4">No assets are currently assigned to this user.</p>
                         )}
                     </div>
                 </div>
 
                 {/* Assigned Peripherals & Accessories (No Asset IDs, Tracked by Batch & Warranty) */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-100 dark:border-slate-700/60 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                <div className="bg-surface p-6 rounded-lg shadow-md border border-line space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-line">
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="text-xl">🖱️</span>
-                                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                                <h3 className="text-xl font-semibold text-ink">
                                     Assigned Peripherals &amp; Accessories ({accessories.filter(a => a.status === 'Assigned').length})
                                 </h3>
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-quiet mt-0.5">
                                 Low-cost peripherals (mouse, keyboard, headset, etc.) tracked with purchase warranty without generating individual Asset IDs
                             </p>
                         </div>
                         <button
                             onClick={() => setIsIssueAccessoryModalOpen(true)}
-                            className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0 self-start sm:self-auto"
+                            className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0 self-start sm:self-auto"
                         >
                             {ICONS.add} Issue Accessory
                         </button>
@@ -776,11 +776,11 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
 
                     <div className="space-y-3">
                         {isLoadingAccessories ? (
-                            <p className="text-xs text-slate-400 text-center py-6">Loading peripherals checklist...</p>
+                            <p className="text-xs text-quiet text-center py-6">Loading peripherals checklist...</p>
                         ) : accessories.length > 0 ? (
                             accessories.map(acc => {
                                 const isAssigned = acc.status === 'Assigned';
-                                const categoryIcon = 
+                                const categoryIcon =
                                     acc.category === 'Mouse' ? '🖱️' :
                                     acc.category === 'Keyboard' ? '⌨️' :
                                     acc.category === 'Headset' ? '🎧' :
@@ -798,31 +798,31 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                     <div
                                         key={acc.id}
                                         className={`p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border transition-all ${
-                                            isAssigned 
-                                                ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-700/60' 
-                                                : 'bg-slate-100/50 dark:bg-slate-800/20 border-dashed border-slate-200 dark:border-slate-700 opacity-60'
+                                            isAssigned
+                                                ? 'bg-canvas  border-line/80 '
+                                                : 'bg-muted/50  border-dashed border-line  opacity-60'
                                         }`}
                                     >
                                         <div className="flex items-start gap-3 min-w-0 flex-1">
-                                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xl shrink-0 shadow-sm">
+                                            <div className="w-10 h-10 rounded-xl bg-surface border border-line flex items-center justify-center text-xl shrink-0 shadow-sm">
                                                 {categoryIcon}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                                                    <h4 className="font-bold text-ink truncate">
                                                         {acc.name}
                                                     </h4>
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-ink">
                                                         {acc.category}
                                                     </span>
                                                     {!isAssigned && (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-quiet">
                                                             Returned
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+                                                <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-quiet">
                                                     {acc.brand && <span>Brand: <strong>{acc.brand}</strong></span>}
                                                     {acc.serialNumber && <span className="font-mono">S/N: {acc.serialNumber}</span>}
                                                     {acc.condition && <span>Condition: <strong>{acc.condition}</strong></span>}
@@ -833,27 +833,27 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                                     {/* Warranty Status Badge */}
                                                     {warrantyEnd ? (
                                                         diffDays !== null && diffDays < 0 ? (
-                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                                                                 🛡️ Warranty Expired ({warrantyEnd.toLocaleDateString()})
                                                             </span>
                                                         ) : diffDays !== null && diffDays <= 30 ? (
-                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                                                                 🛡️ Warranty Expiring in {diffDays}d ({warrantyEnd.toLocaleDateString()})
                                                             </span>
                                                         ) : (
-                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-surface text-ink border border-line">
                                                                 🛡️ Under Warranty (Until {warrantyEnd.toLocaleDateString()})
                                                             </span>
                                                         )
                                                     ) : (
-                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-200/80 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/80 text-quiet">
                                                             Self-Declared / Invoice Not Linked
                                                         </span>
                                                     )}
 
                                                     {/* Batch Link Info */}
                                                     {acc.batch && (
-                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface text-ink border border-line">
                                                             📦 Stock Batch: {acc.batch.name} {acc.batch.invoiceNumber ? `(#${acc.batch.invoiceNumber})` : ''}
                                                         </span>
                                                     )}
@@ -865,7 +865,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                             {isAssigned && (
                                                 <button
                                                     onClick={() => handleReturnAccessory(acc.id)}
-                                                    className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition-colors border border-amber-200 dark:border-amber-800"
+                                                    className="px-3 py-1.5 rounded-lg bg-surface text-ink hover:bg-surface text-xs font-bold transition-colors border border-line"
                                                     title="Mark accessory as returned to IT inventory"
                                                 >
                                                     Return to Stock
@@ -873,7 +873,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                             )}
                                             <button
                                                 onClick={() => handleDeleteAccessory(acc.id)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                className="p-1.5 text-quiet hover:text-ink rounded-lg hover:bg-surface transition-all"
                                                 title="Remove accessory from profile"
                                             >
                                                 {ICONS.delete}
@@ -883,15 +883,15 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                                 );
                             })
                         ) : (
-                            <div className="p-6 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                            <div className="p-6 text-center text-quiet space-y-2 border border-dashed border-line rounded-xl">
                                 <p className="text-2xl">🖱️</p>
-                                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No accessories recorded for this employee yet</p>
-                                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                                <p className="text-sm font-semibold text-quiet">No accessories recorded for this employee yet</p>
+                                <p className="text-xs text-quiet max-w-sm mx-auto">
                                     Issue a mouse, keyboard, or headset from your stock batches to track warranty coverage without generating individual Asset IDs.
                                 </p>
                                 <button
                                     onClick={() => setIsIssueAccessoryModalOpen(true)}
-                                    className="mt-2 text-xs font-bold text-brand-600 hover:underline inline-block"
+                                    className="mt-2 text-xs font-bold text-ink hover:underline inline-block"
                                 >
                                     + Issue First Accessory &rarr;
                                 </button>
@@ -901,17 +901,17 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                 </div>
 
                 {/* Asset History & Activity Log */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+                <div className="bg-surface p-6 rounded-lg shadow-md">
 
-                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-line">
                         <div>
-                            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Asset History & Activity Log</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Chronological history of assets assigned to and returned from this user</p>
+                            <h3 className="text-xl font-semibold text-ink">Asset History & Activity Log</h3>
+                            <p className="text-xs text-quiet">Chronological history of assets assigned to and returned from this user</p>
                         </div>
                         <button
                             onClick={fetchUserAssetHistory}
                             disabled={isLoadingHistory}
-                            className="p-1.5 text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            className="p-1.5 text-quiet hover:text-ink rounded-lg hover:bg-muted transition-colors"
                             title="Refresh history"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -921,45 +921,45 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                     </div>
 
                     {isLoadingHistory ? (
-                        <div className="text-center py-6 text-slate-400 text-sm">Loading activity log...</div>
+                        <div className="text-center py-6 text-quiet text-sm">Loading activity log...</div>
                     ) : userAssetHistory.length > 0 ? (
-                        <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
+                        <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-muted">
                             {userAssetHistory.map((entry: any) => {
                                 const isAssigned = entry.event === 'Assigned';
                                 const isUnassigned = entry.event === 'Unassigned';
-                                const dotColor = isAssigned ? 'bg-emerald-500' : isUnassigned ? 'bg-amber-500' : 'bg-blue-500';
+                                const dotColor = isAssigned ? 'bg-olive' : isUnassigned ? 'bg-olive' : 'bg-olive';
 
                                 return (
                                     <div key={entry.id} className="relative group">
                                         {/* Timeline dot */}
-                                        <div className={`absolute -left-[21px] top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800 ${dotColor}`} />
-                                        
-                                        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                                        <div className={`absolute -left-[21px] top-1.5 w-3 h-3 rounded-full border-2 border-line  ${dotColor}`} />
+
+                                        <div className="bg-canvas p-3.5 rounded-lg border border-line">
                                             <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                                                        isAssigned ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                                                        isUnassigned ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
-                                                        'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                                        isAssigned ? 'bg-surface text-ink  ' :
+                                                        isUnassigned ? 'bg-surface text-ink  ' :
+                                                        'bg-muted text-ink  '
                                                     }`}>
                                                         {entry.event}
                                                     </span>
                                                     {entry.asset && (
-                                                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
-                                                            {entry.asset.name} <span className="font-mono text-xs text-slate-500 dark:text-slate-400">({entry.asset.assetId})</span>
+                                                        <span className="font-semibold text-sm text-ink">
+                                                            {entry.asset.name} <span className="font-mono text-xs text-quiet">({entry.asset.assetId})</span>
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-slate-400">
+                                                <span className="text-xs text-quiet">
                                                     {new Date(entry.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
 
                                             {entry.details && (
-                                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{entry.details}</p>
+                                                <p className="text-sm text-quiet mt-1">{entry.details}</p>
                                             )}
 
-                                            <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-quiet">
                                                 {entry.condition && (
                                                     <span><strong>Condition:</strong> {entry.condition}</span>
                                                 )}
@@ -976,7 +976,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
                             })}
                         </div>
                     ) : (
-                        <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">No asset history recorded for this user yet.</p>
+                        <p className="text-quiet text-center py-4 text-sm">No asset history recorded for this user yet.</p>
                     )}
                 </div>
             </div>

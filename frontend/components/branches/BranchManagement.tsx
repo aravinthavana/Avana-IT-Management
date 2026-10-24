@@ -11,8 +11,8 @@ import BranchDetailView from './BranchDetailView';
 // Reusable FormInput component
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
     <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-        <input {...props} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
+        <label className="block text-sm font-medium text-ink">{label}</label>
+        <input {...props} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
     </div>
 );
 
@@ -36,7 +36,7 @@ const BranchManagement: React.FC = () => {
     const userCounts = useMemo(() => {
         const counts: { [key: number]: number } = {};
         branches.forEach(branch => {
-            counts[branch.id] = users.filter(user => 
+            counts[branch.id] = users.filter(user =>
                 user.branchId === branch.id ||
                 (typeof user.branch === 'string' && user.branch.toLowerCase() === branch.name.toLowerCase()) ||
                 (typeof user.branch === 'object' && user.branch?.name?.toLowerCase() === branch.name.toLowerCase()) ||
@@ -148,30 +148,30 @@ const BranchManagement: React.FC = () => {
                         required
                     />
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
-                        <button type="button" onClick={handleCloseForm} className="w-full sm:w-auto flex justify-center bg-slate-200 text-slate-800 px-5 py-2 rounded-lg hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 font-medium transition-all duration-200 active:scale-95">Cancel</button>
-                        <button type="submit" className="w-full sm:w-auto flex justify-center bg-brand-600 text-white px-5 py-2 rounded-lg hover:bg-brand-700 font-medium transition-all duration-200 active:scale-95">Save</button>
+                        <button type="button" onClick={handleCloseForm} className="w-full sm:w-auto flex justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95">Cancel</button>
+                        <button type="submit" className="w-full sm:w-auto flex justify-center bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium transition-all duration-200 active:scale-95">Save</button>
                     </div>
                 </form>
             </Modal>
 
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Manage Branches</h2>
-                    <button onClick={() => handleOpenForm()} className="bg-brand-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2 font-medium transition-all duration-200 active:scale-95">
+            <div className="bg-surface rounded-lg shadow-md">
+                <div className="p-6 flex justify-between items-center border-b border-line">
+                    <h2 className="text-xl font-bold text-ink">Manage Branches</h2>
+                    <button onClick={() => handleOpenForm()} className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 font-medium transition-all duration-200 active:scale-95">
                         <div className="w-4 h-4">{ICONS.add}</div>
                         <span className="hidden sm:inline">Add Branch</span>
                     </button>
                 </div>
                 <div className="p-6 space-y-3">
                     {branches.map(branch => (
-                         <div key={branch.id} onClick={() => setSelectedBranchId(branch.id)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between border border-slate-200/80 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+                         <div key={branch.id} onClick={() => setSelectedBranchId(branch.id)} className="bg-canvas p-4 rounded-lg flex items-center justify-between border border-line/80 cursor-pointer hover:bg-muted transition-colors">
                              <div>
-                                 <p className="font-semibold text-slate-800 dark:text-slate-100">{branch.name}</p>
-                                 <p className="text-sm text-slate-500 dark:text-slate-400">{branch.location} &bull; Assets: {assetCounts[branch.id] || 0} &bull; Users: {userCounts[branch.id] || 0}</p>
+                                 <p className="font-semibold text-ink">{branch.name}</p>
+                                 <p className="text-sm text-quiet">{branch.location} &bull; Assets: {assetCounts[branch.id] || 0} &bull; Users: {userCounts[branch.id] || 0}</p>
                              </div>
                              <div className="flex items-center space-x-2">
-                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-brand-600 dark:hover:text-brand-500" title="Edit">{ICONS.edit}</button>
-                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(branch); }} className="p-2 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-500" title="Delete">{ICONS.delete}</button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(branch); }} className="p-2 text-quiet rounded-full hover:bg-muted hover:text-ink" title="Edit">{ICONS.edit}</button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(branch); }} className="p-2 text-quiet rounded-full hover:bg-muted hover:text-ink" title="Delete">{ICONS.delete}</button>
                              </div>
                          </div>
                     ))}

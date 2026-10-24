@@ -142,14 +142,14 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
         >
             <form onSubmit={handleSubmit} className="space-y-4 py-1">
                 {/* Mode Selector */}
-                <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-900 text-xs font-bold">
+                <div className="flex rounded-xl p-1 bg-muted text-xs font-bold">
                     <button
                         type="button"
                         onClick={() => setMode('batch')}
                         className={`flex-1 py-2 rounded-lg transition-all ${
                             mode === 'batch'
-                                ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                ? 'bg-surface  text-ink  shadow-sm'
+                                : 'text-quiet hover:text-ink '
                         }`}
                     >
                         📦 Issue from Stock Batch ({batches.filter(b => b.quantityAvailable > 0).length} in stock)
@@ -159,8 +159,8 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                         onClick={() => setMode('custom')}
                         className={`flex-1 py-2 rounded-lg transition-all ${
                             mode === 'custom'
-                                ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                ? 'bg-surface  text-ink  shadow-sm'
+                                : 'text-quiet hover:text-ink '
                         }`}
                     >
                         ✍️ Custom / Legacy Accessory
@@ -171,25 +171,25 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                 {mode === 'batch' && (
                     <div className="space-y-3">
                         {batches.length === 0 ? (
-                            <div className="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500">
+                            <div className="p-4 rounded-xl border border-dashed border-line text-center text-xs text-quiet">
                                 <p>No accessory batches recorded yet.</p>
                                 <button
                                     type="button"
                                     onClick={() => setMode('custom')}
-                                    className="mt-2 text-brand-600 font-bold hover:underline"
+                                    className="mt-2 text-ink font-bold hover:underline"
                                 >
                                     Switch to Custom Accessory &rarr;
                                 </button>
                             </div>
                         ) : (
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="block text-xs font-bold text-ink mb-1">
                                     Select Stock Batch *
                                 </label>
-                                <select
+                                <select aria-label="Select Stock Batch *"
                                     value={selectedBatchId}
                                     onChange={e => setSelectedBatchId(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                                    className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                                 >
                                     {batches.map(b => (
                                         <option
@@ -205,24 +205,24 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
 
                                 {/* Batch Details & Warranty Preview */}
                                 {selectedBatch && (
-                                    <div className="mt-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-xs space-y-1">
+                                    <div className="mt-2.5 p-3 rounded-xl bg-canvas border border-line text-xs space-y-1">
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">Available in Stock:</span>
-                                            <span className={`font-bold ${selectedBatch.quantityAvailable > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            <span className="text-quiet">Available in Stock:</span>
+                                            <span className={`font-bold ${selectedBatch.quantityAvailable > 0 ? 'text-ink' : 'text-ink'}`}>
                                                 {selectedBatch.quantityAvailable} of {selectedBatch.quantityPurchased} units
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">Purchased Date:</span>
-                                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                                            <span className="text-quiet">Purchased Date:</span>
+                                            <span className="font-medium text-ink">
                                                 {new Date(selectedBatch.purchaseDate).toLocaleDateString()}
                                             </span>
                                         </div>
                                         {selectedBatch.warrantyEndDate && (
                                             <div className="flex justify-between">
-                                                <span className="text-slate-500">Warranty Coverage:</span>
+                                                <span className="text-quiet">Warranty Coverage:</span>
                                                 <span className={`font-bold ${
-                                                    new Date(selectedBatch.warrantyEndDate) > new Date() ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'
+                                                    new Date(selectedBatch.warrantyEndDate) > new Date() ? 'text-ink ' : 'text-ink'
                                                 }`}>
                                                     {new Date(selectedBatch.warrantyEndDate) > new Date()
                                                         ? `Valid until ${new Date(selectedBatch.warrantyEndDate).toLocaleDateString()}`
@@ -233,8 +233,8 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                                         )}
                                         {selectedBatch.invoiceNumber && (
                                             <div className="flex justify-between">
-                                                <span className="text-slate-500">Invoice:</span>
-                                                <span className="font-mono text-slate-700 dark:text-slate-300">
+                                                <span className="text-quiet">Invoice:</span>
+                                                <span className="font-mono text-ink">
                                                     {selectedBatch.invoiceNumber} {selectedBatch.vendor ? `(${selectedBatch.vendor})` : ''}
                                                 </span>
                                             </div>
@@ -251,13 +251,13 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="block text-xs font-bold text-ink mb-1">
                                     Category *
                                 </label>
-                                <select
+                                <select aria-label="Category *"
                                     value={customCategory}
                                     onChange={e => setCustomCategory(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                                    className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                                 >
                                     {CATEGORIES.map(c => (
                                         <option key={c} value={c}>{c}</option>
@@ -266,30 +266,30 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="block text-xs font-bold text-ink mb-1">
                                     Brand / Make
                                 </label>
-                                <input
+                                <input aria-label="Brand / Make"
                                     type="text"
                                     placeholder="e.g. Dell, Logitech"
                                     value={customBrand}
                                     onChange={e => setCustomBrand(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                                    className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            <label className="block text-xs font-bold text-ink mb-1">
                                 Accessory Name *
                             </label>
-                            <input
+                            <input aria-label="Accessory Name *"
                                 type="text"
                                 required
                                 placeholder="e.g. Dell Wireless Mouse WM126"
                                 value={customName}
                                 onChange={e => setCustomName(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                                className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                             />
                         </div>
                     </div>
@@ -298,26 +298,26 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                 {/* Common fields for both modes */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Serial Number (Optional)
                         </label>
-                        <input
+                        <input aria-label="Serial Number (Optional)"
                             type="text"
                             placeholder="e.g. CN-0J74X2..."
                             value={serialNumber}
                             onChange={e => setSerialNumber(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent font-mono"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-bold text-ink mb-1">
                             Condition
                         </label>
-                        <select
+                        <select aria-label="Condition"
                             value={condition}
                             onChange={e => setCondition(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                            className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                         >
                             <option value="New">Brand New</option>
                             <option value="Good">Good Condition</option>
@@ -327,31 +327,31 @@ const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-ink mb-1">
                         Issue Remarks (Optional)
                     </label>
-                    <input
+                    <input aria-label="Issue Remarks (Optional)"
                         type="text"
                         placeholder="e.g. Issued for home office desk setup..."
                         value={notes}
                         onChange={e => setNotes(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-brand-500"
+                        className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                     />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-quiet hover:bg-muted transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting || (mode === 'batch' && (!selectedBatch || selectedBatch.quantityAvailable < 1))}
-                        className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-colors shadow-md shadow-brand-500/20 disabled:opacity-50"
+                        className="px-5 py-2 rounded-xl text-xs font-bold text-on-strong bg-accent hover:bg-accent transition-colors shadow-md shadow-strong/15 disabled:opacity-50"
                     >
                         {isSubmitting ? 'Issuing...' : 'Issue to Employee'}
                     </button>
