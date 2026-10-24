@@ -104,7 +104,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 headers: getHeaders(),
                 credentials: 'include'
             });
-            if (res.ok) {
+            const contentType = res.headers.get('content-type') || '';
+            if (res.ok && contentType.includes('application/json')) {
                 const data = await res.json();
                 setPendingHrCount(data.pendingCount || 0);
             }
@@ -629,6 +630,25 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                         M365
                                                     </span>
                                                 )}
+                                                {((user as any).zohoEmployeeId || (user as any).zohoData) && (
+                                                    <span className="text-[10px] bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200 dark:border-orange-800 px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="Connected with Zoho People Plus">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                                        Zoho
+                                                    </span>
+                                                )}
+                                                {(() => {
+                                                    try {
+                                                        const al = JSON.parse((user as any).emailAliases || '[]');
+                                                        if (Array.isArray(al) && al.length > 0) {
+                                                            return (
+                                                                <span className="text-[10px] bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.2 rounded-full font-mono" title={`Aliases: ${al.join(', ')}`}>
+                                                                    +{al.length} alias{al.length > 1 ? 'es' : ''}
+                                                                </span>
+                                                            );
+                                                        }
+                                                    } catch (e) {}
+                                                    return null;
+                                                })()}
                                             </div>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                                                 {user.employeeId && <span className="font-medium text-slate-600 dark:text-slate-300 mr-1">[{user.employeeId}]</span>}

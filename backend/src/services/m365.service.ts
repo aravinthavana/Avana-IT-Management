@@ -35,6 +35,8 @@ export interface M365UserDTO {
     postalCode?: string | null;
     streetAddress?: string | null;
     assignedLicenses?: Array<{ skuId: string }>;
+    proxyAddresses?: string[];
+    otherMails?: string[];
 }
 
 export interface M365SubscribedSkuDTO {
@@ -63,7 +65,7 @@ export interface SyncResult {
  */
 export async function fetchAllM365Users(accessToken: string): Promise<M365UserDTO[]> {
     const allUsers: M365UserDTO[] = [];
-    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses';
+    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses,proxyAddresses,otherMails';
 
     while (nextUrl) {
         const response: any = await axios.get(nextUrl, {
@@ -257,15 +259,59 @@ export async function syncFromM365(): Promise<SyncResult> {
             const hasLicense = (mUser.assignedLicenses && mUser.assignedLicenses.length > 0);
             const userStatus = mUser.accountEnabled === false ? 'Inactive' : 'Active';
 
-            // Find existing user by azureAdId OR email
+            // Collect aliases from proxyAddresses and otherMails
+            const aliases: string[] = [];
+            if (Array.isArray(mUser.proxyAddresses)) {
+                for (const pa of mUser.proxyAddresses) {
+                    const cleaned = pa.replace(/^smtp:/i, '').trim().toLowerCase();
+                    if (cleaned && cleaned !== email && !aliases.includes(cleaned)) {
+                        aliases.push(cleaned);
+                    }
+                }
+            }
+            if (Array.isArray(mUser.otherMails)) {
+                for (const om of mUser.otherMails) {
+                    const cleaned = om.trim().toLowerCase();
+                    if (cleaned && cleaned !== email && !aliases.includes(cleaned)) {
+                        aliases.push(cleaned);
+                    }
+                }
+            }
+
+            const m365DataJson = JSON.stringify({
+                jobTitle: mUser.jobTitle || null,
+                department: mUser.department || null,
+                mobile: mUser.mobilePhone || null,
+                location: mUser.officeLocation || null,
+                status: userStatus
+            });
+
+            // Find existing user by azureAdId OR email OR alias
             let dbUser = await prisma.user.findFirst({
                 where: {
                     OR: [
                         { azureAdId: mUser.id },
-                        { email: email }
+                        { email: email },
+                        { emailAliases: { contains: email } }
                     ]
                 }
             });
+
+            // Merge any existing aliases with new aliases
+            let mergedAliases = [...aliases];
+            if (dbUser?.emailAliases) {
+                try {
+                    const existing = JSON.parse(dbUser.emailAliases);
+                    if (Array.isArray(existing)) {
+                        for (const a of existing) {
+                            if (!mergedAliases.includes(a) && a !== dbUser.email) {
+                                mergedAliases.push(a);
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+            const finalAliasesStr = mergedAliases.length > 0 ? JSON.stringify(mergedAliases) : null;
 
             if (dbUser) {
                 // Update user details
@@ -285,6 +331,8 @@ export async function syncFromM365(): Promise<SyncResult> {
                         postalCode: mUser.postalCode || dbUser.postalCode,
                         workAddress: mUser.streetAddress || dbUser.workAddress,
                         status: userStatus,
+                        emailAliases: finalAliasesStr,
+                        m365Data: m365DataJson,
                         m365AccountCreated: true,
                         m365LicenseAssigned: hasLicense,
                         lastM365Sync: now
@@ -310,6 +358,8 @@ export async function syncFromM365(): Promise<SyncResult> {
                         country: mUser.country || 'India',
                         postalCode: mUser.postalCode || null,
                         workAddress: mUser.streetAddress || null,
+                        emailAliases: finalAliasesStr,
+                        m365Data: m365DataJson,
                         m365AccountCreated: true,
                         m365LicenseAssigned: hasLicense,
                         onboardingStatus: 'Completed',

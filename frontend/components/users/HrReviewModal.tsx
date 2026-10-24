@@ -8,7 +8,9 @@ interface HrNotification {
     employeeName: string;
     fieldName: string;
     currentValue: string | null;
+    m365Value: string | null;
     zohoValue: string | null;
+    aliases: string | null;
     status: 'Pending' | 'Applied' | 'Dismissed';
     createdAt: string;
     resolvedAt?: string | null;
@@ -43,6 +45,10 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                 headers: getHeaders(),
                 credentials: 'include'
             });
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`The backend returned HTTP ${res.status}. If Render is deploying or restarting, please wait a minute and refresh.`);
+            }
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || 'Failed to fetch HR changes');
@@ -67,14 +73,19 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
     const pendingItems = notifications.filter(n => n.status === 'Pending');
     const historyItems = notifications.filter(n => n.status !== 'Pending');
 
-    const handleApply = async (id: number) => {
+    const handleApply = async (id: number, pushToM365: boolean = false) => {
         setActionInProgress(id);
         try {
             const res = await fetch(`${apiUrl}/api/zoho/changes/${id}/apply`, {
                 method: 'POST',
-                headers: getHeaders(),
-                credentials: 'include'
+                headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ pushToM365 })
             });
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`The backend returned HTTP ${res.status}.`);
+            }
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || 'Failed to apply change');
@@ -96,6 +107,10 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                 headers: getHeaders(),
                 credentials: 'include'
             });
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`The backend returned HTTP ${res.status}.`);
+            }
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || 'Failed to dismiss change');
@@ -108,15 +123,16 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
         }
     };
 
-    const handleApplyAll = async () => {
-        if (!confirm(`Apply all ${pendingItems.length} changes to portal user profiles?`)) return;
+    const handleApplyAll = async (pushToM365: boolean = false) => {
+        if (!confirm(`Apply all ${pendingItems.length} changes to portal user profiles${pushToM365 ? ' and push to Microsoft 365' : ''}?`)) return;
         setIsLoading(true);
         for (const item of pendingItems) {
             try {
                 await fetch(`${apiUrl}/api/zoho/changes/${item.id}/apply`, {
                     method: 'POST',
-                    headers: getHeaders(),
-                    credentials: 'include'
+                    headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ pushToM365 })
                 });
             } catch (e) {
                 console.error(e);
@@ -164,7 +180,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                Changes made by HR in Zoho People are held here for your approval. No profile data is overwritten automatically.
+                                3-Way comparison: Compare Portal DB, Microsoft 365, and Zoho People Plus. Changes are NOT applied until you approve them.
                             </p>
                         </div>
                     </div>
@@ -221,11 +237,11 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                 Dismiss All
                             </button>
                             <button
-                                onClick={handleApplyAll}
+                                onClick={() => handleApplyAll(false)}
                                 disabled={isLoading}
                                 className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-sm"
                             >
-                                Approve & Apply All ({pendingItems.length})
+                                Apply All to Portal ({pendingItems.length})
                             </button>
                         </div>
                     )}
@@ -264,91 +280,141 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                         </div>
                     )}
 
-                    {!isLoading && itemsToDisplay.map(item => (
-                        <div
-                            key={item.id}
-                            className={`p-4 rounded-xl border transition-all ${
-                                item.status === 'Pending'
-                                    ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm hover:border-orange-300 dark:hover:border-orange-800'
-                                    : 'bg-slate-50/60 dark:bg-slate-800/30 border-slate-200/60 dark:border-slate-800 opacity-80'
-                            }`}
-                        >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                {/* Employee Info */}
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-400 to-amber-500 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
-                                        {item.employeeName.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                                                {item.employeeName}
-                                            </span>
-                                            {item.employeeId && (
-                                                <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
-                                                    {item.employeeId}
+                    {!isLoading && itemsToDisplay.map(item => {
+                        let aliasesList: string[] = [];
+                        if (item.aliases) {
+                            try {
+                                const parsed = JSON.parse(item.aliases);
+                                if (Array.isArray(parsed)) aliasesList = parsed;
+                            } catch (e) {
+                                aliasesList = item.aliases.split(',').map(s => s.trim()).filter(Boolean);
+                            }
+                        }
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`p-4 rounded-xl border transition-all ${
+                                    item.status === 'Pending'
+                                        ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm hover:border-orange-300 dark:hover:border-orange-800'
+                                        : 'bg-slate-50/60 dark:bg-slate-800/30 border-slate-200/60 dark:border-slate-800 opacity-80'
+                                }`}
+                            >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    {/* Employee Info */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-400 to-amber-500 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
+                                            {item.employeeName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                                                    {item.employeeName}
                                                 </span>
+                                                {item.employeeId && (
+                                                    <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
+                                                        {item.employeeId}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                {item.employeeEmail}
+                                            </div>
+                                            {aliasesList.length > 0 && (
+                                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                    <span className="text-[10px] text-slate-400 font-semibold">Aliases:</span>
+                                                    {aliasesList.map(alias => (
+                                                        <span key={alias} className="text-[10px] bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.2 rounded-full font-mono">
+                                                            {alias}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                                            {item.employeeEmail}
+                                    </div>
+
+                                    {/* Status badge if resolved */}
+                                    {item.status !== 'Pending' && (
+                                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full self-start sm:self-center ${
+                                            item.status === 'Applied'
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                        }`}>
+                                            {item.status}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* 3-Way Comparison Diff */}
+                                <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/70 dark:border-slate-800">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                        Attribute: <span className="text-slate-800 dark:text-slate-100 font-semibold">{item.fieldName}</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                                        {/* 1. Portal Current DB */}
+                                        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                            <div className="text-[10px] font-semibold text-slate-400 flex items-center gap-1 mb-1">
+                                                <span>🏢 Portal (Current)</span>
+                                            </div>
+                                            <div className="font-medium text-slate-700 dark:text-slate-200 truncate" title={item.currentValue || 'None'}>
+                                                {item.currentValue || <span className="text-slate-400 italic">None</span>}
+                                            </div>
+                                        </div>
+
+                                        {/* 2. Microsoft 365 */}
+                                        <div className="p-2.5 rounded-lg bg-sky-50/50 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-800/60">
+                                            <div className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1 mb-1">
+                                                <span>☁️ Microsoft 365</span>
+                                            </div>
+                                            <div className="font-medium text-sky-900 dark:text-sky-200 truncate" title={item.m365Value || 'Not Synced'}>
+                                                {item.m365Value || <span className="text-slate-400 italic">Not Synced / None</span>}
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Zoho People Plus */}
+                                        <div className="p-2.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-800/60">
+                                            <div className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1 mb-1">
+                                                <span>🔶 Zoho People Plus</span>
+                                            </div>
+                                            <div className="font-semibold text-orange-900 dark:text-orange-200 truncate" title={item.zohoValue || 'None'}>
+                                                {item.zohoValue || <span className="text-slate-400 italic">None</span>}
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {/* Actions for Pending */}
+                                    {item.status === 'Pending' && (
+                                        <div className="mt-3 flex items-center justify-end gap-2 flex-wrap pt-2 border-t border-slate-200/50 dark:border-slate-800">
+                                            <button
+                                                onClick={() => handleDismiss(item.id)}
+                                                disabled={actionInProgress === item.id}
+                                                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors font-medium border border-slate-200 dark:border-slate-700"
+                                            >
+                                                Ignore
+                                            </button>
+                                            <button
+                                                onClick={() => handleApply(item.id, false)}
+                                                disabled={actionInProgress === item.id}
+                                                className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-sm flex items-center gap-1 active:scale-95"
+                                                title="Update this field in the portal only"
+                                            >
+                                                {actionInProgress === item.id ? 'Applying...' : 'Apply to Portal'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleApply(item.id, true)}
+                                                disabled={actionInProgress === item.id}
+                                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all shadow-sm flex items-center gap-1 active:scale-95"
+                                                title="Update in portal AND push update to Microsoft 365"
+                                            >
+                                                {actionInProgress === item.id ? 'Applying...' : 'Apply & Push to M365'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Status badge if resolved */}
-                                {item.status !== 'Pending' && (
-                                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full self-start sm:self-center ${
-                                        item.status === 'Applied'
-                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                            : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                                    }`}>
-                                        {item.status}
-                                    </span>
-                                )}
                             </div>
-
-                            {/* Diff Representation */}
-                            <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <div className="flex-1">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                                        Field Changed: <span className="text-slate-700 dark:text-slate-200 font-semibold">{item.fieldName}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                                        <span className="line-through text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900">
-                                            Portal: {item.currentValue || 'None'}
-                                        </span>
-                                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                        </svg>
-                                        <span className="font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
-                                            Zoho: {item.zohoValue || 'None'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Actions for Pending */}
-                                {item.status === 'Pending' && (
-                                    <div className="flex items-center gap-2 self-end sm:self-center">
-                                        <button
-                                            onClick={() => handleDismiss(item.id)}
-                                            disabled={actionInProgress === item.id}
-                                            className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors font-medium border border-slate-200 dark:border-slate-700"
-                                        >
-                                            Ignore
-                                        </button>
-                                        <button
-                                            onClick={() => handleApply(item.id)}
-                                            disabled={actionInProgress === item.id}
-                                            className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-sm flex items-center gap-1 active:scale-95"
-                                        >
-                                            {actionInProgress === item.id ? 'Applying...' : 'Apply Update'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Footer */}

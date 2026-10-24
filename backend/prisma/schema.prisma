@@ -23,6 +23,10 @@ model User {
   jobTitle     String?
   company      String?
   employeeId   String?
+  emailAliases String?      // Comma-separated or JSON list of aliases (e.g. medical & surgical emails)
+  zohoEmployeeId String?    // Zoho People ID (e.g. AMD_204)
+  zohoData     String?      // Cached snapshot of Zoho HR attributes
+  m365Data     String?      // Cached snapshot of M365 attributes
   accountType  String       @default("Employee")
   laptopStatus String?      // e.g. "Using own laptop", "No laptop assigned", "Details not collected"
   location     String?      // Work Location station/city e.g. "Hyderabad", "Pune", "Remote"
@@ -524,7 +528,9 @@ model HrChangeNotification {
   employeeName   String
   fieldName      String
   currentValue   String?
-  zohoValue      String?
+  m365Value      String?   // Corresponding value in Microsoft 365
+  zohoValue      String?   // Corresponding value in Zoho People
+  aliases        String?   // Detected aliases (e.g. medical / surgical)
   status         String    @default("Pending") // "Pending", "Applied", "Dismissed"
   createdAt      DateTime  @default(now())
   resolvedAt     DateTime?

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { prisma } from '../db';
+import { updateM365User } from './m365.service';
 
 interface ZohoTokenCache {
     accessToken: string;
@@ -138,159 +139,149 @@ export async function fetchZohoEmployees(): Promise<ZohoEmployeeRecord[]> {
 
 /**
  * Compare Zoho People employees against Portal Users to detect changes.
- * NEVER overwrites users directly. Queues them in HrChangeNotification for review.
+ * Compares Portal DB vs M365 vs Zoho People (3-Way Comparison).
+ * In-memory batch indexing for high speed.
  */
 export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
+    // 1. Fetch all portal users and pending notifications in batch
+    const allUsers = await prisma.user.findMany({ include: { department: true } });
+    const pendingNotifs = await prisma.hrChangeNotification.findMany({ where: { status: 'Pending' } });
+
+    // 2. Build fast in-memory lookup indexes
+    const emailMap = new Map<string, any>();
+    const empIdMap = new Map<string, any>();
+    const aliasMap = new Map<string, any>();
+    const pendingMap = new Map<string, any>();
+
+    for (const u of allUsers) {
+        if (u.email) emailMap.set(u.email.toLowerCase(), u);
+        if (u.employeeId) empIdMap.set(u.employeeId.toLowerCase(), u);
+        if (u.emailAliases) {
+            try {
+                const al = JSON.parse(u.emailAliases);
+                if (Array.isArray(al)) {
+                    for (const a of al) {
+                        if (typeof a === 'string') aliasMap.set(a.toLowerCase(), u);
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    for (const n of pendingNotifs) {
+        pendingMap.set(`${n.employeeEmail.toLowerCase()}_${n.fieldName.toLowerCase()}`, n);
+    }
+
     let createdNotifications = 0;
+    const notifsToCreate: any[] = [];
+    const notifsToUpdate: { id: number; data: any }[] = [];
 
     for (const zEmp of zohoEmployees) {
         if (!zEmp.email) continue;
+        const zEmail = zEmp.email.toLowerCase();
 
-        const dbUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    { email: { equals: zEmp.email, mode: 'insensitive' as const } },
-                    ...(zEmp.employeeId ? [{ employeeId: { equals: zEmp.employeeId, mode: 'insensitive' as const } }] : [])
-                ]
-            },
-            include: { department: true }
-        });
+        // Match user by email, employeeId, or alias
+        const dbUser = emailMap.get(zEmail) 
+            || (zEmp.employeeId ? empIdMap.get(zEmp.employeeId.toLowerCase()) : null)
+            || aliasMap.get(zEmail);
 
         if (!dbUser) {
-            // User does not exist in portal. We can optionally flag a "New Employee in Zoho" notification
-            const existingNotif = await prisma.hrChangeNotification.findFirst({
-                where: {
+            const notifKey = `${zEmail}_new user detected`;
+            if (!pendingMap.has(notifKey)) {
+                notifsToCreate.push({
+                    source: 'Zoho People Plus (AMD)',
+                    employeeId: zEmp.employeeId || null,
                     employeeEmail: zEmp.email,
+                    employeeName: zEmp.fullName || zEmp.email,
                     fieldName: 'New User Detected',
+                    currentValue: 'Not in Portal',
+                    m365Value: null,
+                    zohoValue: `${zEmp.fullName} (${zEmp.designation || 'No Title'} - ${zEmp.department || 'No Dept'})`,
+                    aliases: null,
                     status: 'Pending'
-                }
-            });
-
-            if (!existingNotif) {
-                await prisma.hrChangeNotification.create({
-                    data: {
-                        source: 'Zoho People Plus (AMD)',
-                        employeeId: zEmp.employeeId || null,
-                        employeeEmail: zEmp.email,
-                        employeeName: zEmp.fullName || zEmp.email,
-                        fieldName: 'New User Detected',
-                        currentValue: 'Not in Portal',
-                        zohoValue: `${zEmp.fullName} (${zEmp.designation || 'No Title'} - ${zEmp.department || 'No Dept'})`,
-                        status: 'Pending'
-                    }
                 });
                 createdNotifications++;
             }
             continue;
         }
 
-        // Compare Department
-        const currentDept = (dbUser as any).department?.name || '';
-        if (zEmp.department && currentDept.toLowerCase() !== zEmp.department.toLowerCase()) {
-            await queueChangeIfNotExists(
-                zEmp.employeeId || dbUser.employeeId,
-                dbUser.email,
-                dbUser.name,
-                'Department',
-                currentDept || 'None',
-                zEmp.department
-            );
-            createdNotifications++;
+        // Parse cached M365 snapshot if present
+        let m365: Record<string, any> = {};
+        if (dbUser.m365Data) {
+            try { m365 = JSON.parse(dbUser.m365Data); } catch (e) {}
         }
 
-        // Compare Job Title / Designation
+        const checkDiff = (fieldName: string, currentVal: string, m365Val: string | null, zohoVal: string) => {
+            const notifKey = `${dbUser.email.toLowerCase()}_${fieldName.toLowerCase()}`;
+            const existing = pendingMap.get(notifKey);
+            if (!existing) {
+                notifsToCreate.push({
+                    source: 'Zoho People Plus (AMD)',
+                    employeeId: zEmp.employeeId || dbUser.employeeId,
+                    employeeEmail: dbUser.email,
+                    employeeName: dbUser.name,
+                    fieldName,
+                    currentValue: currentVal,
+                    m365Value: m365Val,
+                    zohoValue: zohoVal,
+                    aliases: dbUser.emailAliases || null,
+                    status: 'Pending'
+                });
+                createdNotifications++;
+            } else if (existing.zohoValue !== zohoVal || existing.m365Value !== m365Val) {
+                notifsToUpdate.push({
+                    id: existing.id,
+                    data: {
+                        zohoValue: zohoVal,
+                        m365Value: m365Val || existing.m365Value,
+                        currentValue: currentVal,
+                        aliases: dbUser.emailAliases || existing.aliases,
+                        createdAt: new Date()
+                    }
+                });
+            }
+        };
+
+        // 1. Department
+        const currentDept = dbUser.department?.name || '';
+        if (zEmp.department && currentDept.toLowerCase() !== zEmp.department.toLowerCase()) {
+            checkDiff('Department', currentDept || 'None', m365.department || null, zEmp.department);
+        }
+
+        // 2. Job Title
         const currentTitle = dbUser.jobTitle || '';
         if (zEmp.designation && currentTitle.toLowerCase() !== zEmp.designation.toLowerCase()) {
-            await queueChangeIfNotExists(
-                zEmp.employeeId || dbUser.employeeId,
-                dbUser.email,
-                dbUser.name,
-                'Job Title',
-                currentTitle || 'None',
-                zEmp.designation
-            );
-            createdNotifications++;
+            checkDiff('Job Title', currentTitle || 'None', m365.jobTitle || null, zEmp.designation);
         }
 
-        // Compare Mobile Number
+        // 3. Mobile
         const currentMobile = (dbUser.mobile || '').replace(/\D/g, '');
         const zohoMobile = (zEmp.mobile || '').replace(/\D/g, '');
         if (zohoMobile && currentMobile !== zohoMobile && zohoMobile.length >= 8) {
-            await queueChangeIfNotExists(
-                zEmp.employeeId || dbUser.employeeId,
-                dbUser.email,
-                dbUser.name,
-                'Mobile',
-                dbUser.mobile || 'None',
-                zEmp.mobile || ''
-            );
-            createdNotifications++;
+            checkDiff('Mobile', dbUser.mobile || 'None', m365.mobile || null, zEmp.mobile || '');
         }
 
-        // Compare Status (Active / Inactive / Terminated)
+        // 4. Status
         const isZohoActive = !/resigned|terminated|inactive|relieved/i.test(zEmp.status || '');
-        const currentStatus = dbUser.status;
         const targetStatus = isZohoActive ? 'Active' : 'Inactive';
-        if (currentStatus !== targetStatus) {
-            await queueChangeIfNotExists(
-                zEmp.employeeId || dbUser.employeeId,
-                dbUser.email,
-                dbUser.name,
-                'Status',
-                currentStatus,
-                targetStatus
-            );
-            createdNotifications++;
+        if (dbUser.status !== targetStatus) {
+            checkDiff('Status', dbUser.status, m365.status || null, targetStatus);
         }
+    }
+
+    // Batch execute writes
+    if (notifsToCreate.length > 0) {
+        await prisma.hrChangeNotification.createMany({ data: notifsToCreate });
+    }
+    for (const u of notifsToUpdate) {
+        await prisma.hrChangeNotification.update({ where: { id: u.id }, data: u.data });
     }
 
     return createdNotifications;
 }
 
-async function queueChangeIfNotExists(
-    employeeId: string | null | undefined,
-    email: string,
-    name: string,
-    fieldName: string,
-    currentValue: string,
-    zohoValue: string
-) {
-    const existing = await prisma.hrChangeNotification.findFirst({
-        where: {
-            employeeEmail: email,
-            fieldName,
-            status: 'Pending'
-        }
-    });
-
-    if (!existing) {
-        await prisma.hrChangeNotification.create({
-            data: {
-                source: 'Zoho People Plus (AMD)',
-                employeeId: employeeId || null,
-                employeeEmail: email,
-                employeeName: name,
-                fieldName,
-                currentValue,
-                zohoValue,
-                status: 'Pending'
-            }
-        });
-    } else if (existing.zohoValue !== zohoValue) {
-        // Update pending notification if Zoho changed again
-        await prisma.hrChangeNotification.update({
-            where: { id: existing.id },
-            data: {
-                zohoValue,
-                currentValue,
-                createdAt: new Date()
-            }
-        });
-    }
-}
-
 /**
- * Sync Zoho People Plus license count into the Licenses table
+ * Sync Zoho People Plus license count AND auto-map matching employees to LicenseAssignment
  */
 export async function syncZohoLicensePool() {
     const employees = await fetchZohoEmployees();
@@ -318,7 +309,6 @@ export async function syncZohoLicensePool() {
             }
         });
     } else {
-        // Keep seats or update if active count exceeds seats
         const updatedSeats = Math.max(license.seats, activeCount);
         license = await prisma.license.update({
             where: { id: license.id },
@@ -330,19 +320,71 @@ export async function syncZohoLicensePool() {
         });
     }
 
+    // Batch map assignments to portal users
+    const allUsers = await prisma.user.findMany({ select: { id: true, email: true, employeeId: true, emailAliases: true } });
+    const emailMap = new Map<string, any>();
+    const empIdMap = new Map<string, any>();
+    const aliasMap = new Map<string, any>();
+
+    for (const u of allUsers) {
+        if (u.email) emailMap.set(u.email.toLowerCase(), u);
+        if (u.employeeId) empIdMap.set(u.employeeId.toLowerCase(), u);
+        if (u.emailAliases) {
+            try {
+                const al = JSON.parse(u.emailAliases);
+                if (Array.isArray(al)) {
+                    for (const a of al) {
+                        if (typeof a === 'string') aliasMap.set(a.toLowerCase(), u);
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    const existingAssignments = await prisma.licenseAssignment.findMany({
+        where: { licenseId: license.id },
+        select: { userId: true }
+    });
+    const assignedUserIds = new Set(existingAssignments.map(a => a.userId).filter(Boolean));
+
+    const newAssignments: { licenseId: number; userId: number }[] = [];
+    let assignedCount = assignedUserIds.size;
+
+    for (const zEmp of activeEmployees) {
+        if (!zEmp.email) continue;
+        const zEmail = zEmp.email.toLowerCase();
+        const dbUser = emailMap.get(zEmail) 
+            || (zEmp.employeeId ? empIdMap.get(zEmp.employeeId.toLowerCase()) : null)
+            || aliasMap.get(zEmail);
+
+        if (dbUser && !assignedUserIds.has(dbUser.id)) {
+            newAssignments.push({
+                licenseId: license.id,
+                userId: dbUser.id
+            });
+            assignedUserIds.add(dbUser.id);
+            assignedCount++;
+        }
+    }
+
+    if (newAssignments.length > 0) {
+        await prisma.licenseAssignment.createMany({ data: newAssignments });
+    }
+
     return {
         success: true,
         license,
         totalZohoEmployees: employees.length,
         activeZohoEmployees: activeCount,
+        assignedToPortalUsers: assignedCount,
         changesQueued
     };
 }
 
 /**
- * Apply a pending HR change to the User record
+ * Apply a pending HR change to the User record and optionally push to M365
  */
-export async function applyHrChange(notificationId: number, adminUserId?: number) {
+export async function applyHrChange(notificationId: number, adminUserId?: number, pushToM365: boolean = false) {
     const notification = await prisma.hrChangeNotification.findUnique({
         where: { id: notificationId }
     });
@@ -356,7 +398,12 @@ export async function applyHrChange(notificationId: number, adminUserId?: number
     }
 
     const user = await prisma.user.findFirst({
-        where: { email: { equals: notification.employeeEmail, mode: 'insensitive' } }
+        where: {
+            OR: [
+                { email: { equals: notification.employeeEmail, mode: 'insensitive' } },
+                { emailAliases: { contains: notification.employeeEmail } }
+            ]
+        }
     });
 
     if (user && notification.zohoValue) {
@@ -365,18 +412,26 @@ export async function applyHrChange(notificationId: number, adminUserId?: number
                 where: { id: user.id },
                 data: { jobTitle: notification.zohoValue }
             });
+            if (pushToM365 && user.azureAdId) {
+                try { await updateM365User(user.azureAdId, { jobTitle: notification.zohoValue }); } catch (e) {}
+            }
         } else if (notification.fieldName === 'Mobile') {
             await prisma.user.update({
                 where: { id: user.id },
                 data: { mobile: notification.zohoValue }
             });
+            if (pushToM365 && user.azureAdId) {
+                try { await updateM365User(user.azureAdId, { mobilePhone: notification.zohoValue }); } catch (e) {}
+            }
         } else if (notification.fieldName === 'Status') {
             await prisma.user.update({
                 where: { id: user.id },
                 data: { status: notification.zohoValue }
             });
+            if (pushToM365 && user.azureAdId) {
+                try { await updateM365User(user.azureAdId, { accountEnabled: notification.zohoValue === 'Active' }); } catch (e) {}
+            }
         } else if (notification.fieldName === 'Department') {
-            // Find or create department
             let dept = await prisma.department.findFirst({
                 where: { name: { equals: notification.zohoValue, mode: 'insensitive' } }
             });
@@ -389,6 +444,9 @@ export async function applyHrChange(notificationId: number, adminUserId?: number
                 where: { id: user.id },
                 data: { departmentId: dept.id }
             });
+            if (pushToM365 && user.azureAdId) {
+                try { await updateM365User(user.azureAdId, { department: notification.zohoValue }); } catch (e) {}
+            }
         }
     }
 

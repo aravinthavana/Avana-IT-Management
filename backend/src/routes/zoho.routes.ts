@@ -85,10 +85,11 @@ router.post('/api/zoho/changes/:id/apply', authenticateToken, requireAdmin, asyn
     try {
         const id = parseInt(req.params.id, 10);
         if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+        const pushToM365 = req.body?.pushToM365 === true;
 
-        const updated = await applyHrChange(id, req.user?.id);
+        const updated = await applyHrChange(id, req.user?.id, pushToM365);
         res.json({
-            message: 'Change applied successfully',
+            message: pushToM365 ? 'Change applied to Portal and pushed to Microsoft 365' : 'Change applied successfully',
             notification: updated
         });
     } catch (error: any) {
