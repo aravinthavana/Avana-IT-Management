@@ -82,6 +82,14 @@ model User {
   declarations     AssetDeclaration[] @relation("UserDeclarations")
   reconciledDeclarations AssetDeclaration[] @relation("DeclarationReconciledBy")
   ticketComments TicketComment[]
+  workCasesCreated SupportWorkCase[] @relation("WorkCaseCreator")
+  workCasesAssigned SupportWorkCase[] @relation("WorkCaseAssignee")
+  workCasesAffected SupportWorkCase[] @relation("WorkCaseContact")
+  workActivitiesPerformed SupportWorkActivity[] @relation("WorkPerformer")
+  workActivitiesRecorded SupportWorkActivity[] @relation("WorkRecorder")
+  workActivitiesAffected SupportWorkActivity[] @relation("WorkContact")
+  workCasesAsAffectedEmployee SupportWorkCase[] @relation("WorkCaseAffectedEmployee")
+  workActivitiesAsAffectedEmployee SupportWorkActivity[] @relation("WorkAffectedEmployee")
   accessories  UserAccessory[]
   serviceRecordsLogged ServiceRecord[]
 
@@ -358,6 +366,78 @@ model TicketComment {
 
   @@index([ticketId])
   @@index([userId])
+}
+
+// Private, IT-led work records. Kept separate from employee-visible ticket conversations.
+model SupportWorkCase {
+  id Int @id @default(autoincrement())
+  subject String
+  contactName String
+  contactUserId Int?
+  contactUser User? @relation("WorkCaseContact", fields: [contactUserId], references: [id], onDelete: SetNull)
+  affectedUserId Int?
+  affectedUser User? @relation("WorkCaseAffectedEmployee", fields: [affectedUserId], references: [id], onDelete: SetNull)
+  createdById Int
+  createdBy User @relation("WorkCaseCreator", fields: [createdById], references: [id])
+  assignedToId Int
+  assignedTo User @relation("WorkCaseAssignee", fields: [assignedToId], references: [id])
+  status String @default("Open")
+  waitingReason String?
+  nextAction String?
+  followUpDate DateTime? @db.Date
+  revision Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activities SupportWorkActivity[]
+
+  @@index([status, followUpDate])
+  @@index([assignedToId])
+}
+
+model SupportWorkActivity {
+  id Int @id @default(autoincrement())
+  clientRequestId String @unique
+  caseId Int?
+  case SupportWorkCase? @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  workDate DateTime @db.Date
+  subject String
+  contactName String
+  contactUserId Int?
+  contactUser User? @relation("WorkContact", fields: [contactUserId], references: [id], onDelete: SetNull)
+  affectedUserId Int?
+  affectedUser User? @relation("WorkAffectedEmployee", fields: [affectedUserId], references: [id], onDelete: SetNull)
+  channel String
+  category String
+  priority String @default("Medium")
+  workDone String
+  statusAfter String
+  waitingReason String?
+  nextAction String?
+  followUpDate DateTime? @db.Date
+  performedById Int
+  performedBy User @relation("WorkPerformer", fields: [performedById], references: [id])
+  recordedById Int
+  recordedBy User @relation("WorkRecorder", fields: [recordedById], references: [id])
+  effortMinutes Int?
+  assetId Int?
+  attachments String?
+  notificationStatus String @default("Not requested")
+  importKey String? @unique
+  originalStatus String?
+  createdAt DateTime @default(now())
+
+  @@index([workDate, performedById])
+  @@index([caseId, workDate])
+}
+
+model SupportWorkAttachment {
+  id String @id @default(uuid())
+  name String
+  type String
+  size Int
+  data Bytes
+  createdById Int
+  createdAt DateTime @default(now())
 }
 
 model KnowledgeBase {

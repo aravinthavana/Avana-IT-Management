@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ isSidebarOpen, setSidebarOpen }) => {
         purchases: 'Purchase Management',
         profile: 'My Profile',
         onboarding: 'Onboarding & Offboarding', requests: 'Asset Requests',
-        audits: 'Self-Audits', tickets: 'Support Tickets', kb: 'Knowledge Base', licenses: 'Licenses & Subscriptions',
+        audits: 'Self-Audits', tickets: user?.role === 'Admin' ? 'Support & Work Log' : 'Support Tickets', kb: 'Knowledge Base', licenses: 'Licenses & Subscriptions',
     };
 
     const themeIcons = {

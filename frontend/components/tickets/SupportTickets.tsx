@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
 import { SupportTicket, TicketComment, TicketAttachment, KnowledgeBaseArticle } from '../../types';
 import { sanitizeHtml } from '../../utils/sanitize';
+import SupportWorkLog from './SupportWorkLog';
 
 
 // Standardized Ticket ID Formatter
@@ -1877,4 +1878,16 @@ const SupportTickets: React.FC = () => {
     );
 };
 
-export default SupportTickets;
+const SupportWorkspace: React.FC = () => {
+    const { user } = useAuth();
+    const [view, setView] = useState<'work' | 'tickets'>('work');
+    if (user?.role !== 'Admin') return <SupportTickets />;
+    return <div className="space-y-5">
+        <div className="flex flex-wrap gap-2" aria-label="Support workspace">
+            <button aria-pressed={view === 'work'} onClick={() => setView('work')} className={`px-4 py-2 rounded-xl text-sm font-semibold ${view === 'work' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}`}>IT work log</button>
+            <button aria-pressed={view === 'tickets'} onClick={() => setView('tickets')} className={`px-4 py-2 rounded-xl text-sm font-semibold ${view === 'tickets' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}`}>Employee tickets</button>
+        </div>
+        {view === 'work' ? <SupportWorkLog /> : <SupportTickets />}
+    </div>;
+};
+export default SupportWorkspace;

@@ -20,6 +20,7 @@ import purchasesRoutes from './routes/purchases.routes';
 import licensesRoutes from './routes/licenses.routes';
 import requestsRoutes from './routes/requests.routes';
 import ticketsRoutes from './routes/tickets.routes';
+import supportWorkRoutes from './routes/supportWork.routes';
 import kbRoutes from './routes/kb.routes';
 import auditsRoutes from './routes/audits.routes';
 import uploadRoutes from './routes/upload.routes';
@@ -28,6 +29,7 @@ import accessoriesRoutes from './routes/accessories.routes';
 import m365Routes from './routes/m365.routes';
 import zohoRoutes from './routes/zoho.routes';
 import { syncFromM365 } from './services/m365.service';
+import { authenticateToken, requireAdmin } from './middleware/auth';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -48,8 +50,10 @@ app.use(cors({
 }));
 
 // Global parsing middleware
-app.use(express.json());
 app.use(cookieParser());
+// Reviewed workbook imports may exceed the normal small API JSON limit.
+app.use('/api/support-work/import', authenticateToken, requireAdmin, express.json({ limit: '8mb' }));
+app.use(express.json());
 
 // Rate Limiting for general API
 const apiLimiter = rateLimit({
@@ -98,6 +102,7 @@ app.use(purchasesRoutes);
 app.use(licensesRoutes);
 app.use(requestsRoutes);
 app.use(ticketsRoutes);
+app.use(supportWorkRoutes);
 app.use(kbRoutes);
 app.use(auditsRoutes);
 app.use(uploadRoutes);
@@ -105,6 +110,11 @@ app.use(webhooksRoutes);
 app.use(accessoriesRoutes);
 app.use(m365Routes);
 app.use(zohoRoutes);
+
+app.use((error: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (error?.type === 'entity.too.large') return res.status(413).json({ error: 'The selected import is too large. Import fewer rows at a time.' });
+    next(error);
+});
 
 app.listen(port, () => {
     console.log(`Server running on port ${port} with security measures enabled.`);

@@ -118,15 +118,20 @@ function loadComponent(file, context) {
     } }).outputText;
     const module = { exports: {} };
     let stateIndex = 0;
+    let workEntrySeeded = false;
     const localRequire = name => {
         if (name.endsWith('/useAppContext')) return { useAppContext: () => context };
-        if (name.endsWith('/AuthContext')) return { useAuth: () => ({ user: { name: 'UI Reviewer', role: 'Admin' }, logout() {} }) };
+        if (name.endsWith('/AuthContext')) return { useAuth: () => ({ user: context.authUser || { id: 1, name: 'UI Reviewer', role: 'Admin' }, logout() {} }) };
         if (name.endsWith('/apiClient')) return { apiClient() { throw new Error('Unexpected HTTP request in markup test'); } };
         if (name.endsWith('/Modal') && context.inlineDialog) return { default: ({ title, children }) => React.createElement('section', { 'aria-label': title }, children), __esModule: true };
-        if (name === 'react' && (context.initialProvider || context.initialMembers)) return {
+        if (name === 'react' && (context.initialProvider || context.initialMembers || context.initialWorkEntry)) return {
             ...React,
             useState(value) {
                 stateIndex++;
+                if (filename.endsWith('SupportWorkLog.tsx') && value === null && !workEntrySeeded && context.initialWorkEntry) {
+                    workEntrySeeded = true;
+                    return React.useState(context.initialWorkEntry);
+                }
                 const initial = filename.endsWith('LicenseManagement.tsx') && value === 'm365' ? context.initialProvider || value
                     : filename.endsWith('LicenseAssignmentModal.tsx') && stateIndex === 1 ? context.initialMembers || value : value;
                 return React.useState(initial);
@@ -229,4 +234,39 @@ test('pending informational notices are not labeled as successful operations', (
     assert.match(html, /Information/);
     assert.doesNotMatch(html, /Success/);
     assert.match(html, /role="status"/);
+});
+
+test('IT support opens in the private work log with optional employee tickets and report actions', () => {
+    const context = { users: [{ id: 1, name: 'IT', role: 'Admin', status: 'Active' }], assets: [], tickets: [], getHeaders: () => ({}) };
+    const { default: Page } = loadComponent('components/tickets/SupportTickets.tsx', context);
+    const html = renderToStaticMarkup(React.createElement(Page));
+    for (const text of ['IT Support &amp; Work Log', 'Log completed work', 'Log request / follow-up', 'Employee tickets', 'Export weekly Excel', 'Import Excel report']) assert.ok(html.includes(text), text);
+    assert.doesNotMatch(html, /New Ticket|New Response/);
+});
+const workFixture = {
+    clientRequestId: '00000000-0000-4000-8000-000000000000', createCase: false, workDate: '2026-10-16', subject: 'Call already resolved',
+    contactName: 'Vendor', channel: 'Phone', category: 'Other', priority: 'Medium', workDone: 'Configured Outlook', statusAfter: 'Completed',
+    waitingReason: 'User', nextAction: '', followUpDate: '2026-10-17', performedById: 1, assignedToId: 1, effortMinutes: '', assetId: '', attachments: [], notifyEmployee: false
+};
+test('completed-work dialog is labeled, supports quick repeat entry and has email switched off', () => {
+    const { default: Page } = loadComponent('components/tickets/SupportWorkLog.tsx', { users: [], assets: [], getHeaders: () => ({}), initialWorkEntry: workFixture });
+    const html = renderToStaticMarkup(React.createElement(Page));
+    assert.match(html, /role="dialog" aria-modal="true" aria-labelledby="work-entry-title"/);
+    assert.match(html, /Save &amp; add another/);
+    assert.match(html, /type="checkbox"[^>]*disabled=""/);
+    assert.doesNotMatch(html, /checked=""/);
+    assert.doesNotMatch(html, />Next action</);
+    assert.match(html, /max-h-\[94dvh\]/);
+});
+test('ongoing-work dialog exposes the required next action and follow-up fields', () => {
+    const { default: Page } = loadComponent('components/tickets/SupportWorkLog.tsx', { users: [], assets: [], getHeaders: () => ({}), initialWorkEntry: { ...workFixture, createCase: true, statusAfter: 'Waiting' } });
+    const html = renderToStaticMarkup(React.createElement(Page));
+    assert.match(html, /Next action<\/label><input[^>]*required/);
+    assert.match(html, /Follow-up date<\/label><input[^>]*required/);
+    assert.match(html, /Waiting for<\/label><select/);
+});
+test('work dates use the India business day across UTC midnight boundaries', () => {
+    const { indiaDate } = loadComponent('components/tickets/SupportWorkLog.tsx', { users: [], assets: [] });
+    assert.equal(indiaDate(new Date('2026-10-16T18:29:59Z')), '2026-10-16');
+    assert.equal(indiaDate(new Date('2026-10-16T18:30:00Z')), '2026-10-17');
 });

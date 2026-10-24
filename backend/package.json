@@ -10,7 +10,8 @@
     "db:push": "npx prisma db push",
     "sync-users": "ts-node src/syncUsers.ts",
     "wipe-data": "ts-node src/wipeData.ts",
-    "test": "node --test tests/security-regressions.test.cjs tests/licensing.test.cjs"
+    "test": "node --test tests/security-regressions.test.cjs tests/licensing.test.cjs tests/support-work.test.cjs",
+    "db:deploy-support-work": "prisma db execute --file prisma/updates/20261024_support_work.sql --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
@@ -19,6 +20,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
@@ -44,6 +46,9 @@
     "prisma": "^5.14.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "exceljs": { "uuid": "^11.1.1" }
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
