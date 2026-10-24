@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { AccessoryBatch, User } from '../../types';
@@ -22,7 +23,6 @@ const CATEGORIES = [
     'Other'
 ];
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const IssueAccessoryModal: React.FC<IssueAccessoryModalProps> = ({
     isOpen,

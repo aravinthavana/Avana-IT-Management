@@ -1,3 +1,5 @@
+import { findPortalUser } from '../utils/userIdentity';
+import { queueM365ProfileChanges } from './hrReview.service';
 import axios from 'axios';
 import { prisma } from '../db';
 import { getGraphAppToken } from '../utils/email';
@@ -37,6 +39,8 @@ export interface M365UserDTO {
     assignedLicenses?: Array<{ skuId: string }>;
     proxyAddresses?: string[];
     otherMails?: string[];
+    employeeId?: string | null;
+    companyName?: string | null;
 }
 
 export interface M365SubscribedSkuDTO {
@@ -65,7 +69,7 @@ export interface SyncResult {
  */
 export async function fetchAllM365Users(accessToken: string): Promise<M365UserDTO[]> {
     const allUsers: M365UserDTO[] = [];
-    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses,proxyAddresses,otherMails';
+    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses,proxyAddresses,otherMails,employeeId,companyName';
 
     while (nextUrl) {
         const response: any = await axios.get(nextUrl, {
@@ -100,15 +104,18 @@ export async function fetchM365SubscribedSkus(accessToken: string): Promise<M365
 export async function updateM365User(
     azureAdIdOrEmail: string,
     updates: {
-        displayName?: string;
-        jobTitle?: string;
-        department?: string;
-        mobilePhone?: string;
-        officeLocation?: string;
-        city?: string;
-        state?: string;
-        country?: string;
-        postalCode?: string;
+        displayName?: string | null;
+        companyName?: string | null;
+        employeeId?: string | null;
+        streetAddress?: string | null;
+        jobTitle?: string | null;
+        department?: string | null;
+        mobilePhone?: string | null;
+        officeLocation?: string | null;
+        city?: string | null;
+        state?: string | null;
+        country?: string | null;
+        postalCode?: string | null;
         accountEnabled?: boolean;
     }
 ): Promise<{ success: boolean; error?: string }> {
@@ -119,6 +126,9 @@ export async function updateM365User(
         }
 
         const payload: Record<string, any> = {};
+        if (updates.companyName !== undefined) payload.companyName = updates.companyName;
+        if (updates.employeeId !== undefined) payload.employeeId = updates.employeeId;
+        if (updates.streetAddress !== undefined) payload.streetAddress = updates.streetAddress;
         if (updates.displayName !== undefined) payload.displayName = updates.displayName;
         if (updates.jobTitle !== undefined) payload.jobTitle = updates.jobTitle;
         if (updates.department !== undefined) payload.department = updates.department;
@@ -263,6 +273,7 @@ export async function syncFromM365(): Promise<SyncResult> {
         let usersUpdated = 0;
         const now = new Date();
 
+        const portalUsers = await prisma.user.findMany({ include: { department: true } });
         for (const mUser of m365Users) {
             // Ignore external guest accounts
             if (mUser.userPrincipalName?.includes('#EXT#')) {
@@ -326,24 +337,19 @@ export async function syncFromM365(): Promise<SyncResult> {
                 }
             }
 
-            const m365DataJson = JSON.stringify({
+            const m365Snapshot = {
+                name: displayName, company: mUser.companyName, employeeId: mUser.employeeId,
+                city: mUser.city, state: mUser.state, country: mUser.country,
+                postalCode: mUser.postalCode, workAddress: mUser.streetAddress,
                 jobTitle: mUser.jobTitle || null,
                 department: mUser.department || null,
                 mobile: mUser.mobilePhone || null,
                 location: mUser.officeLocation || null,
                 status: userStatus
-            });
+            };
+            const m365DataJson = JSON.stringify(m365Snapshot);
 
-            // Find existing user by azureAdId OR email OR alias
-            let dbUser = await prisma.user.findFirst({
-                where: {
-                    OR: [
-                        { azureAdId: mUser.id },
-                        { email: email },
-                        { emailAliases: { contains: email } }
-                    ]
-                }
-            });
+            let dbUser = await findPortalUser(email, mUser.employeeId, aliases, mUser.id, portalUsers);
 
             // Merge any existing aliases with new aliases
             let mergedAliases = [...aliases];
@@ -362,6 +368,7 @@ export async function syncFromM365(): Promise<SyncResult> {
             const finalAliasesStr = mergedAliases.length > 0 ? JSON.stringify(mergedAliases) : null;
 
             if (dbUser) {
+                await queueM365ProfileChanges(dbUser, m365Snapshot);
                 // Update integration snapshot & cloud identity fields (do NOT overwrite IT-managed portal profile fields)
                 await prisma.user.update({
                     where: { id: dbUser.id },
@@ -371,13 +378,7 @@ export async function syncFromM365(): Promise<SyncResult> {
                         m365Data: m365DataJson,
                         m365AccountCreated: true,
                         m365LicenseAssigned: hasLicense,
-                        lastM365Sync: now,
-                        // Fill in blank fields only if never configured in portal
-                        jobTitle: dbUser.jobTitle || mUser.jobTitle || null,
-                        mobile: dbUser.mobile || mUser.mobilePhone || null,
-                        departmentId: dbUser.departmentId || departmentId || null,
-                        branchId: dbUser.branchId || branchId || null,
-                        location: dbUser.location || mUser.officeLocation || null
+                        lastM365Sync: now
                     }
                 });
                 usersUpdated++;
@@ -407,8 +408,10 @@ export async function syncFromM365(): Promise<SyncResult> {
                         onboardingStatus: 'Completed',
                         onboardingStep: 8,
                         lastM365Sync: now
-                    }
+                    },
+                    include: { department: true }
                 });
+                portalUsers.push(dbUser);
                 usersCreated++;
             }
 

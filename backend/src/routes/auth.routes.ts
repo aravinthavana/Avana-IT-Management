@@ -1,3 +1,5 @@
+import { findPortalUser } from '../utils/userIdentity';
+import { queueM365ProfileChanges } from '../services/hrReview.service';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -72,18 +74,22 @@ router.post('/api/auth/m365', async (req, res) => {
                     if (accessToken) {
                         try {
                             // Fetch basic profile
-                            const profileRes = await fetch('https://graph.microsoft.com/v1.0/me?$select=displayName,mobilePhone,jobTitle,companyName,employeeId,officeLocation', {
+                            const profileRes = await fetch('https://graph.microsoft.com/v1.0/me?$select=id,displayName,mobilePhone,jobTitle,companyName,employeeId,officeLocation,department', {
                                 headers: { Authorization: `Bearer ${accessToken}` }
                             });
                             if (profileRes.ok) {
-                                graphProfile = await profileRes.json();
+                                const profile = await profileRes.json() as any;
+                                if (!decodedToken.oid || profile.id !== decodedToken.oid) {
+                                    return res.status(401).json({ error: 'Microsoft access token does not match the signed-in account.' });
+                                }
+                                graphProfile = profile;
                             }
 
                             // Fetch profile photo
                             const photoRes = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
                                 headers: { Authorization: `Bearer ${accessToken}` }
                             });
-                            if (photoRes.ok) {
+                            if (photoRes.ok && graphProfile.id) {
                                 const photoBuffer = await photoRes.arrayBuffer();
                                 const contentType = photoRes.headers.get('content-type') || 'image/jpeg';
                                 avatarBase64 = `data:${contentType};base64,${Buffer.from(photoBuffer).toString('base64')}`;
@@ -103,11 +109,8 @@ router.post('/api/auth/m365', async (req, res) => {
                         ...(avatarBase64 ? { avatar: avatarBase64 } : {}),
                     };
 
-                    // Upsert User — always sync profile on login
-                    let user = await prisma.user.findUnique({
-                        where: { email: userEmail },
-                        include: { department: true, branch: true }
-                    });
+                    // Resolve the authenticated identity using verified token claims.
+                    let user = await findPortalUser(userEmail, undefined, [], decodedToken.oid);
 
                     if (!user) {
                         const userCount = await prisma.user.count();
@@ -121,25 +124,27 @@ router.post('/api/auth/m365', async (req, res) => {
                             include: { department: true, branch: true }
                         });
                     } else {
-                        // Preserve IT-managed portal profile fields; only backfill if missing, update avatar & store m365 snapshot
+                        if (user.status === 'Inactive') return res.status(403).json({ error: 'Account is inactive' });
+                        // Preserve IT-managed profile fields; queue differences and store cloud evidence
                         const loginUpdateData: any = {};
                         if (avatarBase64) loginUpdateData.avatar = avatarBase64;
-                        if (!user.mobile && graphProfile.mobilePhone) loginUpdateData.mobile = graphProfile.mobilePhone;
-                        if (!user.jobTitle && graphProfile.jobTitle) loginUpdateData.jobTitle = graphProfile.jobTitle;
-                        if (!user.company && graphProfile.companyName) loginUpdateData.company = graphProfile.companyName;
-                        if (!user.employeeId && graphProfile.employeeId) loginUpdateData.employeeId = graphProfile.employeeId;
-                        
                         const m365Snapshot = {
+                            name: graphProfile.displayName || null,
+                            company: graphProfile.companyName || null,
+                            employeeId: graphProfile.employeeId || null,
                             jobTitle: graphProfile.jobTitle || null,
                             department: graphProfile.department || null,
                             mobile: graphProfile.mobilePhone || null,
                             location: graphProfile.officeLocation || null,
                             status: 'Active'
                         };
-                        loginUpdateData.m365Data = JSON.stringify(m365Snapshot);
+                        if (Object.keys(graphProfile).length > 0) {
+                            await queueM365ProfileChanges(user, m365Snapshot);
+                            loginUpdateData.m365Data = JSON.stringify(m365Snapshot);
+                        }
 
                         user = await prisma.user.update({
-                            where: { email: userEmail },
+                            where: { id: user.id },
                             data: loginUpdateData,
                             include: { department: true, branch: true }
                         });

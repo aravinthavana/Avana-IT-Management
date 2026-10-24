@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,7 +8,6 @@ import { sanitizeHtml } from '../../utils/sanitize';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const KnowledgeBase: React.FC = () => {
     const { kbArticles, setKbArticles, getHeaders, setNotification } = useAppContext();

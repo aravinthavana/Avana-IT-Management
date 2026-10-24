@@ -1,3 +1,4 @@
+import { findPortalUser } from '../utils/userIdentity';
 import { Router } from 'express';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
@@ -265,7 +266,7 @@ router.get('/api/tickets/:id/comments', authenticateToken, async (req, res) => {
         if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
 
         const isManagerOfOwner = ticket.user?.managerId === userId;
-        if (role !== 'Admin' && role !== 'Manager' && ticket.userId !== userId && !isManagerOfOwner) {
+        if (role !== 'Admin' && ticket.userId !== userId && ticket.assignedToId !== userId && !isManagerOfOwner) {
             return res.status(403).json({ error: 'Access denied to this ticket discussion' });
         }
 
@@ -308,7 +309,7 @@ router.post('/api/tickets/:id/comments', authenticateToken, async (req, res) => 
         }
 
         const isManagerOfOwner = ticket.user?.managerId === userId;
-        if (role !== 'Admin' && role !== 'Manager' && ticket.userId !== userId && !isManagerOfOwner) {
+        if (role !== 'Admin' && ticket.userId !== userId && ticket.assignedToId !== userId && !isManagerOfOwner) {
             return res.status(403).json({ error: 'Access denied to post on this ticket' });
         }
 
@@ -429,22 +430,14 @@ router.post('/api/tickets/:id/sync-email-reply', authenticateToken, async (req, 
             return res.status(400).json({ error: 'Message and emailMessageId are required' });
         }
 
-        // Idempotency: check if already ingested
-        const existing = await prisma.ticketComment.findUnique({
-            where: { emailMessageId }
-        });
-        if (existing) {
-            return res.json({ status: 'already_synced', comment: existing });
-        }
-
-        const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) } });
+        const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) }, include: { user: { select: { managerId: true } } } });
         if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
 
         // Authorization check: User must be ticket creator, assigned technician, or Admin/Manager
         // @ts-ignore
         const { id: currentUserId, role: currentUserRole, email: currentUserEmail } = req.user;
         const isAuthorized = currentUserRole === 'Admin' || 
-                             currentUserRole === 'Manager' || 
+                             (currentUserRole === 'Manager' && ticket.user.managerId === currentUserId) ||
                              ticket.userId === currentUserId || 
                              ticket.assignedToId === currentUserId;
         if (!isAuthorized) {
@@ -454,19 +447,26 @@ router.post('/api/tickets/:id/sync-email-reply', authenticateToken, async (req, 
         // Enforce verified sender identity (prevent impersonation)
         let commentUserId = currentUserId;
         if (currentUserRole === 'Admin' && senderEmail) {
-            const matchedSender = await prisma.user.findFirst({
-                where: {
-                    OR: [
-                        { email: { equals: senderEmail.trim(), mode: 'insensitive' } },
-                        { emailAliases: { contains: senderEmail.trim() } }
-                    ]
-                }
-            });
+            const matchedSender = await findPortalUser(senderEmail);
             if (matchedSender) {
                 commentUserId = matchedSender.id;
             }
         } else if (senderEmail && currentUserEmail && senderEmail.trim().toLowerCase() !== currentUserEmail.toLowerCase()) {
             return res.status(403).json({ error: 'Sender email mismatch. You cannot post replies as another user.' });
+        }
+
+        // Idempotency: check if already ingested
+        const existing = await prisma.ticketComment.findUnique({
+            where: { emailMessageId }
+        });
+        if (existing && existing.ticketId !== ticket.id) {
+            return res.status(409).json({ error: 'Email message is already linked to another ticket.' });
+        }
+        if (existing) {
+            if (existing.isInternal && currentUserRole !== 'Admin') {
+                return res.status(403).json({ error: 'Access denied to internal comments.' });
+            }
+            return res.json({ status: 'already_synced', comment: existing });
         }
 
         const attachmentsStr = attachments ? (typeof attachments === 'string' ? attachments : JSON.stringify(attachments)) : null;

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 import SignatureCanvas from './SignatureCanvas';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -24,7 +25,6 @@ export default function PendingHandovers() {
     const [handovers, setHandovers] = useState<Handover[]>([]);
     const [selectedHandover, setSelectedHandover] = useState<Handover | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
     const fetchPending = async () => {
         try {

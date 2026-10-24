@@ -1,3 +1,4 @@
+import { API_URL } from '../utils/apiClient';
 import React, { createContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate as useRouterNavigate } from 'react-router-dom';
 import { AppContextType, User, Asset, NotificationType, AssetHistory, Department, Branch, PreviewTarget, Filter, PurchaseRecord, License, AssetRequest, SupportTicket, KnowledgeBaseArticle, SelfAudit } from '../types';
@@ -5,7 +6,6 @@ import { useAuth } from './AuthContext';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 interface AppProviderProps {
     children: ReactNode;

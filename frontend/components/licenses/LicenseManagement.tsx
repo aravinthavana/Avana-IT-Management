@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ICONS } from '../../constants';
@@ -7,7 +8,6 @@ import LicenseAssignmentModal from './LicenseAssignmentModal';
 import LicenseProRataModal from './LicenseProRataModal';
 import { License } from '../../types';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 export const ZohoLogo: React.FC<{ className?: string }> = ({ className = "w-3.5 h-3.5" }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none">

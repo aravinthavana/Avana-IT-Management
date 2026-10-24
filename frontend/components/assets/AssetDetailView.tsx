@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React from 'react';
 import { Asset } from '../../types';
 import { getWarrantyStatus } from '../../utils/assetUtils';
@@ -121,7 +122,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
         setIsUnassignModalOpen(false);
         setIsChangingStatus(true);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${asset.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
@@ -159,7 +160,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
         
         setIsChangingStatus(true);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${asset.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
@@ -190,7 +191,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
         setIsConditionMenuOpen(false);
         setIsChangingCondition(true);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${asset.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${asset.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',

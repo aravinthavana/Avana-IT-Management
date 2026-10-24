@@ -1,3 +1,4 @@
+import { API_URL } from './apiClient';
 import { IPublicClientApplication } from "@azure/msal-browser";
 import { loginRequest } from "../authConfig";
 import { TicketAttachment } from "../types";
@@ -323,7 +324,6 @@ export async function syncIncomingEmailReplies(
     const account = msalInstance.getActiveAccount() || accounts[0];
     if (!account) return 0;
 
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
     try {
         // 1. Acquire Token with Mail.Read scope

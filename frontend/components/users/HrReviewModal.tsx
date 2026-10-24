@@ -126,19 +126,23 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
     const handleApplyAll = async (pushToM365: boolean = false) => {
         if (!confirm(`Apply all ${pendingItems.length} changes to portal user profiles${pushToM365 ? ' and push to Microsoft 365' : ''}?`)) return;
         setIsLoading(true);
+        const failures: string[] = [];
         for (const item of pendingItems) {
             try {
-                await fetch(`${apiUrl}/api/zoho/changes/${item.id}/apply`, {
+                const res = await fetch(`${apiUrl}/api/zoho/changes/${item.id}/apply`, {
                     method: 'POST',
                     headers: { ...getHeaders(), 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ pushToM365 })
                 });
+                if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to apply change'); }
             } catch (e) {
+                failures.push(e instanceof Error ? e.message : 'Failed to apply change');
                 console.error(e);
             }
         }
         await fetchNotifications();
+        if (failures.length) setErrorMsg(failures.join(' ' ));
         if (onChangesApplied) onChangesApplied();
     };
 
@@ -274,7 +278,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                             </p>
                             <p className="text-xs text-slate-400 mt-1">
                                 {activeTab === 'Pending'
-                                    ? 'All user profiles in the portal match the records in Zoho People Plus.'
+                                    ? 'No pending differences from Microsoft 365 or Zoho People Plus.'
                                     : 'Applied and dismissed changes will appear here for audit tracking.'}
                             </p>
                         </div>
@@ -348,7 +352,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                 {/* 3-Way Comparison Diff */}
                                 <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/70 dark:border-slate-800">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                        Attribute: <span className="text-slate-800 dark:text-slate-100 font-semibold">{item.fieldName}</span>
+                                        Source: {item.source} · Attribute: <span className="text-slate-800 dark:text-slate-100 font-semibold">{item.fieldName}</span>
                                     </div>
                                     
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
@@ -368,7 +372,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                                 <svg className="w-3 h-3 text-sky-600" viewBox="0 0 24 24" fill="currentColor">
                                                     <path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/>
                                                 </svg>
-                                                <span>Microsoft 365</span>
+                                                <span>Microsoft 365{item.source === 'Microsoft 365' ? ' (Incoming)' : ''}</span>
                                             </div>
                                             <div className="font-medium text-sky-900 dark:text-sky-200 truncate" title={item.m365Value || 'Not Synced'}>
                                                 {item.m365Value || <span className="text-slate-400 italic">Not Synced / None</span>}
@@ -384,7 +388,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                                     <rect x="2" y="13" width="9" height="9" rx="2" fill="#0078BD" />
                                                     <rect x="13" y="13" width="9" height="9" rx="2" fill="#F4AC1C" />
                                                 </svg>
-                                                <span>Zoho People Plus (AMD & Tech)</span>
+                                                <span>Zoho People Plus (AMD & Tech){item.source !== 'Microsoft 365' ? ' (Incoming)' : ''}</span>
                                             </div>
                                             <div className="font-semibold text-amber-950 dark:text-amber-100 truncate" title={item.zohoValue || 'None'}>
                                                 {item.zohoValue || <span className="text-slate-400 italic">None</span>}
@@ -406,7 +410,7 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                                 onClick={() => handleApply(item.id, false)}
                                                 disabled={actionInProgress === item.id}
                                                 className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-sm flex items-center gap-1 active:scale-95"
-                                                title="Update this field in the portal only"
+                                                title="Apply the incoming value from the source shown above to the portal"
                                             >
                                                 {actionInProgress === item.id ? 'Applying...' : 'Apply to Portal'}
                                             </button>

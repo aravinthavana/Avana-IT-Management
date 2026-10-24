@@ -9,7 +9,6 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { prisma } from './db';
 
 // Modular route handlers
 import authRoutes from './routes/auth.routes';
@@ -85,7 +84,7 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -107,44 +106,8 @@ app.use(accessoriesRoutes);
 app.use(m365Routes);
 app.use(zohoRoutes);
 
-app.listen(port, async () => {
+app.listen(port, () => {
     console.log(`Server running on port ${port} with security measures enabled.`);
-    try {
-        // Automatically ensure all legacy/existing users have onboardingStatus set to 'Completed'
-        const legacyCount = await prisma.user.count({
-            where: { onboardingStatus: null }
-        });
-        if (legacyCount > 0) {
-            await prisma.user.updateMany({
-                where: { onboardingStatus: null, status: 'Active' },
-                data: {
-                    onboardingStatus: 'Completed',
-                    onboardingStep: 8,
-                    m365AccountCreated: true,
-                    softwareInstalled: true,
-                    hardwareTested: true,
-                    credentialsHandedOver: true,
-                    onboardingCompletedDate: new Date()
-                }
-            });
-            await prisma.user.updateMany({
-                where: { onboardingStatus: null, status: 'Inactive' },
-                data: {
-                    onboardingStatus: 'Completed',
-                    onboardingStep: 8,
-                    offboardingStatus: 'Completed',
-                    offboardingCompletedDate: new Date(),
-                    m365AccountDisabled: true,
-                    assetReturned: true,
-                    m365LicenseRevoked: true
-                }
-            });
-            console.log(`Auto-initialized ${legacyCount} legacy user(s) to onboardingStatus: 'Completed'`);
-        }
-    } catch (e) {
-        console.error('Legacy user onboarding initialization notice:', e);
-    }
-
     // Schedule automated periodic background sync from M365 (every 1 hour)
     const SYNC_INTERVAL_MS = 60 * 60 * 1000;
     setInterval(async () => {

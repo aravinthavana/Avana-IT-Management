@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ICONS } from '../../constants';
@@ -5,7 +6,6 @@ import PurchaseForm from './PurchaseForm';
 import AccessoryBatchModal from '../accessories/AccessoryBatchModal';
 import { PurchaseRecord, AccessoryBatch } from '../../types';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const CATEGORY_ICONS: Record<string, string> = {
     Mouse: '🖱️',

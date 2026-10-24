@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { User, Asset, License, DispatchDetails } from '../../types';
@@ -21,7 +22,6 @@ const STEPS = [
     { id: 8, name: 'Review', desc: 'Confirmation' },
 ];
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, onClose, initialUser, onSuccess }) => {
     const { users, setUsers, assets, setAssets, departments, branches, licenses, setLicenses, getHeaders, setNotification, fetchAssetHistory, fetchAllData } = useAppContext();

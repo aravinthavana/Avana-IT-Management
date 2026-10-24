@@ -1,3 +1,4 @@
+import { findPortalUser } from '../utils/userIdentity';
 import axios from 'axios';
 import { prisma } from '../db';
 import { updateM365User } from './m365.service';
@@ -188,7 +189,7 @@ export function normalizeEmpId(id?: string | null): string {
  */
 export async function purgeFalsePositiveNotifications() {
     const pendingNotifs = await prisma.hrChangeNotification.findMany({
-        where: { status: 'Pending' }
+        where: { status: 'Pending', source: { not: 'Microsoft 365' } }
     });
     if (pendingNotifs.length === 0) return 0;
 
@@ -598,38 +599,7 @@ export async function syncZohoLicensePool() {
  * Resolves a portal user record by Email, Email Aliases, or Normalized Employee ID
  */
 export async function findUserForHrNotification(employeeEmail: string, employeeId?: string | null) {
-    const normEmpId = normalizeEmpId(employeeId);
-    
-    // 1. Try direct email match
-    let user = await prisma.user.findFirst({
-        where: { email: { equals: employeeEmail.trim(), mode: 'insensitive' } }
-    });
-    if (user) return user;
-
-    // 2. Try alias match
-    user = await prisma.user.findFirst({
-        where: { emailAliases: { contains: employeeEmail.trim(), mode: 'insensitive' } }
-    });
-    if (user) return user;
-
-    // 3. Try normalized employeeId match
-    if (normEmpId) {
-        const allWithEmpId = await prisma.user.findMany({
-            where: {
-                OR: [
-                    { employeeId: { not: null } },
-                    { zohoEmployeeId: { not: null } }
-                ]
-            }
-        });
-        for (const u of allWithEmpId) {
-            if (normalizeEmpId(u.employeeId) === normEmpId || normalizeEmpId(u.zohoEmployeeId) === normEmpId) {
-                return u;
-            }
-        }
-    }
-
-    return null;
+    return findPortalUser(employeeEmail, employeeId);
 }
 
 /**
@@ -657,59 +627,50 @@ export async function applyHrChange(notificationId: number, adminUserId?: number
         );
     }
 
-    if (!notification.zohoValue) {
-        throw new Error('Cannot apply change: Notification has no incoming value to apply.');
-    }
-
-    if (notification.fieldName === 'Job Title') {
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { jobTitle: notification.zohoValue }
-        });
-        if (pushToM365 && user.azureAdId) {
-            try { await updateM365User(user.azureAdId, { jobTitle: notification.zohoValue }); } catch (e) {}
-        }
-    } else if (notification.fieldName === 'Mobile') {
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { mobile: notification.zohoValue }
-        });
-        if (pushToM365 && user.azureAdId) {
-            try { await updateM365User(user.azureAdId, { mobilePhone: notification.zohoValue }); } catch (e) {}
-        }
+    const incoming = notification.source === 'Microsoft 365' ? notification.m365Value : notification.zohoValue;
+    if (incoming == null && notification.source !== 'Microsoft 365') throw new Error('Cannot apply change: Notification has no incoming value.');
+    if (['Name', 'Status'].includes(notification.fieldName) && !incoming) throw new Error('Name and status cannot be empty.');
+    const fields: Record<string, [string, string]> = {
+        'Name': ['name', 'displayName'], 'Job Title': ['jobTitle', 'jobTitle'],
+        'Mobile': ['mobile', 'mobilePhone'], 'Location': ['location', 'officeLocation'],
+        'Company': ['company', 'companyName'], 'Employee ID': ['employeeId', 'employeeId'],
+        'City': ['city', 'city'], 'State': ['state', 'state'], 'Country': ['country', 'country'],
+        'Postal Code': ['postalCode', 'postalCode'], 'Work Address': ['workAddress', 'streetAddress']
+    };
+    const data: Record<string, any> = {};
+    const graph: Record<string, any> = {};
+    if (notification.fieldName === 'Department') {
+        graph.department = incoming;
     } else if (notification.fieldName === 'Status') {
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { status: notification.zohoValue }
-        });
-        if (pushToM365 && user.azureAdId) {
-            try { await updateM365User(user.azureAdId, { accountEnabled: notification.zohoValue === 'Active' }); } catch (e) {}
-        }
-    } else if (notification.fieldName === 'Department') {
-        let dept = await prisma.department.findFirst({
-            where: { name: { equals: notification.zohoValue, mode: 'insensitive' } }
-        });
-        if (!dept) {
-            dept = await prisma.department.create({
-                data: { name: notification.zohoValue }
-            });
-        }
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { departmentId: dept.id }
-        });
-        if (pushToM365 && user.azureAdId) {
-            try { await updateM365User(user.azureAdId, { department: notification.zohoValue }); } catch (e) {}
-        }
+        if (!incoming || !['Active', 'Inactive'].includes(incoming)) throw new Error('Invalid account status.');
+        data.status = incoming;
+        graph.accountEnabled = incoming === 'Active';
+    } else {
+        const mapping = fields[notification.fieldName];
+        if (!mapping) throw new Error('Unsupported HR change. Resolve this record manually.');
+        data[mapping[0]] = incoming;
+        graph[mapping[1]] = incoming;
     }
-
-    const updated = await prisma.hrChangeNotification.update({
-        where: { id: notificationId },
-        data: {
-            status: 'Applied',
-            resolvedAt: new Date(),
-            resolvedBy: adminUserId || null
+    // Complete the requested external action first. A failed push leaves the review pending.
+    if (pushToM365) {
+        if (!user.azureAdId) throw new Error('User is not linked to Microsoft 365. Apply to portal only or resolve identity.');
+        const result = await updateM365User(user.azureAdId, graph);
+        if (!result.success) throw new Error('Microsoft 365 update failed: ' + (result.error || 'Unknown error'));
+    }
+    const updated = await prisma.$transaction(async tx => {
+        const claimed = await tx.hrChangeNotification.updateMany({
+            where: { id: notificationId, status: 'Pending' },
+            data: { status: 'Applied', resolvedAt: new Date(), resolvedBy: adminUserId || null }
+        });
+        if (claimed.count !== 1) throw new Error('Notification was already resolved.');
+        if (notification.fieldName === 'Department') {
+            if (incoming) {
+                const dept = await tx.department.upsert({ where: { name: incoming }, create: { name: incoming }, update: {} });
+                data.departmentId = dept.id;
+            } else data.departmentId = null;
         }
+        await tx.user.update({ where: { id: user.id }, data });
+        return tx.hrChangeNotification.findUniqueOrThrow({ where: { id: notificationId } });
     });
 
     return updated;

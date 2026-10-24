@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -8,7 +9,6 @@ import RequestDetailModal from './RequestDetailModal';
 import { ICONS, ASSET_ICONS } from '../../constants';
 import { AssetRequest } from '../../types';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const AssetRequestList: React.FC = () => {
     const { user } = useAuth();

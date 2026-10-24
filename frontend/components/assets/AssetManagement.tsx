@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ASSET_ICONS, ICONS } from '../../constants';
@@ -12,7 +13,6 @@ import { getWarrantyStatus } from '../../utils/assetUtils';
 import AssetCreationMethodModal from './AssetCreationMethodModal';
 import UnassignAssetModal from '../users/UnassignAssetModal';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 
 

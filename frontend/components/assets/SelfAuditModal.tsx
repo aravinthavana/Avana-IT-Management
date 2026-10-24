@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useRef } from 'react';
 import Modal from '../ui/Modal';
 import { Asset, SelfAudit } from '../../types';
@@ -12,7 +13,6 @@ interface SelfAuditModalProps {
     onSubmitted?: () => void;
 }
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const compressImage = (fileOrDataUrl: File | string, maxWidth = 1280, maxHeight = 1280, quality = 0.7): Promise<string> => {
     return new Promise((resolve, reject) => {

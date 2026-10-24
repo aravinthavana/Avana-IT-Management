@@ -1,8 +1,7 @@
-// If VITE_API_URL is provided, use it. Otherwise, on production (e.g. Vercel), default to relative ''
-// so requests use Vercel's same-origin rewrite proxy to Render, ensuring seamless cookie & CSRF handling.
-const API_URL = (import.meta as any).env?.VITE_API_URL !== undefined
-    ? (import.meta as any).env.VITE_API_URL
-    : (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '' : 'http://localhost:8080');
+// Always use the Vercel /api proxy in production, even with a legacy Render URL.
+export const API_URL = (import.meta as any).env.PROD
+    ? ''
+    : ((import.meta as any).env.VITE_API_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 export async function apiClient<T = any>(
     endpoint: string,

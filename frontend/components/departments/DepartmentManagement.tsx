@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Department } from '../../types';
@@ -6,7 +7,6 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import { ICONS } from '../../constants';
 import DepartmentDetailView from './DepartmentDetailView';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 // Reusable FormInput component
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (

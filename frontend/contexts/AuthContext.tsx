@@ -1,3 +1,4 @@
+import { API_URL } from '../utils/apiClient';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User } from '../types';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
@@ -18,7 +19,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { instance, accounts } = useMsal();
     const isMsalAuthenticated = useIsAuthenticated();
 
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
     const login = useCallback((userData: User) => {
         setUser(userData);

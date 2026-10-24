@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AssetHistory } from '../../types';
@@ -17,7 +18,7 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
         setIsLoading(true);
         setError(null);
         try {
-            const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
+            const apiUrl = API_URL;
             const res = await fetch(`${apiUrl}/api/assets/${assetId}/history`, {
                 headers: getHeaders(),
                 credentials: 'include'

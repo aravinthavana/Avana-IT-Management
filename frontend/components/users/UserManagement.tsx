@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,7 +11,6 @@ import OnboardingWizardModal from '../onboarding/OnboardingWizardModal';
 import { HrReviewModal } from './HrReviewModal';
 import { User } from '../../types';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 interface UserManagementProps {
     initialFilters: any[] | null;

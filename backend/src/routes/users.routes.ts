@@ -276,8 +276,8 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
         if (postalCode !== undefined) updateData.postalCode = postalCode;
         if (country !== undefined) updateData.country = country;
 
-        // Security check: Only Admin or Manager can modify corporate/employment fields, onboarding, or offboarding flags
-        if (requestingUserRole === 'Admin' || requestingUserRole === 'Manager') {
+        // Only IT admins may change employment and IT completion records.
+        if (requestingUserRole === 'Admin') {
             if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
             if (company !== undefined) updateData.company = company;
             if (employeeId !== undefined) updateData.employeeId = employeeId;
@@ -354,7 +354,7 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
 
         // Outbound real-time push to Microsoft 365 / Entra ID
         const targetAd = user.azureAdId || (user.email.includes('@') ? user.email : null);
-        if (targetAd) {
+        if (targetAd && requestingUserRole === 'Admin') {
             updateM365User(targetAd, {
                 displayName: user.name,
                 jobTitle: user.jobTitle || undefined,
@@ -712,154 +712,132 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
         const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-        // 1. Process Asset Return if provided
-        let assetSuccessfullyReturned = false;
-        const userExistingAsset = await prisma.asset.findFirst({
-            where: {
-                OR: [
-                    { assigneeId: targetUser.id },
-                    { userId: targetUser.id }
-                ]
+        // Validate ownership before performing external actions. Never substitute another asset.
+        const ownership = { OR: [
+            { assigneeId: targetUser.id, assigneeType: { in: ['User', 'user'] } },
+            { userId: targetUser.id }
+        ] };
+        if (assetReturn?.assetId) {
+            const owned = await prisma.asset.findFirst({ where: { id: Number(assetReturn.assetId), ...ownership } });
+            if (!owned) return res.status(400).json({ error: 'The selected asset is not assigned to this employee. Refresh and retry.' });
+        }
+        const operationErrors: string[] = [];
+        const targetAd = targetUser.azureAdId || targetUser.email;
+        let m365RevokeSuccess = false;
+        let m365DisableSuccess = false;
+        if (revokeAllLicenses) {
+            const result = await revokeM365Licenses(targetAd);
+            m365RevokeSuccess = result.success;
+            if (!result.success) operationErrors.push('License revocation failed: ' + (result.error || 'Unknown error'));
+        }
+        if (disableM365) {
+            const result = await updateM365User(targetAd, { accountEnabled: false });
+            m365DisableSuccess = result.success;
+            if (!result.success) operationErrors.push('Account disabling failed: ' + (result.error || 'Unknown error'));
+        }
+        // Persist successful actions and asset history atomically; cloud calls remain outside the transaction.
+        const updatedUser = await prisma.$transaction(async tx => {
+            if (revokeAllLicenses && m365RevokeSuccess) {
+                await tx.licenseAssignment.deleteMany({ where: { userId: targetUser.id } });
             }
-        });
-        const userHadAsset = Boolean(userExistingAsset);
+            // 1. Process Asset Return if provided
 
-        if (assetReturn && assetReturn.assetId) {
-            let assetId = Number(assetReturn.assetId);
-            const destinationStatus = assetReturn.destinationStatus || 'Under Inspection';
-            const condition = assetReturn.condition || 'Good';
+            if (assetReturn && assetReturn.assetId) {
+                let assetId = Number(assetReturn.assetId);
+                const destinationStatus = assetReturn.destinationStatus || 'Under Inspection';
+                const condition = assetReturn.condition || 'Good';
 
-            // Security & Integrity check: Verify that the asset actually belongs to targetUser
-            let assetToReturn = await prisma.asset.findFirst({
-                where: {
-                    id: assetId,
-                    OR: [
-                        { assigneeId: targetUser.id },
-                        { userId: targetUser.id }
-                    ]
-                }
-            });
-
-            // If the specified assetId does NOT belong to targetUser, route to their actual asset if found
-            if (!assetToReturn && userExistingAsset) {
-                console.log(`[Offboarding Auto-Correct] Routed offboarding return to user's actual assigned asset ID ${userExistingAsset.id} (${userExistingAsset.assetId}).`);
-                assetToReturn = userExistingAsset;
-                assetId = userExistingAsset.id;
-            }
-
-            if (assetToReturn) {
-                await prisma.asset.update({
-                    where: { id: assetId },
-                    data: {
-                        userId: null,
-                        assigneeId: null,
-                        assigneeType: null,
-                        status: destinationStatus,
-                        condition: condition || 'Good',
-                        location: 'In Stock',
-                        remarks: assetReturn.remarks || null
-                    }
-                });
-                assetSuccessfullyReturned = true;
-
-                const modeText = assetReturn.returnMode === 'Courier' 
-                    ? `Courier Return (${assetReturn.courierName || 'Carrier'} - Docket: ${assetReturn.docketNumber || 'N/A'})`
-                    : 'In-Person Handover';
-
-                await prisma.assetHistory.create({
-                    data: {
-                        assetId,
-                        userId: requestingUserId,
-                        event: 'Unassigned',
-                        condition,
-                        details: `Asset returned during offboarding of ${targetUser.name}. Mode: ${modeText}. Return condition: ${condition}. Remarks: ${assetReturn.remarks || 'None'}. Routed to status "${destinationStatus}".`
+                // Security & Integrity check: Verify that the asset actually belongs to targetUser
+                let assetToReturn = await tx.asset.findFirst({
+                    where: {
+                        id: assetId,
+                        ...ownership
                     }
                 });
 
-                if (deviceWiped) {
-                    await prisma.assetHistory.create({
+                if (assetToReturn) {
+                    await tx.asset.update({
+                        where: { id: assetId },
+                        data: {
+                            userId: null,
+                            assigneeId: null,
+                            assigneeType: null,
+                            status: destinationStatus,
+                            condition: condition || 'Good',
+                            location: 'In Stock',
+                            remarks: assetReturn.remarks || null
+                        }
+                    });
+
+                    const modeText = assetReturn.returnMode === 'Courier'
+                        ? `Courier Return (${assetReturn.courierName || 'Carrier'} - Docket: ${assetReturn.docketNumber || 'N/A'})`
+                        : 'In-Person Handover';
+
+                    await tx.assetHistory.create({
                         data: {
                             assetId,
                             userId: requestingUserId,
-                            event: 'Wiped',
-                            details: `Device wiped during offboarding. Method / Remarks: ${wipeDetails || 'Standard Factory Reset'}.`
+                            event: 'Unassigned',
+                            condition,
+                            details: `Asset returned during offboarding of ${targetUser.name}. Mode: ${modeText}. Return condition: ${condition}. Remarks: ${assetReturn.remarks || 'None'}. Routed to status "${destinationStatus}".`
                         }
                     });
-                }
-            } else {
-                console.warn(`[Offboarding Info] Target user ${targetUser.name} has no hardware assets to unassign. Skipping asset return update.`);
-            }
-        }
 
-        // 2. Revoke Licenses (Both portal database & live Microsoft Graph API)
-        let m365RevokeSuccess = false;
-        if (revokeAllLicenses) {
-            await prisma.licenseAssignment.deleteMany({
-                where: { userId: targetUser.id }
+                    if (deviceWiped) {
+                        await tx.assetHistory.create({
+                            data: {
+                                assetId,
+                                userId: requestingUserId,
+                                event: 'Wiped',
+                                details: `Device wiped during offboarding. Method / Remarks: ${wipeDetails || 'Standard Factory Reset'}.`
+                            }
+                        });
+                    }
+                } else {
+                    console.warn(`[Offboarding Info] Target user ${targetUser.name} has no hardware assets to unassign. Skipping asset return update.`);
+                }
+            }
+
+            // 4. Update User Offboarding Flags & Status
+            const remainingAssets = await tx.asset.count({ where: ownership });
+            const verifiedAssetReturned = remainingAssets === 0;
+            if (!verifiedAssetReturned) operationErrors.push('Employee still has assigned assets awaiting return.');
+            const verifiedLicenseRevoked = revokeAllLicenses ? m365RevokeSuccess : targetUser.m365LicenseRevoked;
+            const verifiedAccountDisabled = disableM365 ? m365DisableSuccess : targetUser.m365AccountDisabled;
+
+            const returnDocketJson = (assetReturn && assetReturn.docketNumber)
+                ? JSON.stringify({
+                    mode: assetReturn.returnMode,
+                    courier: assetReturn.courierName,
+                    docketNo: assetReturn.docketNumber,
+                    returnDate: assetReturn.returnDate || new Date().toISOString()
+                })
+                : null;
+
+            const resultUser = await tx.user.update({
+                where: { id: targetUser.id },
+                data: {
+                    assetReturned: verifiedAssetReturned,
+                    assetReturnCondition: assetReturn?.condition || null,
+                    assetReturnRemarks: assetReturn?.remarks || offboardingRemarks || null,
+                    assetReturnDocket: returnDocketJson || targetUser.assetReturnDocket,
+                    deviceWiped: Boolean(deviceWiped),
+                    dataBackedUp: Boolean(dataBackedUp),
+                    m365LicenseRevoked: verifiedLicenseRevoked,
+                    m365LicenseAssigned: revokeAllLicenses && m365RevokeSuccess ? false : targetUser.m365LicenseAssigned,
+                    m365AccountDisabled: verifiedAccountDisabled,
+                    status: deactivateUser ? 'Inactive' : targetUser.status,
+                    offboardingStatus: operationErrors.length === 0 ? 'Completed' : 'In Progress',
+                    offboardingCompletedDate: operationErrors.length === 0 ? new Date() : null
+                },
+                include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } }
             });
 
-            const targetAd = targetUser.azureAdId || (targetUser.email.includes('@') ? targetUser.email : null);
-            if (targetAd) {
-                const revokeResult = await revokeM365Licenses(targetAd);
-                m365RevokeSuccess = revokeResult.success;
-                if (!revokeResult.success) {
-                    console.warn(`[Offboarding] Graph license revoke failed for ${targetUser.email}:`, revokeResult.error);
-                }
-            } else {
-                m365RevokeSuccess = true;
-            }
-        }
-
-        // 3. Disable M365 Account in Graph API
-        let m365DisableSuccess = false;
-        if (disableM365) {
-            const targetAd = targetUser.azureAdId || (targetUser.email.includes('@') ? targetUser.email : null);
-            if (targetAd) {
-                const disableResult = await updateM365User(targetAd, { accountEnabled: false });
-                m365DisableSuccess = disableResult.success;
-                if (!disableResult.success) {
-                    console.warn(`[Offboarding] Graph account disable failed for ${targetUser.email}:`, disableResult.error);
-                }
-            } else {
-                m365DisableSuccess = true;
-            }
-        }
-
-        // 4. Update User Offboarding Flags & Status
-        const verifiedAssetReturned = userHadAsset ? assetSuccessfullyReturned : true;
-        const verifiedLicenseRevoked = revokeAllLicenses ? m365RevokeSuccess : targetUser.m365LicenseRevoked;
-        const verifiedAccountDisabled = disableM365 ? m365DisableSuccess : targetUser.m365AccountDisabled;
-
-        const returnDocketJson = (assetReturn && assetReturn.docketNumber) 
-            ? JSON.stringify({
-                mode: assetReturn.returnMode,
-                courier: assetReturn.courierName,
-                docketNo: assetReturn.docketNumber,
-                returnDate: assetReturn.returnDate || new Date().toISOString()
-            })
-            : null;
-
-        const updatedUser = await prisma.user.update({
-            where: { id: targetUser.id },
-            data: {
-                assetReturned: verifiedAssetReturned,
-                assetReturnCondition: assetReturn?.condition || null,
-                assetReturnRemarks: assetReturn?.remarks || offboardingRemarks || null,
-                assetReturnDocket: returnDocketJson || targetUser.assetReturnDocket,
-                deviceWiped: Boolean(deviceWiped),
-                dataBackedUp: Boolean(dataBackedUp),
-                m365LicenseRevoked: verifiedLicenseRevoked,
-                m365LicenseAssigned: revokeAllLicenses && m365RevokeSuccess ? false : targetUser.m365LicenseAssigned,
-                m365AccountDisabled: verifiedAccountDisabled,
-                status: deactivateUser ? 'Inactive' : targetUser.status,
-                offboardingStatus: 'Completed',
-                offboardingCompletedDate: new Date()
-            },
-            include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } }
+            return resultUser;
         });
 
         const { password: _, ...sanitized } = updatedUser;
-        res.json(sanitized);
+        res.json({ ...sanitized, operationErrors });
     } catch (error: any) {
         console.error('Failed to process offboarding:', error);
         res.status(500).json({ error: error.message || 'Failed to process offboarding' });

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { SelfAudit, Asset, User, HardwareChecks, AssetDeclaration, DeclaredAssetItem, AccessoryBatch } from '../../types';
@@ -5,7 +6,6 @@ import { ICONS, ASSET_ICONS } from '../../constants';
 import AssignAuditModal from './AssignAuditModal';
 import { useAuth } from '../../contexts/AuthContext';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const SelfAuditsList: React.FC = () => {
     const { user } = useAuth();

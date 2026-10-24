@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useRef } from 'react';
 import Modal from '../ui/Modal';
 import { Asset, SelfAudit, DeclaredAssetItem } from '../../types';
@@ -13,7 +14,6 @@ interface AssetDeclarationModalProps {
     onCompleted: (declarationId: number, shouldContinueToAudit: boolean, assetToAudit?: Asset | null) => void;
 }
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const CATEGORY_OPTIONS = [
     { key: 'Laptop', label: 'Laptop', icon: '💻', desc: 'ThinkPad, MacBook, Dell Latitude, etc.' },

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ICONS } from '../../constants';
@@ -25,7 +26,6 @@ const UserProfile: React.FC = () => {
         setEmployeeId(currentUser.employeeId || '');
     }, [currentUser]);
 
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
     const defaultAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name) + '&background=random';
 
     const handleUpdateProfile = async (e: React.FormEvent) => {

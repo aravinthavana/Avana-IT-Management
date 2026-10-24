@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Asset, ServiceRecord } from '../../types';
 import { ICONS } from '../../constants';
@@ -37,7 +38,7 @@ const AssetServiceHistory: React.FC<AssetServiceHistoryProps> = ({
         setIsLoading(true);
         setError(null);
         try {
-            const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
+            const apiUrl = API_URL;
             const res = await fetch(`${apiUrl}/api/assets/${asset.id}/services`, {
                 headers: getHeaders(),
                 credentials: 'include'
@@ -76,7 +77,7 @@ const AssetServiceHistory: React.FC<AssetServiceHistoryProps> = ({
         }
 
         try {
-            const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
+            const apiUrl = API_URL;
             const res = await fetch(`${apiUrl}/api/services/${service.id}`, {
                 method: 'DELETE',
                 headers: getHeaders(),

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Asset, User, UserAccessory } from '../../types';
@@ -33,7 +34,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const fetchUserAccessories = async () => {
         setIsLoadingAccessories(true);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories`, {
+            const res = await fetch(`${API_URL}/api/users/${userId}/accessories`, {
                 headers: getHeaders(),
                 credentials: 'include'
             });
@@ -63,7 +64,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         if (!returnAccessoryState) return;
         setReturnAccessoryState(prev => prev ? { ...prev, submitting: true } : null);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories/${returnAccessoryState.accId}`, {
+            const res = await fetch(`${API_URL}/api/users/${userId}/accessories/${returnAccessoryState.accId}`, {
                 method: 'PUT',
                 headers: {
                     ...getHeaders(),
@@ -89,7 +90,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const handleDeleteAccessory = async (accId: number) => {
         if (!confirm('Remove this accessory record from the user profile?')) return;
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/accessories/${accId}`, {
+            const res = await fetch(`${API_URL}/api/users/${userId}/accessories/${accId}`, {
                 method: 'DELETE',
                 headers: getHeaders(),
                 credentials: 'include'
@@ -105,7 +106,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     const fetchUserAssetHistory = async () => {
         setIsLoadingHistory(true);
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/asset-history`, {
+            const res = await fetch(`${API_URL}/api/users/${userId}/asset-history`, {
                 headers: getHeaders(),
                 credentials: 'include'
             });
@@ -148,7 +149,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
     
     const handleAssignAsset = async (assetToAssign: Asset, condition: string) => {
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToAssign.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${assetToAssign.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
@@ -180,7 +181,7 @@ const UserDetailView: React.FC<UserDetailViewProps> = ({ userId, onBack }) => {
         if (!assetToUnassign) return;
         
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToUnassign.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${assetToUnassign.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',

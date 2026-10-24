@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { User, Asset, License } from '../../types';
@@ -19,7 +20,6 @@ const STEPS = [
     { id: 6, name: 'Sign-Off', desc: 'Deactivation' },
 ];
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen, onClose, initialUser, onSuccess }) => {
     const { users, setUsers, assets, setAssets, licenses, setLicenses, getHeaders, setNotification, fetchAssetHistory } = useAppContext();
@@ -178,7 +178,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
             }
 
             // If licenses revoked, update license state
-            if (revokeAllLicenses && userLicenses.length > 0) {
+            if (revokeAllLicenses && updatedUser.m365LicenseRevoked && userLicenses.length > 0) {
                 setLicenses(licenses.map(l => {
                     const filtered = l.assignments?.filter(a => a.userId !== selectedUser.id) || [];
                     return {
@@ -189,6 +189,10 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
                 }));
             }
 
+            if (updatedUser.offboardingStatus !== 'Completed') {
+                setNotification({ message: (updatedUser.operationErrors || ['Offboarding remains in progress.']).join(' '), type: 'error' });
+                return;
+            }
             setNotification({ message: `Offboarding completed successfully for ${updatedUser.name}.`, type: 'success' });
             if (onSuccess) onSuccess(updatedUser);
             onClose();

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { Asset, ServiceRecord } from '../../types';
 import { ICONS } from '../../constants';
@@ -132,7 +133,7 @@ const ServiceRecordModal: React.FC<ServiceRecordModalProps> = ({
 
         setIsSubmitting(true);
         try {
-            const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
+            const apiUrl = API_URL;
             const payload = {
                 serviceType,
                 serviceDate,

@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../ui/Modal';
 import { Asset, PurchaseRecord } from '../../types';
@@ -6,7 +7,6 @@ import AssetForm from '../assets/AssetForm';
 import AssetTypeChoiceModal from '../assets/AssetTypeChoiceModal';
 import { ICONS } from '../../constants';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 interface PurchaseFormProps {
     isOpen: boolean;

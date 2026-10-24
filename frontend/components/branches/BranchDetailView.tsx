@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Asset } from '../../types';
@@ -39,7 +40,7 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
     
     const handleAssignAsset = async (assetToAssign: Asset, condition: string) => {
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToAssign.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${assetToAssign.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',
@@ -70,7 +71,7 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
         if (!assetToUnassign) return;
         
         try {
-            const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:8080'}/api/assets/${assetToUnassign.id}`, {
+            const res = await fetch(`${API_URL}/api/assets/${assetToUnassign.id}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 credentials: 'include',

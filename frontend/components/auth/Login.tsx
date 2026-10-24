@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS } from '../../constants';
@@ -22,7 +23,6 @@ const Login: React.FC = () => {
 
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
     // Countdown effect for OTP resend cooldown
     useEffect(() => {

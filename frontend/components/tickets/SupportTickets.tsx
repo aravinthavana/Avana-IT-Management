@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -5,7 +6,6 @@ import { ICONS } from '../../constants';
 import { SupportTicket, TicketComment, TicketAttachment, KnowledgeBaseArticle } from '../../types';
 import { sanitizeHtml } from '../../utils/sanitize';
 
-const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080';
 
 // Standardized Ticket ID Formatter
 export const formatTicketId = (id: number) => `#TKT-${String(id).padStart(4, '0')}`;

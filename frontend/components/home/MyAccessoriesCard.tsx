@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 
@@ -31,7 +32,6 @@ const CATEGORY_ICON: Record<string, string> = {
     Other: '📦',
 };
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
 const MyAccessoriesCard: React.FC<MyAccessoriesCardProps> = ({ userId }) => {
     const { getHeaders } = useAppContext();

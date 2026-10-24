@@ -1,3 +1,4 @@
+import { API_URL } from '../../utils/apiClient';
 import React, { useState } from 'react';
 import { License, LicenseAssignment } from '../../types';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -19,7 +20,6 @@ const LicenseAssignmentModal: React.FC<AssignmentModalProps> = ({ isOpen, onClos
 
     const currentAssignments = license.assignments || [];
     const availableSeats = license.seats - currentAssignments.length;
-    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080';
 
     const handleAssign = async () => {
         if (!selectedAssigneeId) return;
