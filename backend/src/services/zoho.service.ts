@@ -138,11 +138,181 @@ export async function fetchZohoEmployees(): Promise<ZohoEmployeeRecord[]> {
 }
 
 /**
+ * Normalizes string for fair comparison:
+ * - Converts Unicode en-dashes (\u2013) & em-dashes (\u2014) to standard hyphen (-)
+ * - Converts non-breaking spaces (\u00A0) to regular spaces
+ * - Replaces multiple whitespace with a single space
+ * - Trims leading and trailing whitespace
+ * - Converts to lower case
+ */
+export function normalizeString(val?: string | null): string {
+    if (!val) return '';
+    return val
+        .replace(/[\u2013\u2014]/g, '-')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * Normalizes phone numbers for fair comparison:
+ * Extracts digits and compares the last 10 digits (ignoring country codes +91, 91, 0, spaces, dashes)
+ */
+export function normalizePhone(val?: string | null): string {
+    if (!val) return '';
+    const digits = val.replace(/\D/g, '');
+    if (digits.length >= 10) {
+        return digits.slice(-10);
+    }
+    return digits;
+}
+
+/**
+ * Normalizes employee IDs:
+ * Strips hyphens, underscores, and spaces, and converts to lowercase
+ * e.g., "AMD-177" -> "amd177", "AMD_177" -> "amd177"
+ */
+export function normalizeEmpId(id?: string | null): string {
+    if (!id) return '';
+    return id.replace(/[-_\s]/g, '').trim().toLowerCase();
+}
+
+/**
+ * Purge or correct pending notifications that are false positives:
+ * 1. "New User Detected" for users who actually exist in portal (by email, alias, or normalized employeeId).
+ * 2. "Job Title" where current and Zoho values match after normalization (ignoring unicode dashes, whitespace).
+ * 3. "Mobile" where current and Zoho values match after 10-digit normalization (+91).
+ * 4. "Department" where current and Zoho values match after normalization.
+ * 5. Update m365Value if it was null and is now available in m365Data.
+ */
+export async function purgeFalsePositiveNotifications() {
+    const pendingNotifs = await prisma.hrChangeNotification.findMany({
+        where: { status: 'Pending' }
+    });
+    if (pendingNotifs.length === 0) return 0;
+
+    const allUsers = await prisma.user.findMany({
+        include: { department: true }
+    });
+
+    const emailMap = new Map<string, any>();
+    const empIdMap = new Map<string, any>();
+    const aliasMap = new Map<string, any>();
+
+    for (const u of allUsers) {
+        if (u.email) emailMap.set(u.email.toLowerCase(), u);
+        if (u.employeeId) {
+            empIdMap.set(u.employeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.employeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
+        if (u.zohoEmployeeId) {
+            empIdMap.set(u.zohoEmployeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.zohoEmployeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
+        if (u.emailAliases) {
+            try {
+                const al = JSON.parse(u.emailAliases);
+                if (Array.isArray(al)) {
+                    for (const a of al) {
+                        if (typeof a === 'string') aliasMap.set(a.trim().toLowerCase(), u);
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
+    const idsToDelete: number[] = [];
+    const updates: { id: number; data: any }[] = [];
+
+    for (const n of pendingNotifs) {
+        const nEmail = n.employeeEmail.toLowerCase();
+        const normEmpId = normalizeEmpId(n.employeeId);
+        const user = emailMap.get(nEmail) 
+            || (normEmpId ? empIdMap.get(normEmpId) : null)
+            || aliasMap.get(nEmail);
+
+        if (n.fieldName === 'New User Detected') {
+            if (user) {
+                // User exists in the portal! Delete this false positive notification
+                idsToDelete.push(n.id);
+            }
+            continue;
+        }
+
+        // For field changes:
+        if (n.fieldName === 'Job Title') {
+            if (normalizeString(n.currentValue) === normalizeString(n.zohoValue)) {
+                idsToDelete.push(n.id);
+                continue;
+            }
+        } else if (n.fieldName === 'Mobile') {
+            if (normalizePhone(n.currentValue) === normalizePhone(n.zohoValue)) {
+                idsToDelete.push(n.id);
+                continue;
+            }
+        } else if (n.fieldName === 'Department') {
+            if (normalizeString(n.currentValue) === normalizeString(n.zohoValue)) {
+                idsToDelete.push(n.id);
+                continue;
+            }
+        } else if (n.fieldName === 'Status') {
+            if (normalizeString(n.currentValue) === normalizeString(n.zohoValue)) {
+                idsToDelete.push(n.id);
+                continue;
+            }
+        }
+
+        // If notification is genuine, check if m365Value needs backfilling
+        if (user && user.m365Data && (!n.m365Value || n.m365Value === 'null')) {
+            try {
+                const m365 = JSON.parse(user.m365Data);
+                let mVal: string | null = null;
+                if (n.fieldName === 'Job Title') mVal = m365.jobTitle || null;
+                else if (n.fieldName === 'Department') mVal = m365.department || null;
+                else if (n.fieldName === 'Mobile') mVal = m365.mobile || null;
+                else if (n.fieldName === 'Status') mVal = m365.status || null;
+
+                if (mVal) {
+                    updates.push({
+                        id: n.id,
+                        data: {
+                            m365Value: mVal,
+                            aliases: user.emailAliases || n.aliases
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (idsToDelete.length > 0) {
+        await prisma.hrChangeNotification.deleteMany({
+            where: { id: { in: idsToDelete } }
+        });
+    }
+
+    for (const u of updates) {
+        await prisma.hrChangeNotification.update({
+            where: { id: u.id },
+            data: u.data
+        });
+    }
+
+    return idsToDelete.length;
+}
+
+/**
  * Compare Zoho People employees against Portal Users to detect changes.
  * Compares Portal DB vs M365 vs Zoho People (3-Way Comparison).
  * In-memory batch indexing for high speed.
  */
 export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
+    // 0. Purge any stale false-positive notifications first
+    await purgeFalsePositiveNotifications();
+
     // 1. Fetch all portal users and pending notifications in batch
     const allUsers = await prisma.user.findMany({ include: { department: true } });
     const pendingNotifs = await prisma.hrChangeNotification.findMany({ where: { status: 'Pending' } });
@@ -155,13 +325,22 @@ export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
 
     for (const u of allUsers) {
         if (u.email) emailMap.set(u.email.toLowerCase(), u);
-        if (u.employeeId) empIdMap.set(u.employeeId.toLowerCase(), u);
+        if (u.employeeId) {
+            empIdMap.set(u.employeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.employeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
+        if (u.zohoEmployeeId) {
+            empIdMap.set(u.zohoEmployeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.zohoEmployeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
         if (u.emailAliases) {
             try {
                 const al = JSON.parse(u.emailAliases);
                 if (Array.isArray(al)) {
                     for (const a of al) {
-                        if (typeof a === 'string') aliasMap.set(a.toLowerCase(), u);
+                        if (typeof a === 'string') aliasMap.set(a.trim().toLowerCase(), u);
                     }
                 }
             } catch (e) {}
@@ -179,9 +358,11 @@ export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
     for (const zEmp of zohoEmployees) {
         if (!zEmp.email) continue;
         const zEmail = zEmp.email.toLowerCase();
+        const normZEmpId = normalizeEmpId(zEmp.employeeId);
 
         // Match user by email, employeeId, or alias
         const dbUser = emailMap.get(zEmail) 
+            || (normZEmpId ? empIdMap.get(normZEmpId) : null)
             || (zEmp.employeeId ? empIdMap.get(zEmp.employeeId.toLowerCase()) : null)
             || aliasMap.get(zEmail);
 
@@ -203,6 +384,23 @@ export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
                 createdNotifications++;
             }
             continue;
+        }
+
+        // Enrich user with Zoho info if changed/missing
+        const zohoSnapshot = JSON.stringify({
+            designation: zEmp.designation || null,
+            department: zEmp.department || null,
+            mobile: zEmp.mobile || null,
+            status: zEmp.status || null
+        });
+        if (dbUser.zohoEmployeeId !== zEmp.employeeId || dbUser.zohoData !== zohoSnapshot) {
+            await prisma.user.update({
+                where: { id: dbUser.id },
+                data: {
+                    zohoEmployeeId: zEmp.employeeId || dbUser.zohoEmployeeId,
+                    zohoData: zohoSnapshot
+                }
+            }).catch(() => {});
         }
 
         // Parse cached M365 snapshot if present
@@ -244,28 +442,32 @@ export async function detectHrChanges(zohoEmployees: ZohoEmployeeRecord[]) {
 
         // 1. Department
         const currentDept = dbUser.department?.name || '';
-        if (zEmp.department && currentDept.toLowerCase() !== zEmp.department.toLowerCase()) {
-            checkDiff('Department', currentDept || 'None', m365.department || null, zEmp.department);
+        const normCurrentDept = normalizeString(currentDept);
+        const normZohoDept = normalizeString(zEmp.department);
+        if (normZohoDept && normCurrentDept !== normZohoDept) {
+            checkDiff('Department', currentDept || 'None', m365.department || null, zEmp.department!);
         }
 
         // 2. Job Title
         const currentTitle = dbUser.jobTitle || '';
-        if (zEmp.designation && currentTitle.toLowerCase() !== zEmp.designation.toLowerCase()) {
-            checkDiff('Job Title', currentTitle || 'None', m365.jobTitle || null, zEmp.designation);
+        const normCurrentTitle = normalizeString(currentTitle);
+        const normZohoTitle = normalizeString(zEmp.designation);
+        if (normZohoTitle && normCurrentTitle !== normZohoTitle) {
+            checkDiff('Job Title', currentTitle || 'None', m365.jobTitle || null, zEmp.designation!);
         }
 
         // 3. Mobile
-        const currentMobile = (dbUser.mobile || '').replace(/\D/g, '');
-        const zohoMobile = (zEmp.mobile || '').replace(/\D/g, '');
-        if (zohoMobile && currentMobile !== zohoMobile && zohoMobile.length >= 8) {
+        const normCurrentMobile = normalizePhone(dbUser.mobile);
+        const normZohoMobile = normalizePhone(zEmp.mobile);
+        if (normZohoMobile && normZohoMobile.length >= 10 && normCurrentMobile !== normZohoMobile) {
             checkDiff('Mobile', dbUser.mobile || 'None', m365.mobile || null, zEmp.mobile || '');
         }
 
         // 4. Status
         const isZohoActive = !/resigned|terminated|inactive|relieved/i.test(zEmp.status || '');
         const targetStatus = isZohoActive ? 'Active' : 'Inactive';
-        if (dbUser.status !== targetStatus) {
-            checkDiff('Status', dbUser.status, m365.status || null, targetStatus);
+        if (normalizeString(dbUser.status) !== normalizeString(targetStatus)) {
+            checkDiff('Status', dbUser.status || 'None', m365.status || null, targetStatus);
         }
     }
 
@@ -321,20 +523,29 @@ export async function syncZohoLicensePool() {
     }
 
     // Batch map assignments to portal users
-    const allUsers = await prisma.user.findMany({ select: { id: true, email: true, employeeId: true, emailAliases: true } });
+    const allUsers = await prisma.user.findMany({ select: { id: true, email: true, employeeId: true, zohoEmployeeId: true, emailAliases: true } });
     const emailMap = new Map<string, any>();
     const empIdMap = new Map<string, any>();
     const aliasMap = new Map<string, any>();
 
     for (const u of allUsers) {
         if (u.email) emailMap.set(u.email.toLowerCase(), u);
-        if (u.employeeId) empIdMap.set(u.employeeId.toLowerCase(), u);
+        if (u.employeeId) {
+            empIdMap.set(u.employeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.employeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
+        if (u.zohoEmployeeId) {
+            empIdMap.set(u.zohoEmployeeId.toLowerCase(), u);
+            const norm = normalizeEmpId(u.zohoEmployeeId);
+            if (norm) empIdMap.set(norm, u);
+        }
         if (u.emailAliases) {
             try {
                 const al = JSON.parse(u.emailAliases);
                 if (Array.isArray(al)) {
                     for (const a of al) {
-                        if (typeof a === 'string') aliasMap.set(a.toLowerCase(), u);
+                        if (typeof a === 'string') aliasMap.set(a.trim().toLowerCase(), u);
                     }
                 }
             } catch (e) {}
@@ -353,7 +564,9 @@ export async function syncZohoLicensePool() {
     for (const zEmp of activeEmployees) {
         if (!zEmp.email) continue;
         const zEmail = zEmp.email.toLowerCase();
+        const normZEmpId = normalizeEmpId(zEmp.employeeId);
         const dbUser = emailMap.get(zEmail) 
+            || (normZEmpId ? empIdMap.get(normZEmpId) : null)
             || (zEmp.employeeId ? empIdMap.get(zEmp.employeeId.toLowerCase()) : null)
             || aliasMap.get(zEmail);
 

@@ -364,8 +364,11 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
 
                                         {/* 2. Microsoft 365 */}
                                         <div className="p-2.5 rounded-lg bg-sky-50/50 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-800/60">
-                                            <div className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1 mb-1">
-                                                <span>☁️ Microsoft 365</span>
+                                            <div className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1.5 mb-1">
+                                                <svg className="w-3 h-3 text-sky-600" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/>
+                                                </svg>
+                                                <span>Microsoft 365</span>
                                             </div>
                                             <div className="font-medium text-sky-900 dark:text-sky-200 truncate" title={item.m365Value || 'Not Synced'}>
                                                 {item.m365Value || <span className="text-slate-400 italic">Not Synced / None</span>}
@@ -373,11 +376,17 @@ export const HrReviewModal: React.FC<HrReviewModalProps> = ({
                                         </div>
 
                                         {/* 3. Zoho People Plus */}
-                                        <div className="p-2.5 rounded-lg bg-orange-50/50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-800/60">
-                                            <div className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1 mb-1">
-                                                <span>🔶 Zoho People Plus</span>
+                                        <div className="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60">
+                                            <div className="text-[10px] font-semibold text-slate-800 dark:text-amber-300 flex items-center gap-1.5 mb-1">
+                                                <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                                                    <rect x="2" y="2" width="9" height="9" rx="2" fill="#E42528" />
+                                                    <rect x="13" y="2" width="9" height="9" rx="2" fill="#22A048" />
+                                                    <rect x="2" y="13" width="9" height="9" rx="2" fill="#0078BD" />
+                                                    <rect x="13" y="13" width="9" height="9" rx="2" fill="#F4AC1C" />
+                                                </svg>
+                                                <span>Zoho People Plus (AMD & Tech)</span>
                                             </div>
-                                            <div className="font-semibold text-orange-900 dark:text-orange-200 truncate" title={item.zohoValue || 'None'}>
+                                            <div className="font-semibold text-amber-950 dark:text-amber-100 truncate" title={item.zohoValue || 'None'}>
                                                 {item.zohoValue || <span className="text-slate-400 italic">None</span>}
                                             </div>
                                         </div>

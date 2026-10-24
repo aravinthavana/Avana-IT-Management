@@ -631,9 +631,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                     </span>
                                                 )}
                                                 {((user as any).zohoEmployeeId || (user as any).zohoData) && (
-                                                    <span className="text-[10px] bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200 dark:border-orange-800 px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="Connected with Zoho People Plus">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                                                        Zoho
+                                                    <span className="text-[10px] bg-amber-50 text-slate-800 dark:bg-amber-950/40 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/80 px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1 shadow-xs" title="Connected with Zoho People Plus (AMD & Tech)">
+                                                        <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                                                            <rect x="2" y="2" width="9" height="9" rx="2" fill="#E42528" />
+                                                            <rect x="13" y="2" width="9" height="9" rx="2" fill="#22A048" />
+                                                            <rect x="2" y="13" width="9" height="9" rx="2" fill="#0078BD" />
+                                                            <rect x="13" y="13" width="9" height="9" rx="2" fill="#F4AC1C" />
+                                                        </svg>
+                                                        <span className="font-semibold text-[9.5px]">Zoho People</span>
                                                     </span>
                                                 )}
                                                 {(() => {
