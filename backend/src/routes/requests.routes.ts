@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { sendAssetRequestEmail } from '../utils/email';
+import { SAFE_USER_SELECT } from '../utils/safeUser';
 
 const router = Router();
 
@@ -93,7 +94,7 @@ router.post('/api/requests', authenticateToken, async (req, res) => {
         const { id } = req.user;
         const user = await prisma.user.findUnique({ 
             where: { id },
-            include: { manager: true }
+            include: { manager: { select: SAFE_USER_SELECT } }
         });
         const { requestType, category, description, priority, currentAssetId } = req.body;
         
@@ -324,7 +325,7 @@ router.post('/api/requests/:id/allocate', authenticateToken, requireAdmin, async
 
         const request = await prisma.assetRequest.findUnique({
             where: { id: Number(id) },
-            include: { user: true, manager: true }
+            include: { user: { select: SAFE_USER_SELECT }, manager: { select: SAFE_USER_SELECT } }
         });
 
         if (!request) {

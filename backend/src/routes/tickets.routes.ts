@@ -440,15 +440,33 @@ router.post('/api/tickets/:id/sync-email-reply', authenticateToken, async (req, 
         const ticket = await prisma.supportTicket.findUnique({ where: { id: Number(id) } });
         if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
 
-        // Match sender by email or fallback to current user
-        let commentUser = senderEmail ? await prisma.user.findUnique({ where: { email: senderEmail.toLowerCase() } }) : null;
-        if (!commentUser) {
-            // @ts-ignore
-            commentUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+        // Authorization check: User must be ticket creator, assigned technician, or Admin/Manager
+        // @ts-ignore
+        const { id: currentUserId, role: currentUserRole, email: currentUserEmail } = req.user;
+        const isAuthorized = currentUserRole === 'Admin' || 
+                             currentUserRole === 'Manager' || 
+                             ticket.userId === currentUserId || 
+                             ticket.assignedToId === currentUserId;
+        if (!isAuthorized) {
+            return res.status(403).json({ error: 'Access denied. You are not authorized to reply to this ticket.' });
         }
 
-        if (!commentUser) {
-            return res.status(400).json({ error: 'Unable to identify comment author' });
+        // Enforce verified sender identity (prevent impersonation)
+        let commentUserId = currentUserId;
+        if (currentUserRole === 'Admin' && senderEmail) {
+            const matchedSender = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { email: { equals: senderEmail.trim(), mode: 'insensitive' } },
+                        { emailAliases: { contains: senderEmail.trim() } }
+                    ]
+                }
+            });
+            if (matchedSender) {
+                commentUserId = matchedSender.id;
+            }
+        } else if (senderEmail && currentUserEmail && senderEmail.trim().toLowerCase() !== currentUserEmail.toLowerCase()) {
+            return res.status(403).json({ error: 'Sender email mismatch. You cannot post replies as another user.' });
         }
 
         const attachmentsStr = attachments ? (typeof attachments === 'string' ? attachments : JSON.stringify(attachments)) : null;
@@ -456,7 +474,7 @@ router.post('/api/tickets/:id/sync-email-reply', authenticateToken, async (req, 
         const comment = await prisma.ticketComment.create({
             data: {
                 ticketId: Number(id),
-                userId: commentUser.id,
+                userId: commentUserId,
                 message: message.trim().slice(0, 5000),
                 attachments: attachmentsStr,
                 source: 'Email',

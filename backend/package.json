@@ -4,10 +4,10 @@
   "description": "API for Avana IT Management",
   "main": "dist/index.js",
   "scripts": {
-    "start": "npx prisma db push --accept-data-loss && node dist/index.js",
+    "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "build": "npx prisma generate && tsc",
-    "db:push": "npx prisma db push --accept-data-loss",
+    "db:push": "npx prisma db push",
     "sync-users": "ts-node src/syncUsers.ts",
     "wipe-data": "ts-node src/wipeData.ts"
   },

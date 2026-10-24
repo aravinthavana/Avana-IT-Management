@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { assetSchema } from '../schemas';
+import { SAFE_USER_SELECT } from '../utils/safeUser';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/api/assets', authenticateToken, async (req, res) => {
         let assets;
         
         if (role === 'Admin') {
-            assets = await prisma.asset.findMany({ include: { user: true, purchase: true } });
+            assets = await prisma.asset.findMany({ include: { user: { select: SAFE_USER_SELECT }, purchase: true } });
         } else if (role === 'Manager') {
             // Managers see all assets in their department or their own
             const user = await prisma.user.findUnique({ where: { id } });
@@ -24,13 +25,13 @@ router.get('/api/assets', authenticateToken, async (req, res) => {
                         { user: { departmentId: user?.departmentId || -1 } }
                     ]
                 },
-                include: { user: true, purchase: true }
+                include: { user: { select: SAFE_USER_SELECT }, purchase: true }
             });
         } else {
             // Regular users only see their own assigned assets
             assets = await prisma.asset.findMany({
                 where: { userId: id },
-                include: { user: true, purchase: true }
+                include: { user: { select: SAFE_USER_SELECT }, purchase: true }
             });
         }
         res.json(assets);
@@ -403,7 +404,7 @@ router.get('/api/assets/:id/history', authenticateToken, async (req, res) => {
         if (role !== 'Admin') {
             const asset = await prisma.asset.findUnique({
                 where: { id: assetId },
-                include: { user: true }
+                include: { user: { select: SAFE_USER_SELECT } }
             });
             if (!asset) return res.status(404).json({ error: 'Asset not found' });
 

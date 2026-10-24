@@ -1,11 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../db';
 
-export interface AuthRequest extends Request {
-    user?: { id: number; role: string };
+export interface AuthUser {
+    id: number;
+    role: string;
+    email: string;
+    name?: string;
+    status: string;
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+export interface AuthRequest extends Request {
+    user?: AuthUser;
+}
+
+export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
     const token = req.cookies?.authToken || (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
 
     if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
@@ -26,8 +35,32 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     }
 
     try {
-        const decoded = jwt.verify(token, secret);
-        req.user = decoded as { id: number; role: string };
+        const decoded = jwt.verify(token, secret) as { id: number; role?: string };
+        if (!decoded?.id) {
+            return res.status(403).json({ error: 'Invalid token payload.' });
+        }
+
+        // Live check against database: immediately revoke access for deactivated users or demoted roles
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: { id: true, role: true, status: true, email: true, name: true }
+        });
+
+        if (!user) {
+            return res.status(401).json({ error: 'User account no longer exists.' });
+        }
+
+        if (user.status === 'Inactive') {
+            return res.status(403).json({ error: 'Account is deactivated. Access revoked.' });
+        }
+
+        req.user = {
+            id: user.id,
+            role: user.role,
+            email: user.email,
+            name: user.name,
+            status: user.status
+        };
         next();
     } catch (error) {
         console.error('JWT Verification Failed:', (error as Error).message);

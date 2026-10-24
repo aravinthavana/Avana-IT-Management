@@ -595,6 +595,44 @@ export async function syncZohoLicensePool() {
 }
 
 /**
+ * Resolves a portal user record by Email, Email Aliases, or Normalized Employee ID
+ */
+export async function findUserForHrNotification(employeeEmail: string, employeeId?: string | null) {
+    const normEmpId = normalizeEmpId(employeeId);
+    
+    // 1. Try direct email match
+    let user = await prisma.user.findFirst({
+        where: { email: { equals: employeeEmail.trim(), mode: 'insensitive' } }
+    });
+    if (user) return user;
+
+    // 2. Try alias match
+    user = await prisma.user.findFirst({
+        where: { emailAliases: { contains: employeeEmail.trim(), mode: 'insensitive' } }
+    });
+    if (user) return user;
+
+    // 3. Try normalized employeeId match
+    if (normEmpId) {
+        const allWithEmpId = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { employeeId: { not: null } },
+                    { zohoEmployeeId: { not: null } }
+                ]
+            }
+        });
+        for (const u of allWithEmpId) {
+            if (normalizeEmpId(u.employeeId) === normEmpId || normalizeEmpId(u.zohoEmployeeId) === normEmpId) {
+                return u;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
  * Apply a pending HR change to the User record and optionally push to M365
  */
 export async function applyHrChange(notificationId: number, adminUserId?: number, pushToM365: boolean = false) {
@@ -610,56 +648,58 @@ export async function applyHrChange(notificationId: number, adminUserId?: number
         throw new Error(`Notification is already ${notification.status}`);
     }
 
-    const user = await prisma.user.findFirst({
-        where: {
-            OR: [
-                { email: { equals: notification.employeeEmail, mode: 'insensitive' } },
-                { emailAliases: { contains: notification.employeeEmail } }
-            ]
-        }
-    });
+    // Resolve target user using multi-identifier matching (Email, Alias, Normalized Employee ID)
+    const user = await findUserForHrNotification(notification.employeeEmail, notification.employeeId);
 
-    if (user && notification.zohoValue) {
-        if (notification.fieldName === 'Job Title') {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { jobTitle: notification.zohoValue }
+    if (!user) {
+        throw new Error(
+            `Cannot apply change: Target user "${notification.employeeEmail}" (${notification.employeeId || 'No Emp ID'}) could not be located in the portal. Please verify the user exists or resolve identity first.`
+        );
+    }
+
+    if (!notification.zohoValue) {
+        throw new Error('Cannot apply change: Notification has no incoming value to apply.');
+    }
+
+    if (notification.fieldName === 'Job Title') {
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { jobTitle: notification.zohoValue }
+        });
+        if (pushToM365 && user.azureAdId) {
+            try { await updateM365User(user.azureAdId, { jobTitle: notification.zohoValue }); } catch (e) {}
+        }
+    } else if (notification.fieldName === 'Mobile') {
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { mobile: notification.zohoValue }
+        });
+        if (pushToM365 && user.azureAdId) {
+            try { await updateM365User(user.azureAdId, { mobilePhone: notification.zohoValue }); } catch (e) {}
+        }
+    } else if (notification.fieldName === 'Status') {
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { status: notification.zohoValue }
+        });
+        if (pushToM365 && user.azureAdId) {
+            try { await updateM365User(user.azureAdId, { accountEnabled: notification.zohoValue === 'Active' }); } catch (e) {}
+        }
+    } else if (notification.fieldName === 'Department') {
+        let dept = await prisma.department.findFirst({
+            where: { name: { equals: notification.zohoValue, mode: 'insensitive' } }
+        });
+        if (!dept) {
+            dept = await prisma.department.create({
+                data: { name: notification.zohoValue }
             });
-            if (pushToM365 && user.azureAdId) {
-                try { await updateM365User(user.azureAdId, { jobTitle: notification.zohoValue }); } catch (e) {}
-            }
-        } else if (notification.fieldName === 'Mobile') {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { mobile: notification.zohoValue }
-            });
-            if (pushToM365 && user.azureAdId) {
-                try { await updateM365User(user.azureAdId, { mobilePhone: notification.zohoValue }); } catch (e) {}
-            }
-        } else if (notification.fieldName === 'Status') {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { status: notification.zohoValue }
-            });
-            if (pushToM365 && user.azureAdId) {
-                try { await updateM365User(user.azureAdId, { accountEnabled: notification.zohoValue === 'Active' }); } catch (e) {}
-            }
-        } else if (notification.fieldName === 'Department') {
-            let dept = await prisma.department.findFirst({
-                where: { name: { equals: notification.zohoValue, mode: 'insensitive' } }
-            });
-            if (!dept) {
-                dept = await prisma.department.create({
-                    data: { name: notification.zohoValue }
-                });
-            }
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { departmentId: dept.id }
-            });
-            if (pushToM365 && user.azureAdId) {
-                try { await updateM365User(user.azureAdId, { department: notification.zohoValue }); } catch (e) {}
-            }
+        }
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { departmentId: dept.id }
+        });
+        if (pushToM365 && user.azureAdId) {
+            try { await updateM365User(user.azureAdId, { department: notification.zohoValue }); } catch (e) {}
         }
     }
 

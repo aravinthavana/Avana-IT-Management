@@ -121,10 +121,26 @@ router.post('/api/auth/m365', async (req, res) => {
                             include: { department: true, branch: true }
                         });
                     } else {
-                        // Sync profile data on every login
+                        // Preserve IT-managed portal profile fields; only backfill if missing, update avatar & store m365 snapshot
+                        const loginUpdateData: any = {};
+                        if (avatarBase64) loginUpdateData.avatar = avatarBase64;
+                        if (!user.mobile && graphProfile.mobilePhone) loginUpdateData.mobile = graphProfile.mobilePhone;
+                        if (!user.jobTitle && graphProfile.jobTitle) loginUpdateData.jobTitle = graphProfile.jobTitle;
+                        if (!user.company && graphProfile.companyName) loginUpdateData.company = graphProfile.companyName;
+                        if (!user.employeeId && graphProfile.employeeId) loginUpdateData.employeeId = graphProfile.employeeId;
+                        
+                        const m365Snapshot = {
+                            jobTitle: graphProfile.jobTitle || null,
+                            department: graphProfile.department || null,
+                            mobile: graphProfile.mobilePhone || null,
+                            location: graphProfile.officeLocation || null,
+                            status: 'Active'
+                        };
+                        loginUpdateData.m365Data = JSON.stringify(m365Snapshot);
+
                         user = await prisma.user.update({
                             where: { email: userEmail },
-                            data: profileData,
+                            data: loginUpdateData,
                             include: { department: true, branch: true }
                         });
                     }
@@ -139,12 +155,12 @@ router.post('/api/auth/m365', async (req, res) => {
                     res.cookie('authToken', token, {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === 'production',
-                        sameSite: 'strict',
+                        sameSite: 'lax',
                         maxAge: 8 * 60 * 60 * 1000
                     });
                     res.cookie('XSRF-TOKEN', csrfToken, {
                         secure: process.env.NODE_ENV === 'production',
-                        sameSite: 'strict',
+                        sameSite: 'lax',
                         maxAge: 8 * 60 * 60 * 1000
                     });
                     res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
@@ -180,12 +196,12 @@ router.post('/api/login', async (req, res) => {
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
         });
         res.cookie('XSRF-TOKEN', csrfToken, {
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000
         });
         res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
@@ -198,11 +214,11 @@ router.post('/api/logout', (req, res) => {
     res.clearCookie('authToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'lax'
     });
     res.clearCookie('XSRF-TOKEN', {
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'lax'
     });
     res.json({ success: true, message: 'Logged out successfully' });
 });
@@ -364,12 +380,12 @@ router.post('/api/auth/otp/verify', async (req, res) => {
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
         });
         res.cookie('XSRF-TOKEN', csrfToken, {
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000
         });
 

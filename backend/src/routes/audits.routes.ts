@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { sendSelfAuditEmail } from '../utils/email';
+import { SAFE_USER_SELECT } from '../utils/safeUser';
 
 const router = Router();
 
@@ -241,7 +242,7 @@ router.put('/api/self-audits/:id/status', authenticateToken, requireAdmin, async
 
         const existingAudit = await prisma.selfAudit.findUnique({
             where: { id: Number(id) },
-            include: { user: true, asset: true }
+            include: { user: { select: SAFE_USER_SELECT }, asset: true }
         });
 
         if (!existingAudit) {
@@ -411,7 +412,7 @@ router.post('/api/asset-declarations/:id/convert-ghost-asset', authenticateToken
 
         const declaration = await prisma.assetDeclaration.findUnique({
             where: { id: Number(id) },
-            include: { user: true }
+            include: { user: { select: SAFE_USER_SELECT } }
         });
 
         if (!declaration) {
@@ -567,7 +568,7 @@ router.post('/api/asset-declarations/:id/reconcile-accessories', authenticateTok
 
         const declaration = await prisma.assetDeclaration.findUnique({
             where: { id: Number(id) },
-            include: { user: true }
+            include: { user: { select: SAFE_USER_SELECT } }
         });
 
         if (!declaration) {

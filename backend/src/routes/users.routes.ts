@@ -3,7 +3,8 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../db';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth';
 import { userSchema } from '../schemas';
-import { updateM365User } from '../services/m365.service';
+import { updateM365User, revokeM365Licenses } from '../services/m365.service';
+import { SAFE_USER_SELECT } from '../utils/safeUser';
 
 const router = Router();
 
@@ -145,21 +146,21 @@ router.get('/api/users', authenticateToken, async (req, res) => {
 
         if (role === 'Admin') {
             users = await prisma.user.findMany({
-                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } },
+                include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } },
                 orderBy: { name: 'asc' }
             });
         } else if (role === 'Manager') {
             // Managers see themselves and their direct reports
             users = await prisma.user.findMany({
                 where: { OR: [{ id }, { managerId: id }] },
-                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } },
+                include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } },
                 orderBy: { name: 'asc' }
             });
         } else {
             // Regular users only see themselves
             users = await prisma.user.findMany({
                 where: { id },
-                include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
+                include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } }
             });
         }
 
@@ -234,7 +235,7 @@ router.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
                 m365AccountDisabled: m365AccountDisabled || false,
                 offboardingStatus: offboardingStatus || 'Pending',
             },
-            include: { department: true, branch: true, manager: true }
+            include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT } }
         });
         const { password: _, ...sanitized } = user;
         res.status(201).json(sanitized);
@@ -265,50 +266,54 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
 
         const updateData: any = {};
         if (name) updateData.name = name;
-        if (email) updateData.email = email;
+        if (email && requestingUserRole === 'Admin') updateData.email = email;
         if (avatar !== undefined) updateData.avatar = avatar;
         if (mobile !== undefined) updateData.mobile = mobile;
-        if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
-        if (company !== undefined) updateData.company = company;
-        if (employeeId !== undefined) updateData.employeeId = employeeId;
-        if (accountType !== undefined) updateData.accountType = accountType;
-        if (laptopStatus !== undefined) updateData.laptopStatus = laptopStatus;
         if (location !== undefined) updateData.location = location;
         if (workAddress !== undefined) updateData.workAddress = workAddress;
         if (city !== undefined) updateData.city = city;
         if (state !== undefined) updateData.state = state;
         if (postalCode !== undefined) updateData.postalCode = postalCode;
         if (country !== undefined) updateData.country = country;
-        
-        // IT Operations - Onboarding Checklist fields
-        if (req.body.m365AccountCreated !== undefined) updateData.m365AccountCreated = Boolean(req.body.m365AccountCreated);
-        if (req.body.m365LicenseAssigned !== undefined) updateData.m365LicenseAssigned = Boolean(req.body.m365LicenseAssigned);
-        if (req.body.softwareInstalled !== undefined) updateData.softwareInstalled = Boolean(req.body.softwareInstalled);
-        if (req.body.hardwareTested !== undefined) updateData.hardwareTested = Boolean(req.body.hardwareTested);
-        if (req.body.credentialsHandedOver !== undefined) updateData.credentialsHandedOver = Boolean(req.body.credentialsHandedOver);
-        if (req.body.dispatchDetails !== undefined) {
-            updateData.dispatchDetails = req.body.dispatchDetails ? (typeof req.body.dispatchDetails === 'string' ? req.body.dispatchDetails : JSON.stringify(req.body.dispatchDetails)) : null;
-        }
-        if (req.body.onboardingStatus !== undefined) updateData.onboardingStatus = req.body.onboardingStatus;
-        if (req.body.onboardingCompletedDate !== undefined) {
-            updateData.onboardingCompletedDate = req.body.onboardingCompletedDate ? new Date(req.body.onboardingCompletedDate) : null;
-        }
-        if (req.body.onboardingStep !== undefined) updateData.onboardingStep = Number(req.body.onboardingStep) || 1;
 
-        // IT Operations - Offboarding Checklist fields
-        if (req.body.assetReturned !== undefined) updateData.assetReturned = Boolean(req.body.assetReturned);
-        if (req.body.assetReturnCondition !== undefined) updateData.assetReturnCondition = req.body.assetReturnCondition;
-        if (req.body.assetReturnRemarks !== undefined) updateData.assetReturnRemarks = req.body.assetReturnRemarks;
-        if (req.body.assetReturnDocket !== undefined) {
-            updateData.assetReturnDocket = req.body.assetReturnDocket ? (typeof req.body.assetReturnDocket === 'string' ? req.body.assetReturnDocket : JSON.stringify(req.body.assetReturnDocket)) : null;
-        }
-        if (req.body.deviceWiped !== undefined) updateData.deviceWiped = Boolean(req.body.deviceWiped);
-        if (req.body.dataBackedUp !== undefined) updateData.dataBackedUp = Boolean(req.body.dataBackedUp);
-        if (req.body.m365LicenseRevoked !== undefined) updateData.m365LicenseRevoked = Boolean(req.body.m365LicenseRevoked);
-        if (req.body.m365AccountDisabled !== undefined) updateData.m365AccountDisabled = Boolean(req.body.m365AccountDisabled);
-        if (req.body.offboardingStatus !== undefined) updateData.offboardingStatus = req.body.offboardingStatus;
-        if (req.body.offboardingCompletedDate !== undefined) {
-            updateData.offboardingCompletedDate = req.body.offboardingCompletedDate ? new Date(req.body.offboardingCompletedDate) : null;
+        // Security check: Only Admin or Manager can modify corporate/employment fields, onboarding, or offboarding flags
+        if (requestingUserRole === 'Admin' || requestingUserRole === 'Manager') {
+            if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
+            if (company !== undefined) updateData.company = company;
+            if (employeeId !== undefined) updateData.employeeId = employeeId;
+            if (accountType !== undefined) updateData.accountType = accountType;
+            if (laptopStatus !== undefined) updateData.laptopStatus = laptopStatus;
+
+            // IT Operations - Onboarding Checklist fields
+            if (req.body.m365AccountCreated !== undefined) updateData.m365AccountCreated = Boolean(req.body.m365AccountCreated);
+            if (req.body.m365LicenseAssigned !== undefined) updateData.m365LicenseAssigned = Boolean(req.body.m365LicenseAssigned);
+            if (req.body.softwareInstalled !== undefined) updateData.softwareInstalled = Boolean(req.body.softwareInstalled);
+            if (req.body.hardwareTested !== undefined) updateData.hardwareTested = Boolean(req.body.hardwareTested);
+            if (req.body.credentialsHandedOver !== undefined) updateData.credentialsHandedOver = Boolean(req.body.credentialsHandedOver);
+            if (req.body.dispatchDetails !== undefined) {
+                updateData.dispatchDetails = req.body.dispatchDetails ? (typeof req.body.dispatchDetails === 'string' ? req.body.dispatchDetails : JSON.stringify(req.body.dispatchDetails)) : null;
+            }
+            if (req.body.onboardingStatus !== undefined) updateData.onboardingStatus = req.body.onboardingStatus;
+            if (req.body.onboardingCompletedDate !== undefined) {
+                updateData.onboardingCompletedDate = req.body.onboardingCompletedDate ? new Date(req.body.onboardingCompletedDate) : null;
+            }
+            if (req.body.onboardingStep !== undefined) updateData.onboardingStep = Number(req.body.onboardingStep) || 1;
+
+            // IT Operations - Offboarding Checklist fields
+            if (req.body.assetReturned !== undefined) updateData.assetReturned = Boolean(req.body.assetReturned);
+            if (req.body.assetReturnCondition !== undefined) updateData.assetReturnCondition = req.body.assetReturnCondition;
+            if (req.body.assetReturnRemarks !== undefined) updateData.assetReturnRemarks = req.body.assetReturnRemarks;
+            if (req.body.assetReturnDocket !== undefined) {
+                updateData.assetReturnDocket = req.body.assetReturnDocket ? (typeof req.body.assetReturnDocket === 'string' ? req.body.assetReturnDocket : JSON.stringify(req.body.assetReturnDocket)) : null;
+            }
+            if (req.body.deviceWiped !== undefined) updateData.deviceWiped = Boolean(req.body.deviceWiped);
+            if (req.body.dataBackedUp !== undefined) updateData.dataBackedUp = Boolean(req.body.dataBackedUp);
+            if (req.body.m365LicenseRevoked !== undefined) updateData.m365LicenseRevoked = Boolean(req.body.m365LicenseRevoked);
+            if (req.body.m365AccountDisabled !== undefined) updateData.m365AccountDisabled = Boolean(req.body.m365AccountDisabled);
+            if (req.body.offboardingStatus !== undefined) updateData.offboardingStatus = req.body.offboardingStatus;
+            if (req.body.offboardingCompletedDate !== undefined) {
+                updateData.offboardingCompletedDate = req.body.offboardingCompletedDate ? new Date(req.body.offboardingCompletedDate) : null;
+            }
         }
 
         // Only admin can change role/status/depts
@@ -344,7 +349,7 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
         const user = await prisma.user.update({
             where: { id: Number(id) },
             data: updateData,
-            include: { department: true, branch: true, manager: true }
+            include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT } }
         });
 
         // Outbound real-time push to Microsoft 365 / Entra ID
@@ -675,7 +680,7 @@ router.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (
                 onboardingCompletedDate: onboardingStatus === 'Completed' ? new Date() : (onboardingStatus === 'In Progress' ? null : targetUser.onboardingCompletedDate),
                 onboardingStep: onboardingStatus === 'Completed' ? 8 : (onboardingStep ? Number(onboardingStep) : (targetUser.onboardingStep || 1))
             },
-            include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
+            include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } }
         });
 
         const { password: _, ...sanitized } = updatedUser;
@@ -708,6 +713,17 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
         // 1. Process Asset Return if provided
+        let assetSuccessfullyReturned = false;
+        const userExistingAsset = await prisma.asset.findFirst({
+            where: {
+                OR: [
+                    { assigneeId: targetUser.id },
+                    { userId: targetUser.id }
+                ]
+            }
+        });
+        const userHadAsset = Boolean(userExistingAsset);
+
         if (assetReturn && assetReturn.assetId) {
             let assetId = Number(assetReturn.assetId);
             const destinationStatus = assetReturn.destinationStatus || 'Under Inspection';
@@ -724,22 +740,11 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
                 }
             });
 
-            // If the specified assetId does NOT belong to targetUser, do not unassign someone else's asset!
-            if (!assetToReturn) {
-                console.warn(`[Offboarding Warning] Asset ID ${assetId} does not belong to user ${targetUser.name} (${targetUser.id}). Checking for user's assigned asset...`);
-                const userActualAsset = await prisma.asset.findFirst({
-                    where: {
-                        OR: [
-                            { assigneeId: targetUser.id },
-                            { userId: targetUser.id }
-                        ]
-                    }
-                });
-                if (userActualAsset) {
-                    console.log(`[Offboarding Auto-Correct] Routed offboarding return to user's actual assigned asset ID ${userActualAsset.id} (${userActualAsset.assetId}).`);
-                    assetToReturn = userActualAsset;
-                    assetId = userActualAsset.id;
-                }
+            // If the specified assetId does NOT belong to targetUser, route to their actual asset if found
+            if (!assetToReturn && userExistingAsset) {
+                console.log(`[Offboarding Auto-Correct] Routed offboarding return to user's actual assigned asset ID ${userExistingAsset.id} (${userExistingAsset.assetId}).`);
+                assetToReturn = userExistingAsset;
+                assetId = userExistingAsset.id;
             }
 
             if (assetToReturn) {
@@ -755,6 +760,7 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
                         remarks: assetReturn.remarks || null
                     }
                 });
+                assetSuccessfullyReturned = true;
 
                 const modeText = assetReturn.returnMode === 'Courier' 
                     ? `Courier Return (${assetReturn.courierName || 'Carrier'} - Docket: ${assetReturn.docketNumber || 'N/A'})`
@@ -785,14 +791,45 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
             }
         }
 
-        // 2. Revoke Licenses
+        // 2. Revoke Licenses (Both portal database & live Microsoft Graph API)
+        let m365RevokeSuccess = false;
         if (revokeAllLicenses) {
             await prisma.licenseAssignment.deleteMany({
                 where: { userId: targetUser.id }
             });
+
+            const targetAd = targetUser.azureAdId || (targetUser.email.includes('@') ? targetUser.email : null);
+            if (targetAd) {
+                const revokeResult = await revokeM365Licenses(targetAd);
+                m365RevokeSuccess = revokeResult.success;
+                if (!revokeResult.success) {
+                    console.warn(`[Offboarding] Graph license revoke failed for ${targetUser.email}:`, revokeResult.error);
+                }
+            } else {
+                m365RevokeSuccess = true;
+            }
         }
 
-        // 3. Update User Offboarding Flags & Status
+        // 3. Disable M365 Account in Graph API
+        let m365DisableSuccess = false;
+        if (disableM365) {
+            const targetAd = targetUser.azureAdId || (targetUser.email.includes('@') ? targetUser.email : null);
+            if (targetAd) {
+                const disableResult = await updateM365User(targetAd, { accountEnabled: false });
+                m365DisableSuccess = disableResult.success;
+                if (!disableResult.success) {
+                    console.warn(`[Offboarding] Graph account disable failed for ${targetUser.email}:`, disableResult.error);
+                }
+            } else {
+                m365DisableSuccess = true;
+            }
+        }
+
+        // 4. Update User Offboarding Flags & Status
+        const verifiedAssetReturned = userHadAsset ? assetSuccessfullyReturned : true;
+        const verifiedLicenseRevoked = revokeAllLicenses ? m365RevokeSuccess : targetUser.m365LicenseRevoked;
+        const verifiedAccountDisabled = disableM365 ? m365DisableSuccess : targetUser.m365AccountDisabled;
+
         const returnDocketJson = (assetReturn && assetReturn.docketNumber) 
             ? JSON.stringify({
                 mode: assetReturn.returnMode,
@@ -805,20 +842,20 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
         const updatedUser = await prisma.user.update({
             where: { id: targetUser.id },
             data: {
-                assetReturned: true,
+                assetReturned: verifiedAssetReturned,
                 assetReturnCondition: assetReturn?.condition || null,
                 assetReturnRemarks: assetReturn?.remarks || offboardingRemarks || null,
                 assetReturnDocket: returnDocketJson || targetUser.assetReturnDocket,
                 deviceWiped: Boolean(deviceWiped),
                 dataBackedUp: Boolean(dataBackedUp),
-                m365LicenseRevoked: Boolean(revokeAllLicenses || targetUser.m365LicenseRevoked),
-                m365LicenseAssigned: revokeAllLicenses ? false : targetUser.m365LicenseAssigned,
-                m365AccountDisabled: Boolean(disableM365 || targetUser.m365AccountDisabled),
+                m365LicenseRevoked: verifiedLicenseRevoked,
+                m365LicenseAssigned: revokeAllLicenses && m365RevokeSuccess ? false : targetUser.m365LicenseAssigned,
+                m365AccountDisabled: verifiedAccountDisabled,
                 status: deactivateUser ? 'Inactive' : targetUser.status,
                 offboardingStatus: 'Completed',
                 offboardingCompletedDate: new Date()
             },
-            include: { department: true, branch: true, manager: true, licenseAssignments: { include: { license: true } } }
+            include: { department: true, branch: true, manager: { select: SAFE_USER_SELECT }, licenseAssignments: { include: { license: true } } }
         });
 
         const { password: _, ...sanitized } = updatedUser;

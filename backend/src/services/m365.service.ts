@@ -151,6 +151,54 @@ export async function updateM365User(
 }
 
 /**
+ * Revoke all assigned Microsoft 365 licenses from a user via Microsoft Graph API
+ */
+export async function revokeM365Licenses(
+    azureAdIdOrEmail: string
+): Promise<{ success: boolean; removedCount: number; error?: string }> {
+    try {
+        const auth = await getGraphAppToken();
+        if (!auth.token) {
+            return { success: false, removedCount: 0, error: auth.error || 'Failed to get Graph access token' };
+        }
+
+        const encodedTarget = encodeURIComponent(azureAdIdOrEmail);
+        // 1. Fetch user's currently assigned licenses
+        const userRes = await axios.get(`https://graph.microsoft.com/v1.0/users/${encodedTarget}?$select=assignedLicenses`, {
+            headers: { Authorization: `Bearer ${auth.token}` },
+            timeout: 15000
+        });
+
+        const assignedLicenses: Array<{ skuId: string }> = userRes.data?.assignedLicenses || [];
+        if (assignedLicenses.length === 0) {
+            return { success: true, removedCount: 0 };
+        }
+
+        const skuIdsToRemove = assignedLicenses.map(l => l.skuId);
+        // 2. Remove all assigned licenses via assignLicenses endpoint
+        await axios.post(
+            `https://graph.microsoft.com/v1.0/users/${encodedTarget}/assignLicenses`,
+            {
+                addLicenses: [],
+                removeLicenses: skuIdsToRemove
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${auth.token}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 15000
+            }
+        );
+
+        return { success: true, removedCount: skuIdsToRemove.length };
+    } catch (error: any) {
+        console.error('[M365 License Revoke Error]:', error.response?.data || error.message);
+        return { success: false, removedCount: 0, error: error.response?.data?.error?.message || error.message };
+    }
+}
+
+/**
  * Full synchronization from M365 into PostgreSQL
  */
 export async function syncFromM365(): Promise<SyncResult> {
@@ -314,28 +362,22 @@ export async function syncFromM365(): Promise<SyncResult> {
             const finalAliasesStr = mergedAliases.length > 0 ? JSON.stringify(mergedAliases) : null;
 
             if (dbUser) {
-                // Update user details
+                // Update integration snapshot & cloud identity fields (do NOT overwrite IT-managed portal profile fields)
                 await prisma.user.update({
                     where: { id: dbUser.id },
                     data: {
-                        name: displayName,
                         azureAdId: mUser.id,
-                        jobTitle: mUser.jobTitle || dbUser.jobTitle,
-                        mobile: mUser.mobilePhone || dbUser.mobile,
-                        departmentId: departmentId || dbUser.departmentId,
-                        branchId: branchId || dbUser.branchId,
-                        location: mUser.officeLocation || dbUser.location,
-                        city: mUser.city || dbUser.city,
-                        state: mUser.state || dbUser.state,
-                        country: mUser.country || dbUser.country,
-                        postalCode: mUser.postalCode || dbUser.postalCode,
-                        workAddress: mUser.streetAddress || dbUser.workAddress,
-                        status: userStatus,
                         emailAliases: finalAliasesStr,
                         m365Data: m365DataJson,
                         m365AccountCreated: true,
                         m365LicenseAssigned: hasLicense,
-                        lastM365Sync: now
+                        lastM365Sync: now,
+                        // Fill in blank fields only if never configured in portal
+                        jobTitle: dbUser.jobTitle || mUser.jobTitle || null,
+                        mobile: dbUser.mobile || mUser.mobilePhone || null,
+                        departmentId: dbUser.departmentId || departmentId || null,
+                        branchId: dbUser.branchId || branchId || null,
+                        location: dbUser.location || mUser.officeLocation || null
                     }
                 });
                 usersUpdated++;
