@@ -47,7 +47,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
 
     return (
         <div
-            className={`bg-surface overflow-hidden flex flex-col ${className || ''}`}
+            className={`bg-white overflow-hidden flex flex-col ${className || ''}`}
             style={{
                 width: '50mm',
                 height: '30mm',
@@ -55,7 +55,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                 maxHeight: '30mm',
                 boxSizing: 'border-box',
                 padding: '4px',
-                backgroundColor: '#d7d0bc',
+                backgroundColor: '#ffffff',
                 ...style
             }}
         >
@@ -77,7 +77,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                 className="w-full shrink-0"
                 style={{
                     height: '1px',
-                    backgroundColor: '#d7d0bc',
+                    backgroundColor: '#d1d5db',
                     marginTop: '1px',
                     marginBottom: '3px'
                 }}
@@ -100,7 +100,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                         flex: 1,
                         minWidth: 0,
                         height: '100%',
-                        color: '#172025'
+                        color: '#1e293b'
                     }}
                 >
                     <p
@@ -108,7 +108,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                         style={{
                             fontSize: '9px',
                             lineHeight: 1.15,
-                            color: '#172025',
+                            color: '#0f172a',
                             margin: 0
                         }}
                         title={asset.name}
@@ -119,7 +119,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                         className="font-semibold truncate uppercase"
                         style={{
                             fontSize: '7px',
-                            color: '#aab2b2',
+                            color: '#64748b',
                             letterSpacing: '0.04em',
                             lineHeight: 1.15,
                             margin: '1px 0 0 0'
@@ -131,14 +131,14 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                         style={{
                             marginTop: '2px',
                             paddingTop: '2px',
-                            borderTop: '1px solid #d7d0bc'
+                            borderTop: '1px solid #e2e8f0'
                         }}
                     >
                         <p
                             className="truncate"
                             style={{
                                 fontSize: '7.5px',
-                                color: '#404131',
+                                color: '#334155',
                                 lineHeight: 1.15,
                                 margin: 0
                             }}
@@ -150,7 +150,7 @@ const AssetLabel: React.FC<AssetLabelProps> = ({ asset, className, style }) => {
                             style={{
                                 fontSize: '10px',
                                 fontWeight: 800,
-                                color: '#172025',
+                                color: '#0f172a',
                                 letterSpacing: '-0.02em',
                                 lineHeight: 1.15,
                                 margin: '1px 0 0 0'

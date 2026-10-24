@@ -44,11 +44,11 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
     }, [fetchHistory, refreshTrigger]);
 
     return (
-        <div className="bg-surface p-6 rounded-xl shadow-sm border border-line">
-            <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
+        <div className="p-6 rounded-xl shadow-sm border bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700/50">
+            <div className="flex items-center justify-between border-b pb-4 mb-4 border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-semibold text-ink">Asset History</h3>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-quiet">
+                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Asset History</h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {history.length}
                     </span>
                 </div>
@@ -56,7 +56,7 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
                     onClick={fetchHistory}
                     disabled={isLoading}
                     title="Refresh History"
-                    className="p-1.5 text-quiet hover:text-ink rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+                    className="p-1.5 rounded-lg transition-colors disabled:opacity-50 text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +68,7 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className={isLoading ? 'animate-spin text-ink' : ''}
+                        className={isLoading ? 'animate-spin text-brand-600' : ''}
                     >
                         <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                         <path d="M3 3v5h5" />
@@ -79,8 +79,8 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
             </div>
 
             {isLoading && history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-quiet space-y-2">
-                    <svg className="animate-spin h-6 w-6 text-ink" fill="none" viewBox="0 0 24 24">
+                <div className="flex flex-col items-center justify-center py-10 space-y-2 text-slate-400 dark:text-slate-500">
+                    <svg className="animate-spin h-6 w-6 text-brand-600" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -88,28 +88,28 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
                 </div>
             ) : error ? (
                 <div className="py-6 text-center space-y-3">
-                    <p className="text-sm text-ink">{error}</p>
+                    <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
                     <button
                         onClick={fetchHistory}
-                        className="px-3 py-1.5 text-xs font-medium bg-muted text-ink rounded-lg hover:bg-muted transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200"
                     >
                         Try Again
                     </button>
                 </div>
             ) : history.length === 0 ? (
-                <p className="text-quiet text-center py-8">No history recorded for this asset.</p>
+                <p className="text-center py-8 text-slate-500 dark:text-slate-400">No history recorded for this asset.</p>
             ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                     {history.map(entry => (
                         <div key={entry.id} className="flex gap-4">
                             <div className="flex flex-col items-center">
-                                <span className="w-3 h-3 bg-accent rounded-full mt-1 shrink-0 ring-4 ring-accent"></span>
-                                <span className="flex-grow w-px bg-muted my-1"></span>
+                                <span className="w-3 h-3 rounded-full mt-1 shrink-0 ring-4 bg-brand-500 ring-brand-50 dark:ring-brand-950/50"></span>
+                                <span className="flex-grow w-px my-1 bg-slate-200 dark:bg-slate-700"></span>
                             </div>
                             <div className="pb-4 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                    <p className="font-semibold text-ink">{entry.event}</p>
-                                    <span className="text-xs text-quiet shrink-0">
+                                    <p className="font-semibold text-slate-800 dark:text-slate-100">{entry.event}</p>
+                                    <span className="text-xs shrink-0 text-slate-400 dark:text-slate-500">
                                         {new Date(entry.timestamp).toLocaleString(undefined, {
                                             dateStyle: 'medium',
                                             timeStyle: 'short'
@@ -117,16 +117,16 @@ const AssetHistoryLog: React.FC<AssetHistoryLogProps> = ({ assetId, refreshTrigg
                                     </span>
                                 </div>
                                 {entry.details && (
-                                    <p className="text-sm text-quiet mt-1">{entry.details}</p>
+                                    <p className="text-sm mt-1 text-slate-600 dark:text-slate-300">{entry.details}</p>
                                 )}
                                 {entry.condition && (
                                     <div className="mt-1.5 flex items-center gap-1.5">
-                                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface text-ink border border-line">
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded border bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60">
                                             Condition: {entry.condition}
                                         </span>
                                     </div>
                                 )}
-                                <p className="text-xs text-quiet mt-1.5">
+                                <p className="text-xs mt-1.5 text-slate-400 dark:text-slate-500">
                                     by {entry.user?.name || 'System'}
                                 </p>
                             </div>

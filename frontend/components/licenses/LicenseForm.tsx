@@ -9,8 +9,8 @@ interface LicenseFormProps {
     license: License | null;
 }
 
-const inputClass = "w-full px-3 py-2 border rounded-lg    focus:outline-none focus:ring-2 focus:ring-accent text-ink";
-const labelClass = "block text-sm font-medium text-ink  mb-1";
+const inputClass = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-brand-500 text-slate-900";
+const labelClass = "block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300";
 
 const LicenseForm: React.FC<LicenseFormProps> = ({ isOpen, onClose, onSave, license }) => {
 
@@ -38,9 +38,9 @@ const LicenseForm: React.FC<LicenseFormProps> = ({ isOpen, onClose, onSave, lice
     const set = (field: keyof License, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
 
     return (
-        <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="License details" className="fixed inset-0 bg-strong/60 z-50 flex justify-center items-center p-4">
-            <div className="bg-surface rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-5 text-ink">{license ? 'Edit License' : 'Add License'}</h2>
+        <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="License details" className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-black/60">
+            <div className="rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto bg-white dark:bg-slate-800">
+                <h2 className="text-xl font-bold mb-5 text-slate-800 dark:text-slate-100">{license ? 'Edit License' : 'Add License'}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
 
                     {/* Basic Info */}
@@ -106,14 +106,14 @@ const LicenseForm: React.FC<LicenseFormProps> = ({ isOpen, onClose, onSave, lice
                             rows={3}
                             value={formData.remarks || ''}
                             onChange={(e) => set('remarks', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-ink resize-none"
+                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 resize-none dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-brand-500 text-slate-900"
                             placeholder="Any additional notes about this license..."
                         />
                     </div>
 
                     <div className="flex flex-wrap justify-end gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 hover:bg-muted text-ink rounded-lg transition-colors">Cancel</button>
-                        <button type="submit" className="bg-accent hover:bg-accent text-on-strong px-4 py-2 rounded-lg transition-colors font-medium">Save License</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Cancel</button>
+                        <button type="submit" className="px-4 py-2 rounded-lg transition-colors font-medium bg-brand-600 hover:bg-brand-700 text-white">Save License</button>
                     </div>
                 </form>
             </div>

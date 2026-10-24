@@ -43,30 +43,30 @@ const UserActionMenu: React.FC<{
         <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
             <button
                 onClick={() => setOpen(o => !o)}
-                className="p-2 rounded-lg text-quiet hover:text-ink hover:bg-muted transition-colors"
+                className="p-2 rounded-lg transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 title="Actions"
             >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
             </button>
             {open && (
-                <div className="absolute right-0 mt-1 w-44 bg-surface border border-line rounded-xl shadow-lg z-10 py-1 text-sm">
-                    <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-canvas flex items-center gap-2 text-ink">
+                <div className="absolute right-0 mt-1 w-44 border rounded-xl shadow-lg z-10 py-1 text-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <button onClick={() => { onEdit(); setOpen(false); }} className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200">
                         {ICONS.edit} Edit
                     </button>
                     {isAdmin && !isSelf && !isInactive && (
-                        <button onClick={() => { onDeactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-canvas flex items-center gap-2 text-ink">
+                        <button onClick={() => { onDeactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-amber-700 dark:text-amber-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                             Deactivate
                         </button>
                     )}
                     {isAdmin && !isSelf && isInactive && (
-                        <button onClick={() => { onReactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-canvas flex items-center gap-2 text-ink">
+                        <button onClick={() => { onReactivate(); setOpen(false); }} className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-green-700 dark:text-green-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             Reactivate
                         </button>
                     )}
                     {isAdmin && !isSelf && (
-                        <button onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-surface flex items-center gap-2 text-ink border-t border-line mt-1">
+                        <button onClick={() => { onDelete(); setOpen(false); }} className="w-full text-left px-4 py-2.5 flex items-center gap-2 border-t mt-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 border-slate-100 dark:border-slate-700">
                             {ICONS.delete} Delete
                         </button>
                     )}
@@ -439,16 +439,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 <div className="flex flex-col gap-4">
                     <p>{confirmAction ? confirmMessages[confirmAction.type] : ''}</p>
                     {confirmAction?.type === 'deactivate' && (
-                        <label className="flex items-start gap-2 bg-canvas p-3 rounded-lg border border-line text-left cursor-pointer">
+                        <label className="flex items-start gap-2 p-3 rounded-lg border text-left cursor-pointer bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                             <input
                                 type="checkbox"
                                 checked={reclaimAll}
                                 onChange={(e) => setReclaimAll(e.target.checked)}
-                                className="mt-1 h-4 w-4 text-ink focus:ring-accent border-line rounded"
+                                className="mt-1 h-4 w-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300"
                             />
                             <div className="flex flex-col">
-                                <span className="text-sm font-semibold text-ink">Automatically reclaim assets and licenses</span>
-                                <span className="text-xs text-quiet mt-0.5">All assets will be moved to 'Under Inspection' and licenses unassigned.</span>
+                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Automatically reclaim assets and licenses</span>
+                                <span className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">All assets will be moved to 'Under Inspection' and licenses unassigned.</span>
                             </div>
                         </label>
                     )}
@@ -459,30 +459,30 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                 {/* ── Top bar: Search + View toggle + Add button ── */}
                 <div className="flex items-center gap-3 mb-4">
                     <div className="relative flex-1 min-w-0">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet pointer-events-none">{ICONS.search}</span>
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">{ICONS.search}</span>
                         <input
                             type="text"
                             placeholder="Search by name, email, department…"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2.5 bg-surface border border-line rounded-xl w-full text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                            className="pl-10 pr-4 py-2.5 border rounded-xl w-full text-sm focus:outline-none focus:ring-2 transition-all bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-brand-500"
                         />
                     </div>
 
                     {/* Filter toggle button */}
                     <button
                         onClick={() => setShowFilters(f => !f)}
-                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${showFilters || activeFilterCount > 0 ? 'bg-strong text-on-strong border-line' : 'bg-surface  border-line  text-quiet  hover:border-line'}`}
+                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${showFilters || activeFilterCount > 0 ? 'bg-avana-dark text-white border-avana-dark' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`}
                     >
                         {ICONS.filter}
                         <span className="hidden sm:inline">Filters</span>
-                        {activeFilterCount > 0 && <span className="bg-accent text-on-strong text-[10px] font-bold px-1.5 rounded-full">{activeFilterCount}</span>}
+                        {activeFilterCount > 0 && <span className="text-[10px] font-bold px-1.5 rounded-full bg-brand-500 text-white">{activeFilterCount}</span>}
                     </button>
 
                     {/* View toggle */}
-                    <div className="hidden sm:flex bg-muted p-1 rounded-xl">
-                        <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'list' ? 'bg-surface  shadow-sm text-ink ' : 'text-quiet'}`}>List</button>
-                        <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'tree' ? 'bg-surface  shadow-sm text-ink ' : 'text-quiet'}`}>Tree</button>
+                    <div className="hidden sm:flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+                        <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'list' ? 'shadow-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>List</button>
+                        <button onClick={() => setViewMode('tree')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${viewMode === 'tree' ? 'shadow-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>Tree</button>
                     </div>
 
                     {loggedInUser?.role === 'Admin' && (
@@ -490,7 +490,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             <button
                                 onClick={handleSyncM365}
                                 disabled={isM365Syncing}
-                                className="bg-olive hover:bg-olive text-on-strong px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                                className="px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-sm bg-blue-600 hover:bg-blue-700 text-white"
                                 title="Synchronize all user accounts, licenses, and profile details with Microsoft 365"
                             >
                                 <svg className={`w-4 h-4 ${isM365Syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -501,15 +501,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
 
                             <button
                                 onClick={() => setIsHrReviewOpen(true)}
-                                className="relative bg-surface text-ink border border-line px-3.5 py-2.5 rounded-xl hover:bg-surface text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 shadow-sm"
+                                className="relative border px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 shadow-sm bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/60"
                                 title="Review profile and department changes made by HR in Zoho People"
                             >
-                                <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                                 <span className="hidden sm:inline">HR Updates</span>
                                 {pendingHrCount > 0 && (
-                                    <span className="bg-olive text-on-strong text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse">
+                                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse bg-orange-600 text-white">
                                         {pendingHrCount}
                                     </span>
                                 )}
@@ -518,7 +518,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                     )}
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-strong text-on-strong px-4 py-2.5 rounded-xl hover:bg-strong text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 flex items-center gap-1.5 bg-avana-dark text-white hover:bg-slate-800"
                     >
                         {ICONS.add} <span className="hidden sm:inline">Add User</span>
                     </button>
@@ -526,10 +526,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
 
                 {/* ── Collapsible filter panel ── */}
                 {showFilters && (
-                    <div className="bg-surface border border-line rounded-xl p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="border rounded-xl p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                         <div>
-                            <label className="block text-[10px] font-semibold text-quiet uppercase tracking-wider mb-1">Company</label>
-                            <select aria-label="Company" value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent bg-surface text-ink">
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1 text-slate-400">Company</label>
+                            <select aria-label="Company" value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 border-slate-200 dark:border-slate-700 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 <option value="All">All</option>
                                 <option value="Avana Medical Devices">Avana Medical</option>
                                 <option value="Avana Surgical Systems">Avana Surgical</option>
@@ -538,8 +538,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-semibold text-quiet uppercase tracking-wider mb-1">Account Type</label>
-                            <select aria-label="Account Type" value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent bg-surface text-ink">
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1 text-slate-400">Account Type</label>
+                            <select aria-label="Account Type" value={filterAccountType} onChange={e => setFilterAccountType(e.target.value)} className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 border-slate-200 dark:border-slate-700 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 <option value="All">All Types</option>
                                 <option value="Employee">Employees</option>
                                 <option value="External Employee">External</option>
@@ -548,8 +548,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-semibold text-quiet uppercase tracking-wider mb-1">Device</label>
-                            <select aria-label="Device" value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-accent bg-surface text-ink">
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1 text-slate-400">Device</label>
+                            <select aria-label="Device" value={filterLaptopStatus} onChange={e => setFilterLaptopStatus(e.target.value)} className="w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 border-slate-200 dark:border-slate-700 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 <option value="All">All</option>
                                 <option value="Has Assigned Device">Has Device</option>
                                 <option value="Details Not Collected">Details Pending</option>
@@ -558,14 +558,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-semibold text-quiet uppercase tracking-wider mb-1">Status / Sort</label>
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1 text-slate-400">Status / Sort</label>
                             <div className="flex gap-2">
-                                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="flex-1 text-sm border border-line rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-accent bg-surface text-ink">
+                                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="flex-1 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-1 border-slate-200 dark:border-slate-700 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                     <option value="All">All</option>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
                                 </select>
-                                <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="flex-1 text-sm border border-line rounded-lg px-2 py-2 focus:outline-none focus:ring-1 focus:ring-accent bg-surface text-ink">
+                                <select value={sortKey} onChange={e => setSortKey(e.target.value)} className="flex-1 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-1 border-slate-200 dark:border-slate-700 focus:ring-brand-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                     <option value="name-asc">A→Z</option>
                                     <option value="name-desc">Z→A</option>
                                 </select>
@@ -573,21 +573,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                         </div>
                         {activeFilterCount > 0 && (
                             <div className="col-span-2 sm:col-span-4 flex justify-end">
-                                <button onClick={() => { setFilterCompany('All'); setFilterAccountType('All'); setFilterLaptopStatus('All'); setFilterStatus('All'); }} className="text-xs text-ink hover:underline">Clear filters</button>
+                                <button onClick={() => { setFilterCompany('All'); setFilterAccountType('All'); setFilterLaptopStatus('All'); setFilterStatus('All'); }} className="text-xs hover:underline text-brand-600 dark:text-brand-400">Clear filters</button>
                             </div>
                         )}
                     </div>
                 )}
 
                 {/* ── Result count ── */}
-                <p className="text-xs text-quiet mb-3 px-1">
+                <p className="text-xs mb-3 px-1 text-slate-400 dark:text-slate-500">
                     {processedUsers.length} {processedUsers.length === 1 ? 'user' : 'users'}{searchTerm || activeFilterCount > 0 ? ' found' : ' total'}
                 </p>
 
                 {viewMode === 'list' ? (
                     <div className="space-y-2">
                         {processedUsers.length === 0 && (
-                            <div className="text-center py-16 text-quiet">
+                            <div className="text-center py-16 text-slate-400 dark:text-slate-500">
                                 <p className="text-base font-medium">No users found</p>
                                 <p className="text-sm mt-1">Try adjusting your search or filters.</p>
                             </div>
@@ -604,14 +604,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                 <div
                                     key={user.id}
                                     onClick={() => setSelectedUserId(user.id)}
-                                    className={`bg-surface  rounded-xl border cursor-pointer group transition-all hover:border-line  hover:shadow-sm ${isInactive ? 'border-line  opacity-60' : 'border-line '}`}
+                                    className={`rounded-xl border cursor-pointer group transition-all hover:shadow-sm bg-white dark:bg-slate-900 hover:border-avana-gray dark:hover:border-slate-600 ${isInactive ? 'opacity-60 border-slate-100 dark:border-slate-800' : 'border-slate-200 dark:border-slate-800'}`}
                                 >
                                     <div className="flex items-center gap-3 p-3 sm:p-4">
                                         {/* Avatar */}
                                         {user.avatar ? (
-                                            <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full flex-shrink-0 object-cover border border-line" />
+                                            <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full flex-shrink-0 object-cover border border-slate-200 dark:border-slate-700" />
                                         ) : (
-                                            <div className="h-10 w-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm bg-strong text-on-strong">
+                                            <div className="h-10 w-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm bg-avana-dark text-white">
                                                 {initials}
                                             </div>
                                         )}
@@ -619,24 +619,24 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                         {/* Main info */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="font-semibold text-sm text-ink truncate">{user.name}</p>
-                                                {isSelf && <span className="text-[10px] bg-surface text-ink px-1.5 py-0.5 rounded-full font-semibold">You</span>}
+                                                <p className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100">{user.name}</p>
+                                                {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">You</span>}
                                                 {user.accountType && user.accountType !== 'Employee' && (
-                                                    <span className="text-[10px] bg-surface text-ink px-1.5 py-0.5 rounded-full font-semibold">{user.accountType}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300">{user.accountType}</span>
                                                 )}
                                                 {(user.azureAdId || user.m365AccountCreated) && (
-                                                    <span className="text-[10px] bg-surface text-ink border border-line px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="Connected with Microsoft 365">
-                                                        <svg className="w-2.5 h-2.5 text-ink" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/></svg>
+                                                    <span className="text-[10px] border px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1 bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800" title="Connected with Microsoft 365">
+                                                        <svg className="w-2.5 h-2.5 text-sky-600" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2H2v9.5h9.5V2zm10.5 0H12.5v9.5H22V2zM11.5 12.5H2V22h9.5V12.5zm10.5 0H12.5V22H22V12.5z"/></svg>
                                                         M365
                                                     </span>
                                                 )}
                                                 {((user as any).zohoEmployeeId || (user as any).zohoData) && (
-                                                    <span className="text-[10px] bg-surface text-ink border border-line/80 px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1 shadow-xs" title="Connected with Zoho People Plus (AMD & Tech)">
+                                                    <span className="text-[10px] border px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1 shadow-xs bg-amber-50 text-slate-800 dark:bg-amber-950/40 dark:text-amber-200 border-amber-200/80 dark:border-amber-800/80" title="Connected with Zoho People Plus (AMD & Tech)">
                                                         <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                                                            <rect x="2" y="2" width="9" height="9" rx="2" fill="#b27f0d" />
-                                                            <rect x="13" y="2" width="9" height="9" rx="2" fill="#404131" />
-                                                            <rect x="2" y="13" width="9" height="9" rx="2" fill="#404131" />
-                                                            <rect x="13" y="13" width="9" height="9" rx="2" fill="#b27f0d" />
+                                                            <rect x="2" y="2" width="9" height="9" rx="2" fill="#E42528" />
+                                                            <rect x="13" y="2" width="9" height="9" rx="2" fill="#22A048" />
+                                                            <rect x="2" y="13" width="9" height="9" rx="2" fill="#0078BD" />
+                                                            <rect x="13" y="13" width="9" height="9" rx="2" fill="#F4AC1C" />
                                                         </svg>
                                                         <span className="font-semibold text-[9.5px]">Zoho People</span>
                                                     </span>
@@ -646,7 +646,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                         const al = JSON.parse((user as any).emailAliases || '[]');
                                                         if (Array.isArray(al) && al.length > 0) {
                                                             return (
-                                                                <span className="text-[10px] bg-surface text-ink border border-line px-1.5 py-0.2 rounded-full font-mono" title={`Aliases: ${al.join(', ')}`}>
+                                                                <span className="text-[10px] border px-1.5 py-0.2 rounded-full font-mono bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800" title={`Aliases: ${al.join(', ')}`}>
                                                                     +{al.length} alias{al.length > 1 ? 'es' : ''}
                                                                 </span>
                                                             );
@@ -655,8 +655,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                                     return null;
                                                 })()}
                                             </div>
-                                            <p className="text-xs text-quiet truncate mt-0.5">
-                                                {user.employeeId && <span className="font-medium text-quiet mr-1">[{user.employeeId}]</span>}
+                                            <p className="text-xs truncate mt-0.5 text-slate-500 dark:text-slate-400">
+                                                {user.employeeId && <span className="font-medium mr-1 text-slate-600 dark:text-slate-300">[{user.employeeId}]</span>}
                                                 {user.email}
                                                 {user.department?.name && <span className="mx-1">·</span>}
                                                 {user.department?.name}
@@ -664,18 +664,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                             {/* Device + license strip */}
                                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                 {assignedAsset ? (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-surface text-ink px-2 py-0.5 rounded-full">
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                                         {isDesk ? '🖥️' : '💻'} {assignedAsset.assetId || assignedAsset.name}
                                                     </span>
                                                 ) : isUsingOwnLaptop ? (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-surface text-ink px-2 py-0.5 rounded-full">BYOD</span>
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">BYOD</span>
                                                 ) : user.laptopStatus === 'Details Not Collected' ? (
-                                                    <span className="inline-flex items-center text-[10px] font-semibold bg-surface text-ink px-2 py-0.5 rounded-full">⚠ Details Pending</span>
+                                                    <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">⚠ Details Pending</span>
                                                 ) : (
-                                                    <span className="inline-flex items-center text-[10px] text-quiet px-2 py-0.5 rounded-full border border-line">No Device</span>
+                                                    <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700">No Device</span>
                                                 )}
                                                 {user.licenseAssignments && user.licenseAssignments.length > 0 && (
-                                                    <span className="text-[10px] text-quiet" title={user.licenseAssignments.map((la: any) => la.license?.name?.replace('Microsoft 365 ', '')).join(', ')}>
+                                                    <span className="text-[10px] text-slate-500 dark:text-slate-400" title={user.licenseAssignments.map((la: any) => la.license?.name?.replace('Microsoft 365 ', '')).join(', ')}>
                                                         📧 {user.licenseAssignments.length} {user.licenseAssignments.length === 1 ? 'License' : 'Licenses'}
                                                     </span>
                                                 )}
@@ -685,10 +685,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                         {/* Right: role + status + actions */}
                                         <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
                                             <div className="hidden sm:flex flex-col items-end gap-1">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role === 'Admin' ? 'bg-surface text-ink  ' : user.role === 'Manager' ? 'bg-surface/60 text-quiet  ' : 'bg-muted text-quiet  '}`}>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role === 'Admin' ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300' : user.role === 'Manager' ? 'bg-avana-beige/60 text-avana-olive dark:bg-slate-700 dark:text-avana-beige' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                                                     {user.role}
                                                 </span>
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isInactive ? 'bg-muted text-quiet  ' : 'bg-surface text-ink  '}`}>
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isInactive ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
                                                     {isInactive ? 'Inactive' : 'Active'}
                                                 </span>
                                             </div>

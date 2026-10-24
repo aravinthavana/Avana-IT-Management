@@ -81,8 +81,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
 
     return (
         <>
-            <aside ref={drawerRef} id="primary-navigation" tabIndex={-1} role={isMobile && isSidebarOpen ? 'dialog' : undefined} aria-modal={isMobile && isSidebarOpen ? true : undefined} aria-label="Main navigation" className={`bg-surface  text-ink  w-64 fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'} lg:translate-x-0 lg:visible transition-transform duration-300 ease-in-out z-40 border-r border-line  flex flex-col`}>
-                <div className="py-2 px-4 flex items-center justify-between border-b border-line h-16 shrink-0">
+            <aside ref={drawerRef} id="primary-navigation" tabIndex={-1} role={isMobile && isSidebarOpen ? 'dialog' : undefined} aria-modal={isMobile && isSidebarOpen ? true : undefined} aria-label="Main navigation" className={`w-64 fixed inset-y-0 left-0 transform bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 ${isSidebarOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'} lg:translate-x-0 lg:visible transition-transform duration-300 ease-in-out z-40 border-r flex flex-col border-slate-200 dark:border-slate-800`}>
+                <div className="py-2 px-4 flex items-center justify-between border-b h-16 shrink-0 border-slate-200 dark:border-slate-800">
                     <a
                         href="#"
                         onClick={(e) => {
@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     </a>
                     {/* Mobile close button */}
                     <button
-                        className="lg:hidden p-1.5 rounded-lg text-quiet hover:bg-muted ml-2"
+                        className="lg:hidden p-1.5 rounded-lg ml-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                         onClick={() => setSidebarOpen(false)}
                         aria-label="Close sidebar"
                     >
@@ -123,20 +123,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                                 }}
                                 className={`group flex items-center justify-between w-full px-3 py-2.5 rounded-lg transition-colors duration-150 text-sm font-medium ${
                                     currentView === item.view
-                                        ? 'bg-strong text-on-strong shadow-sm'
-                                        : 'text-quiet  hover:bg-muted  hover:text-ink '
+                                        ? 'shadow-sm bg-avana-dark text-white'
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
                                     <span className="w-5 h-5 mr-3 flex-shrink-0 opacity-80">{item.icon}</span>
                                     <span className="flex-1 truncate">{item.name}</span>
                                     {item.view === 'requests' && pendingCount > 0 && (
-                                        <span className="ml-2 bg-accent text-on-strong text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                                        <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse bg-brand-500 text-white">
                                             {pendingCount}
                                         </span>
                                     )}
                                     {item.view === 'tickets' && user?.role === 'Admin' && openTicketCount > 0 && (
-                                        <span className="ml-2 bg-accent text-on-strong text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                        <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-brand-500 text-white">
                                             {openTicketCount}
                                         </span>
                                     )}
@@ -147,9 +147,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                             </a>
                             {item.subItems && isAssetsSubMenuOpen && (
                                 <div className="pl-8 py-1 space-y-0.5">
-                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-bold text-ink ' : 'text-quiet  hover:text-ink '}`}>All Assets</a>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav('All'); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === 'All' ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>All Assets</a>
                                     {item.subItems.map(subItem => (
-                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-bold text-ink ' : 'text-quiet  hover:text-ink '}`}>
+                                        <a key={subItem.name} href="#" onClick={(e) => { e.preventDefault(); handleAssetFilterNav(subItem.status); }} className={`flex items-center text-xs px-3 py-2 rounded-md ${activeFilterStatus === subItem.status ? 'font-bold text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
                                             {subItem.name}
                                         </a>
                                     ))}
@@ -159,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
                     ))}
                 </nav>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-strong/50 backdrop-blur-sm z-[35] lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
+            {isSidebarOpen && <div className="fixed inset-0 backdrop-blur-sm z-[35] lg:hidden bg-avana-dark/50" onClick={() => setSidebarOpen(false)}></div>}
         </>
     );
 };

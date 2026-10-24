@@ -11,10 +11,10 @@ import { License } from '../../types';
 
 export const ZohoLogo: React.FC<{ className?: string }> = ({ className = "w-3.5 h-3.5" }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="2" width="9" height="9" rx="2" fill="#b27f0d" />
-        <rect x="13" y="2" width="9" height="9" rx="2" fill="#404131" />
-        <rect x="2" y="13" width="9" height="9" rx="2" fill="#404131" />
-        <rect x="13" y="13" width="9" height="9" rx="2" fill="#b27f0d" />
+        <rect x="2" y="2" width="9" height="9" rx="2" fill="#E42528" />
+        <rect x="13" y="2" width="9" height="9" rx="2" fill="#22A048" />
+        <rect x="2" y="13" width="9" height="9" rx="2" fill="#0078BD" />
+        <rect x="13" y="13" width="9" height="9" rx="2" fill="#F4AC1C" />
     </svg>
 );
 
@@ -136,9 +136,9 @@ const LicenseManagement: React.FC = () => {
     });
 
     const getStatusStyle = (status: string) => {
-        if (status === 'Active') return 'bg-surface text-ink   border border-line ';
-        if (status === 'Expiring Soon') return 'bg-surface text-ink   border border-line ';
-        return 'bg-surface text-ink   border border-line ';
+        if (status === 'Active') return 'border bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+        if (status === 'Expiring Soon') return 'border bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+        return 'border bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
     };
 
     const handleSave = async (licenseData: License) => {
@@ -203,62 +203,62 @@ const LicenseManagement: React.FC = () => {
         <div className="bg-transparent pb-20 space-y-6">
             {/* ── Summary Metrics Bar ── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs">
-                    <p className="text-xs font-semibold text-quiet uppercase tracking-wider">Total Subscriptions</p>
+                <div className="border rounded-2xl p-4 shadow-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Subscriptions</p>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-bold text-ink">{totalLicenses}</span>
-                        <span className="text-xs font-medium text-quiet">{cloudLicensesCount} cloud · {manualLicensesCount} manual</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalLicenses}</span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{cloudLicensesCount} cloud · {manualLicensesCount} manual</span>
                     </div>
                 </div>
 
-                <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs">
-                    <p className="text-xs font-semibold text-quiet uppercase tracking-wider">Total Licensed Seats</p>
+                <div className="border rounded-2xl p-4 shadow-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Licensed Seats</p>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-bold text-ink">{totalSeats}</span>
-                        <span className="text-xs font-medium text-quiet">capacity</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalSeats}</span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">capacity</span>
                     </div>
                 </div>
 
-                <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs">
-                    <p className="text-xs font-semibold text-quiet uppercase tracking-wider">Assigned Seats</p>
+                <div className="border rounded-2xl p-4 shadow-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Assigned Seats</p>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-bold text-ink">{totalAssignedSeats}</span>
-                        <span className="text-xs font-semibold text-ink">{overallUtilization}% utilized</span>
+                        <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">{totalAssignedSeats}</span>
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{overallUtilization}% utilized</span>
                     </div>
                 </div>
 
-                <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs">
-                    <p className="text-xs font-semibold text-quiet uppercase tracking-wider">Available Free Seats</p>
+                <div className="border rounded-2xl p-4 shadow-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Available Free Seats</p>
                     <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-2xl font-bold text-ink">{totalAvailableSeats}</span>
-                        <span className="text-xs font-medium text-quiet">ready to assign</span>
+                        <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{totalAvailableSeats}</span>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">ready to assign</span>
                     </div>
                 </div>
             </div>
 
             {/* ── Toolbar: Search, Filters & Sync Actions ── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface p-4 rounded-2xl border border-line shadow-xs">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 rounded-2xl border shadow-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                 {/* Search & Tabs */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                     <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet">{ICONS.search}</span>
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{ICONS.search}</span>
                         <input
                             type="text"
                             placeholder="Search licenses, suites, keys..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-canvas border border-line rounded-xl text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="pl-9 pr-4 py-2 border rounded-xl text-sm w-full sm:w-64 focus:outline-none focus:ring-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-brand-500"
                         />
                     </div>
 
                     {/* Filter Pills */}
-                    <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
+                    <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
                         <button
                             onClick={() => setActiveTab('all')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                 activeTab === 'all'
-                                    ? 'bg-surface  text-ink  shadow-xs'
-                                    : 'text-quiet  hover:text-ink'
+                                    ? 'shadow-xs bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                             }`}
                         >
                             All ({totalLicenses})
@@ -267,12 +267,12 @@ const LicenseManagement: React.FC = () => {
                             onClick={() => setActiveTab('cloud')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                                 activeTab === 'cloud'
-                                    ? 'bg-surface  text-ink  shadow-xs'
-                                    : 'text-quiet  hover:text-ink'
+                                    ? 'shadow-xs bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                             }`}
                         >
                             <span>Cloud Synced</span>
-                            <span className="text-[10px] bg-surface text-ink px-1.5 py-0.2 rounded-full font-bold">
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">
                                 {cloudLicensesCount}
                             </span>
                         </button>
@@ -280,12 +280,12 @@ const LicenseManagement: React.FC = () => {
                             onClick={() => setActiveTab('manual')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                                 activeTab === 'manual'
-                                    ? 'bg-surface  text-ink  shadow-xs'
-                                    : 'text-quiet  hover:text-ink'
+                                    ? 'shadow-xs bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                             }`}
                         >
                             <span>Manual Software</span>
-                            <span className="text-[10px] bg-muted text-ink px-1.5 py-0.2 rounded-full font-bold">
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                                 {manualLicensesCount}
                             </span>
                         </button>
@@ -297,17 +297,17 @@ const LicenseManagement: React.FC = () => {
                     <button
                         onClick={handleSyncM365Licenses}
                         disabled={isSyncing}
-                        className="bg-surface hover:bg-surface text-ink border border-line px-3.5 py-2 rounded-xl font-semibold transition-all duration-200 active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs shadow-xs"
+                        className="border px-3.5 py-2 rounded-xl font-semibold transition-all duration-200 active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs shadow-xs bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
                         title="Sync Microsoft 365 license pools and user assignments"
                     >
-                        <M365Logo className={`w-3.5 h-3.5 text-ink  ${isSyncing ? 'animate-spin' : ''}`} />
+                        <M365Logo className={`w-3.5 h-3.5 text-sky-600 dark:text-sky-400 ${isSyncing ? 'animate-spin' : ''}`} />
                         <span>{isSyncing ? 'Syncing M365...' : 'Sync M365'}</span>
                     </button>
 
                     <button
                         onClick={handleSyncZohoLicenses}
                         disabled={isZohoSyncing}
-                        className="bg-surface hover:bg-surface text-ink border border-line/80 px-3.5 py-2 rounded-xl font-semibold transition-all duration-200 active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs shadow-xs"
+                        className="border px-3.5 py-2 rounded-xl font-semibold transition-all duration-200 active:scale-95 flex items-center gap-2 disabled:opacity-50 text-xs shadow-xs bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-slate-800 dark:text-amber-200 border-amber-200/80 dark:border-amber-800/80"
                         title="Sync Zoho People Plus (AMD & Tech) active employees and seat pool"
                     >
                         <ZohoLogo className={`w-3.5 h-3.5 ${isZohoSyncing ? 'animate-spin' : ''}`} />
@@ -316,7 +316,7 @@ const LicenseManagement: React.FC = () => {
 
                     <button
                         onClick={openAddForm}
-                        className="bg-accent text-on-strong px-4 py-2 rounded-xl hover:bg-accent font-semibold transition-all duration-200 active:scale-95 text-xs shadow-xs flex items-center gap-1.5"
+                        className="px-4 py-2 rounded-xl font-semibold transition-all duration-200 active:scale-95 text-xs shadow-xs flex items-center gap-1.5 bg-brand-600 text-white hover:bg-brand-700"
                     >
                         {ICONS.add} <span>Add License</span>
                     </button>
@@ -336,19 +336,19 @@ const LicenseManagement: React.FC = () => {
                     const utilization = total > 0 ? Math.min(100, Math.round((assigned / total) * 100)) : 0;
 
                     // Progress bar coloring
-                    let progressColor = 'bg-olive';
-                    if (utilization >= 95) progressColor = 'bg-olive';
-                    else if (utilization >= 80) progressColor = 'bg-olive';
+                    let progressColor = 'bg-emerald-500';
+                    if (utilization >= 95) progressColor = 'bg-rose-500';
+                    else if (utilization >= 80) progressColor = 'bg-amber-500';
 
                     return (
                         <div
                             key={license.id}
-                            className={`bg-surface  rounded-2xl border transition-all hover:shadow-md flex flex-col justify-between p-5 ${
+                            className={`rounded-2xl border transition-all hover:shadow-md flex flex-col justify-between p-5 bg-white dark:bg-slate-900 ${
                                 isZoho
-                                    ? 'border-line/80  hover:border-line'
+                                    ? 'border-amber-200/80 dark:border-amber-900/50 hover:border-amber-300'
                                     : isM365
-                                    ? 'border-line/80  hover:border-line'
-                                    : 'border-line  hover:border-line'
+                                    ? 'border-sky-200/80 dark:border-sky-900/50 hover:border-sky-300'
+                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
                             }`}
                         >
                             <div>
@@ -357,33 +357,33 @@ const LicenseManagement: React.FC = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 flex-wrap mb-1">
                                             {isM365 && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] bg-surface text-ink border border-line px-2 py-0.5 rounded-full font-semibold">
-                                                    <M365Logo className="w-2.5 h-2.5 text-ink" />
+                                                <span className="inline-flex items-center gap-1 text-[10px] border px-2 py-0.5 rounded-full font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800">
+                                                    <M365Logo className="w-2.5 h-2.5 text-sky-600" />
                                                     Microsoft 365
                                                 </span>
                                             )}
                                             {isZoho && (
-                                                <span className="inline-flex items-center gap-1.5 text-[10px] bg-surface text-ink border border-line px-2 py-0.5 rounded-full font-semibold">
+                                                <span className="inline-flex items-center gap-1.5 text-[10px] border px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-slate-800 dark:bg-amber-950/50 dark:text-amber-200 border-amber-200 dark:border-amber-800">
                                                     <ZohoLogo className="w-3 h-3 flex-shrink-0" />
                                                     Zoho People Plus (AMD & Tech)
                                                 </span>
                                             )}
                                             {!isCloud && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] bg-muted text-ink border border-line px-2 py-0.5 rounded-full font-medium">
+                                                <span className="inline-flex items-center gap-1 text-[10px] border px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700">
                                                     💾 Manual Software
                                                 </span>
                                             )}
                                             {isCloud && (
-                                                <span className="text-[10px] text-ink font-semibold flex items-center gap-1">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-olive animate-pulse"></span>
+                                                <span className="text-[10px] font-semibold flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                                    <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-500"></span>
                                                     Auto-Synced
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-base text-ink leading-snug line-clamp-2" title={license.name}>
+                                        <h3 className="font-bold text-base leading-snug line-clamp-2 text-slate-900 dark:text-slate-100" title={license.name}>
                                             {license.name}
                                         </h3>
-                                        <p className="text-xs text-quiet mt-0.5">{license.category || 'General Software'}</p>
+                                        <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">{license.category || 'General Software'}</p>
                                     </div>
                                     <span className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full flex-shrink-0 ${getStatusStyle(license.status)}`}>
                                         {license.status}
@@ -391,57 +391,57 @@ const LicenseManagement: React.FC = () => {
                                 </div>
 
                                 {/* Seat Utilization Progress Bar */}
-                                <div className="mt-4 p-3 bg-canvas rounded-xl border border-line">
+                                <div className="mt-4 p-3 rounded-xl border bg-slate-50 dark:bg-slate-800/60 border-slate-100 dark:border-slate-800">
                                     <div className="flex justify-between items-baseline mb-1.5 text-xs">
-                                        <span className="font-semibold text-ink">
-                                            {assigned} <span className="text-quiet font-normal">/ {total} seats assigned</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                            {assigned} <span className="font-normal text-slate-400">/ {total} seats assigned</span>
                                         </span>
-                                        <span className={`font-bold ${utilization >= 95 ? 'text-ink ' : 'text-quiet '}`}>
+                                        <span className={`font-bold ${utilization >= 95 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300'}`}>
                                             {utilization}%
                                         </span>
                                     </div>
-                                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                    <div className="w-full rounded-full h-2 overflow-hidden bg-slate-200 dark:bg-slate-700">
                                         <div
                                             className={`h-2 rounded-full transition-all duration-300 ${progressColor}`}
                                             style={{ width: `${utilization}%` }}
                                         />
                                     </div>
                                     <div className="flex justify-between items-center mt-2 text-[11px]">
-                                        <span className="text-quiet">Available remaining:</span>
-                                        <span className={`font-semibold ${available === 0 ? 'text-ink ' : 'text-ink '}`}>
+                                        <span className="text-slate-400">Available remaining:</span>
+                                        <span className={`font-semibold ${available === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                                             {available} {available === 1 ? 'seat' : 'seats'} free
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Metadata Details */}
-                                <div className="space-y-1.5 my-3 text-xs text-quiet px-1">
+                                <div className="space-y-1.5 my-3 text-xs px-1 text-slate-600 dark:text-slate-300">
                                     {license.startDate && (
                                         <div className="flex justify-between">
-                                            <span className="text-quiet">Start Date:</span>
+                                            <span className="text-slate-400">Start Date:</span>
                                             <span className="font-medium">{new Date(license.startDate).toLocaleDateString()}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span className="text-quiet">Renewal / Expires:</span>
+                                        <span className="text-slate-400">Renewal / Expires:</span>
                                         <span className="font-medium">{license.expirationDate ? new Date(license.expirationDate).toLocaleDateString() : 'Continuous Cloud Subscription'}</span>
                                     </div>
                                     {license.cost != null && (
                                         <div className="flex justify-between">
-                                            <span className="text-quiet">Annual Cost:</span>
-                                            <span className="font-bold text-ink">₹{license.cost.toLocaleString()}</span>
+                                            <span className="text-slate-400">Annual Cost:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">₹{license.cost.toLocaleString()}</span>
                                         </div>
                                     )}
                                     {license.key && !isCloud && (
                                         <div className="flex justify-between items-center">
-                                            <span className="text-quiet">License Key:</span>
-                                            <span className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded text-ink max-w-[150px] truncate" title={license.key}>
+                                            <span className="text-slate-400">License Key:</span>
+                                            <span className="font-mono text-[11px] px-1.5 py-0.5 rounded max-w-[150px] truncate bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" title={license.key}>
                                                 {license.key}
                                             </span>
                                         </div>
                                     )}
                                     {license.remarks && (
-                                        <p className="text-[11px] text-quiet italic border-t border-line pt-2 line-clamp-2" title={license.remarks}>
+                                        <p className="text-[11px] italic border-t pt-2 line-clamp-2 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-800" title={license.remarks}>
                                             "{license.remarks}"
                                         </p>
                                     )}
@@ -449,31 +449,31 @@ const LicenseManagement: React.FC = () => {
                             </div>
 
                             {/* Action Footer */}
-                            <div className="pt-3 border-t border-line flex items-center justify-between gap-2">
+                            <div className="pt-3 border-t flex items-center justify-between gap-2 border-slate-100 dark:border-slate-800">
                                 <button
                                     onClick={() => handleOpenAssign(license)}
-                                    className="flex-1 bg-strong hover:bg-strong text-on-strong px-3 py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 shadow-xs"
+                                    className="flex-1 px-3 py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 shadow-xs bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100"
                                 >
                                     <span>Manage Users ({assigned})</span>
                                 </button>
 
                                 <button
                                     onClick={() => openProRataForm(license)}
-                                    className="p-1.5 text-ink hover:text-ink hover:bg-surface rounded-lg transition-colors"
+                                    className="p-1.5 rounded-lg transition-colors text-brand-600 hover:text-brand-800 hover:bg-brand-50 dark:hover:bg-brand-950/40"
                                     title="Add Seats (Pro-Rata)"
                                 >
                                     {ICONS.add}
                                 </button>
                                 <button
                                     onClick={() => openEditForm(license)}
-                                    className="p-1.5 text-quiet hover:text-ink hover:bg-muted rounded-lg transition-colors"
+                                    className="p-1.5 rounded-lg transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                                     title="Edit Details"
                                 >
                                     {ICONS.edit}
                                 </button>
                                 <button
                                     onClick={() => setLicenseToDelete(license.id)}
-                                    className="p-1.5 text-ink hover:text-ink hover:bg-surface rounded-lg transition-colors"
+                                    className="p-1.5 rounded-lg transition-colors text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                     title="Delete License"
                                 >
                                     {ICONS.delete}
@@ -486,9 +486,9 @@ const LicenseManagement: React.FC = () => {
 
             {/* Empty state */}
             {filteredLicenses.length === 0 && (
-                <div className="text-center py-16 bg-surface rounded-2xl border border-line">
-                    <p className="text-base font-semibold text-ink">No licenses found</p>
-                    <p className="text-xs text-quiet mt-1">Try adjusting your search terms or filter selection.</p>
+                <div className="text-center py-16 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-base font-semibold text-slate-700 dark:text-slate-300">No licenses found</p>
+                    <p className="text-xs mt-1 text-slate-400">Try adjusting your search terms or filter selection.</p>
                 </div>
             )}
 

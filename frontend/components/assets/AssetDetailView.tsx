@@ -19,44 +19,44 @@ interface AssetDetailViewProps {
 
 const DetailItem: React.FC<{ label: string, value: React.ReactNode, className?: string }> = ({ label, value, className }) => (
     <div className={className}>
-        <p className="text-sm font-medium text-quiet">{label}</p>
-        <div className="text-ink mt-1">{value}</div>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+        <div className="mt-1 text-slate-800 dark:text-slate-100">{value}</div>
     </div>
 );
 
 // Status badge colors
 const STATUS_STYLES: Record<string, string> = {
-    'In Stock':                   'bg-surface text-ink   border-line ',
-    'Pending Handover':           'bg-surface text-ink   border-line ',
-    'Assigned':                   'bg-surface text-ink   border-line ',
-    'Reserved':                   'bg-surface text-ink   border-line ',
-    'In Repair':                  'bg-surface text-ink   border-line ',
-    'Under Inspection':           'bg-surface text-ink   border-line ',
-    'Available for Reallocation': 'bg-surface text-ink   border-line ',
-    'Retired':                    'bg-muted text-ink   border-line ',
-    'Disposed':                   'bg-surface text-ink   border-line ',
+    'In Stock':                   'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    'Pending Handover':           'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Assigned':                   'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    'Reserved':                   'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+    'In Repair':                  'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Under Inspection':           'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    'Available for Reallocation': 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+    'Retired':                    'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    'Disposed':                   'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
 };
 
 const CONDITION_STYLES: Record<string, string> = {
-    'Brand New':              'bg-surface text-ink   border-line ',
-    'Excellent':              'bg-surface text-ink   border-line ',
-    'Good':                   'bg-surface text-ink   border-line ',
-    'Fair':                   'bg-surface text-ink   border-line ',
-    'Minor Damage':           'bg-surface text-ink   border-line ',
-    'Damaged / Under Repair': 'bg-surface text-ink   border-line ',
+    'Brand New':              'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    'Excellent':              'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    'Good':                   'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+    'Fair':                   'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    'Minor Damage':           'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    'Damaged / Under Repair': 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
 };
 
 // Status dot colours for the change-status dropdown
 const STATUS_DOT: Record<string, string> = {
-    'In Stock':                   'bg-olive',
-    'Pending Handover':           'bg-olive',
-    'Assigned':                   'bg-olive',
-    'Reserved':                   'bg-olive',
-    'In Repair':                  'bg-olive',
-    'Under Inspection':           'bg-olive',
-    'Available for Reallocation': 'bg-olive',
-    'Retired':                    'bg-muted',
-    'Disposed':                   'bg-olive',
+    'In Stock':                   'bg-emerald-500',
+    'Pending Handover':           'bg-amber-500',
+    'Assigned':                   'bg-blue-500',
+    'Reserved':                   'bg-violet-500',
+    'In Repair':                  'bg-amber-500',
+    'Under Inspection':           'bg-orange-500',
+    'Available for Reallocation': 'bg-teal-500',
+    'Retired':                    'bg-slate-400',
+    'Disposed':                   'bg-red-500',
 };
 
 // Which statuses a non-assigned asset can transition to (lifecycle flow)
@@ -231,17 +231,17 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
     return (
         <>
             {/* Sticky Header */}
-            <div className="sticky top-16 bg-muted/80 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b border-line">
+            <div className="sticky top-16 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b bg-slate-100/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4 min-w-0">
                         {onBack && (
-                            <button onClick={onBack} className="bg-muted text-ink px-2 sm:px-3 py-1.5 rounded-lg hover:bg-muted flex items-center text-sm transition-colors flex-shrink-0">
+                            <button onClick={onBack} className="px-2 sm:px-3 py-1.5 rounded-lg flex items-center text-sm transition-colors flex-shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">
                                 &larr; <span className="hidden sm:inline ml-2 font-medium">Back</span>
                             </button>
                         )}
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold text-ink truncate" title={asset.name}>{asset.name}</h2>
-                            <p className="text-xs text-quiet font-mono">{asset.assetId}</p>
+                            <h2 className="text-lg font-bold truncate text-slate-800 dark:text-slate-100" title={asset.name}>{asset.name}</h2>
+                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{asset.assetId}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -249,14 +249,14 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                             <>
                                 {/* Assigned or Pending Handover: show Unassign / Cancel */}
                                 {(asset.status === 'Assigned' || asset.status === 'Pending Handover') && (
-                                    <button onClick={() => setIsUnassignModalOpen(true)} className="bg-muted text-ink px-3 sm:px-4 py-2 rounded-lg hover:bg-surface hover:text-ink flex items-center gap-2 text-sm transition-all active:scale-95">
+                                    <button onClick={() => setIsUnassignModalOpen(true)} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400">
                                         {ICONS.remove} <span className="hidden sm:inline">{asset.status === 'Pending Handover' ? 'Cancel Handover' : 'Unassign'}</span>
                                     </button>
                                 )}
 
                                 {/* Pending Handover: show Mark as Handed Over / Assigned */}
                                 {asset.status === 'Pending Handover' && (
-                                    <button onClick={() => handleChangeStatus('Assigned')} disabled={isChangingStatus} className="bg-olive hover:bg-olive text-on-strong font-medium px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm disabled:opacity-60">
+                                    <button onClick={() => handleChangeStatus('Assigned')} disabled={isChangingStatus} className="font-medium px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm disabled:opacity-60 bg-emerald-600 hover:bg-emerald-700 text-white">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
@@ -266,7 +266,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
 
                                 {/* In Stock / Available for Reallocation: show Assign button */}
                                 {(asset.status === 'In Stock' || asset.status === 'Available for Reallocation') && (
-                                    <button onClick={handleAssign} className="bg-olive text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-olive flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm">
+                                    <button onClick={handleAssign} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm bg-blue-600 text-white hover:bg-blue-700">
                                         {ICONS.users} <span className="hidden sm:inline">Assign Asset</span>
                                     </button>
                                 )}
@@ -277,7 +277,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                         <button
                                             onClick={() => setIsStatusMenuOpen(prev => !prev)}
                                             disabled={isChangingStatus}
-                                            className="bg-muted text-ink px-3 sm:px-4 py-2 rounded-lg hover:bg-muted flex items-center gap-2 text-sm transition-all active:scale-95 disabled:opacity-60"
+                                            className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 disabled:opacity-60 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -288,18 +288,18 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                             <>
                                                 {/* Backdrop to close menu */}
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsStatusMenuOpen(false)} />
-                                                <div className="absolute right-0 mt-2 w-52 bg-surface rounded-xl shadow-xl border border-line z-20 overflow-hidden">
-                                                    <p className="px-4 py-2 text-xs font-bold text-quiet uppercase tracking-wider border-b border-line">
+                                                <div className="absolute right-0 mt-2 w-52 rounded-xl shadow-xl border z-20 overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                                                    <p className="px-4 py-2 text-xs font-bold uppercase tracking-wider border-b text-slate-400 border-slate-100 dark:border-slate-700">
                                                         Change to...
                                                     </p>
                                                     {availableTransitions.map(s => (
                                                         <button
                                                             key={s}
                                                             onClick={() => handleChangeStatus(s)}
-                                                            className="w-full text-left px-4 py-3 text-sm hover:bg-canvas transition-colors flex items-center gap-3"
+                                                            className="w-full text-left px-4 py-3 text-sm transition-colors flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700"
                                                         >
-                                                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[s] || 'bg-muted'}`} />
-                                                            <span className="font-medium text-ink">{s}</span>
+                                                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[s] || 'bg-slate-400'}`} />
+                                                            <span className="font-medium text-slate-700 dark:text-slate-200">{s}</span>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -308,13 +308,13 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                     </div>
                                 )}
 
-                                <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 text-sm transition-colors flex-shrink-0">
+                                <button onClick={() => setPreviewTarget({ type: 'label', assetId: asset.id })} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors flex-shrink-0 bg-brand-600 text-white hover:bg-brand-700">
                                     {ICONS.qr} <span className="hidden sm:inline">Print Label</span>
                                 </button>
                             </>
                         )}
                         {user?.role === 'User' && asset.userId === user.id && (
-                            <button onClick={() => setIsAuditModalOpen(true)} className="bg-olive text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-olive flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm">
+                            <button onClick={() => setIsAuditModalOpen(true)} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-all active:scale-95 shadow-sm bg-green-600 text-white hover:bg-green-700">
                                 <span>📷</span> <span className="hidden sm:inline font-medium">Self Audit</span>
                             </button>
                         )}
@@ -323,19 +323,19 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
             </div>
 
             <div className="space-y-6 pt-6">
-                <div className="bg-surface p-6 rounded-xl shadow-sm">
-                    <div className="flex justify-end items-start pb-6 border-b border-line">
-                        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-surface text-ink">{asset.category}</span>
+                <div className="p-6 rounded-xl shadow-sm bg-white dark:bg-slate-800">
+                    <div className="flex justify-end items-start pb-6 border-b border-slate-200 dark:border-slate-700">
+                        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">{asset.category}</span>
                     </div>
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <DetailItem label="Status" value={
-                            <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full ${STATUS_STYLES[asset.status] || 'bg-muted text-quiet'}`}>
+                            <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full ${STATUS_STYLES[asset.status] || 'bg-slate-100 text-slate-600'}`}>
                                 {asset.status}
                             </span>
                         } />
                         <DetailItem label="Physical Condition" value={
                             <div className="flex items-center gap-2">
-                                <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full border ${CONDITION_STYLES[asset.condition || 'Good'] || 'bg-muted text-ink border-line'}`}>
+                                <span className={`px-2.5 py-1 inline-flex text-sm font-semibold rounded-full border ${CONDITION_STYLES[asset.condition || 'Good'] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                                     {asset.condition || 'Good'}
                                 </span>
                                 {user?.role !== 'User' && (
@@ -343,7 +343,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                         <button
                                             onClick={() => setIsConditionMenuOpen(prev => !prev)}
                                             disabled={isChangingCondition}
-                                            className="text-xs text-ink hover:underline font-semibold ml-1 cursor-pointer"
+                                            className="text-xs hover:underline font-semibold ml-1 cursor-pointer text-brand-600 dark:text-red-400"
                                             title="Update Condition"
                                         >
                                             {isChangingCondition ? 'Updating...' : 'Change'}
@@ -351,12 +351,12 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                                         {isConditionMenuOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-20" onClick={() => setIsConditionMenuOpen(false)} />
-                                                <div className="absolute left-0 mt-1 w-48 bg-surface rounded-xl shadow-xl border border-line z-30 py-1 text-xs overflow-hidden">
+                                                <div className="absolute left-0 mt-1 w-48 rounded-xl shadow-xl border z-30 py-1 text-xs overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                                     {['Brand New', 'Excellent', 'Good', 'Fair', 'Minor Damage', 'Damaged / Under Repair'].map(cond => (
                                                         <button
                                                             key={cond}
                                                             onClick={() => handleChangeCondition(cond)}
-                                                            className={`w-full text-left px-3 py-2 hover:bg-muted  flex items-center justify-between ${asset.condition === cond ? 'font-bold text-ink  bg-canvas ' : 'text-ink '}`}
+                                                            className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700 ${asset.condition === cond ? 'font-bold text-brand-600 dark:text-red-400 bg-slate-50 dark:bg-slate-700/50' : 'text-slate-700 dark:text-slate-300'}`}
                                                         >
                                                             <span>{cond}</span>
                                                             {asset.condition === cond && <span>✓</span>}
@@ -382,7 +382,7 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         <DetailItem label="Location" value={derivedLocation} />
                         {purchase && (
                             <DetailItem label="Invoice Number" value={
-                                <a href="#" onClick={handlePurchaseClick} className="text-ink hover:underline font-semibold">
+                                <a href="#" onClick={handlePurchaseClick} className="hover:underline font-semibold text-brand-600 dark:text-red-400">
                                     {purchase.invoiceNumber}
                                 </a>
                             } />
@@ -393,20 +393,20 @@ const AssetDetailView: React.FC<AssetDetailViewProps> = ({ asset, onBack }) => {
                         <DetailItem label="Warranty" value={<span className={`font-semibold ${warrantyStatus.color}`}>{warrantyStatus.text}</span>} className="lg:col-span-3" />
                     </div>
                     {asset.remarks && (
-                        <div className="mt-6 pt-6 border-t border-line">
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                             <DetailItem label="Remarks" value={<p className="italic">"{asset.remarks}"</p>} />
                         </div>
                     )}
                 </div>
 
                 {specEntries.length > 0 && (
-                    <div className="bg-surface p-6 rounded-xl shadow-sm">
-                        <h3 className="text-xl font-semibold mb-4 text-ink border-b border-line pb-4">Specifications</h3>
+                    <div className="p-6 rounded-xl shadow-sm bg-white dark:bg-slate-800">
+                        <h3 className="text-xl font-semibold mb-4 border-b pb-4 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700">Specifications</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
                             {specEntries.map(([key, value]) => (
                                 <div key={key}>
-                                    <p className="text-sm font-medium text-quiet capitalize">{key.replace(/([A-Z])/g, ' $1')}</p>
-                                    <p className="text-ink mt-1">{value}</p>
+                                    <p className="text-sm font-medium capitalize text-slate-500 dark:text-slate-400">{key.replace(/([A-Z])/g, ' $1')}</p>
+                                    <p className="mt-1 text-slate-800 dark:text-slate-100">{value}</p>
                                 </div>
                             ))}
                         </div>

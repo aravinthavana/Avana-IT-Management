@@ -13,8 +13,8 @@ interface UnassignAssetModalProps {
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }> = ({ label, children, ...props }) => (
     <div>
-       <label className="block text-sm font-medium text-ink">{label}</label>
-       <select {...props} className="mt-1 block w-full pl-3 pr-10 py-2 bg-surface border border-line rounded-md text-sm shadow-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink">
+       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+       <select {...props} className="mt-1 block w-full pl-3 pr-10 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:border-brand-500 focus:ring-brand-500 text-slate-900 dark:text-slate-100">
            {children}
        </select>
    </div>
@@ -22,8 +22,8 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { lab
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => (
    <div>
-       <label className="block text-sm font-medium text-ink">{label}</label>
-       <textarea {...props} rows={3} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink"></textarea>
+       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+       <textarea {...props} rows={3} className="mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500 text-slate-900 dark:text-slate-100"></textarea>
    </div>
 );
 
@@ -49,10 +49,10 @@ const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Return Asset & Update Status">
             <div className="space-y-4">
-                <p className="text-sm text-quiet">
-                    You are returning the asset <strong className="text-ink">{asset.name}</strong> ({asset.assetId}). Select its status after return.
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                    You are returning the asset <strong className="text-slate-800 dark:text-slate-100">{asset.name}</strong> ({asset.assetId}). Select its status after return.
                 </p>
-                <div className="bg-surface border border-line rounded-lg px-4 py-3 text-xs text-ink">
+                <div className="border rounded-lg px-4 py-3 text-xs bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700 text-orange-800 dark:text-orange-300">
                     💡 <strong>Recommended:</strong> Set to <em>Under Inspection</em> first. IT will inspect the device, then move it to <em>Available for Reallocation</em> or <em>In Repair</em>.
                 </div>
                 <FormSelect
@@ -82,8 +82,8 @@ const UnassignAssetModal: React.FC<UnassignAssetModalProps> = ({ isOpen, onClose
                     placeholder="e.g. Minor scratches on lid, charger missing..."
                 />
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
-                    <button type="button" onClick={onClose} className="w-full sm:w-auto flex justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95">Cancel</button>
-                    <button type="button" onClick={handleConfirm} className="w-full sm:w-auto flex justify-center bg-olive text-on-strong px-5 py-2 rounded-lg hover:bg-olive font-medium transition-all duration-200 active:scale-95">Confirm Return</button>
+                    <button type="button" onClick={onClose} className="w-full sm:w-auto flex justify-center px-5 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">Cancel</button>
+                    <button type="button" onClick={handleConfirm} className="w-full sm:w-auto flex justify-center px-5 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 bg-red-600 text-white hover:bg-red-700">Confirm Return</button>
                 </div>
             </div>
         </Modal>

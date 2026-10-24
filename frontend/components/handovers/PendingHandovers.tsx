@@ -73,42 +73,42 @@ export default function PendingHandovers() {
     if (handovers.length === 0) return null;
 
     return (
-        <div className="bg-surface border border-line rounded-xl p-4 mb-6">
+        <div className="border rounded-xl p-4 mb-6 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50">
             <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-surface rounded-lg text-ink">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-base font-semibold text-ink">Custody Handover Pending</h3>
-                    <p className="text-sm text-ink">You have {handovers.length} asset(s) awaiting your signature.</p>
+                    <h3 className="text-base font-semibold text-amber-900 dark:text-amber-400">Custody Handover Pending</h3>
+                    <p className="text-sm text-amber-700 dark:text-amber-500">You have {handovers.length} asset(s) awaiting your signature.</p>
                 </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {handovers.map(handover => (
-                    <div key={handover.id} className="bg-surface p-3 rounded-lg border border-line shadow-sm flex justify-between items-start gap-3">
+                    <div key={handover.id} className="p-3 rounded-lg border shadow-sm flex justify-between items-start gap-3 bg-white dark:bg-slate-800 border-amber-200 dark:border-slate-700">
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-semibold text-ink bg-surface px-2 py-0.5 rounded">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400">
                                     {handover.asset.assetId}
                                 </span>
-                                <span className="text-xs font-semibold text-quiet bg-muted px-2 py-0.5 rounded">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700">
                                     {handover.status}
                                 </span>
                             </div>
-                            <h4 className="text-sm font-medium text-ink mt-1 truncate">{handover.asset.name}</h4>
-                            <p className="text-xs text-quiet">{handover.asset.brand} {handover.asset.model}</p>
+                            <h4 className="text-sm font-medium mt-1 truncate text-slate-900 dark:text-white">{handover.asset.name}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{handover.asset.brand} {handover.asset.model}</p>
                             {handover.handoverDate && (
-                                <p className="text-xs text-quiet mt-1">
+                                <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">
                                     Initiated: {new Date(handover.handoverDate).toLocaleDateString()}
                                 </p>
                             )}
                         </div>
                         <button
                             onClick={() => setSelectedHandover(handover)}
-                            className="px-3 py-1.5 text-xs font-semibold text-on-strong bg-olive hover:bg-olive rounded-md transition-colors flex-shrink-0"
+                            className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex-shrink-0 text-white bg-amber-600 hover:bg-amber-700"
                         >
                             Sign
                         </button>
@@ -117,7 +117,7 @@ export default function PendingHandovers() {
             </div>
 
             {selectedHandover && (
-                <div className="fixed inset-0 bg-strong/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4 bg-slate-900/50">
                     <SignatureCanvas
                         onSave={handleSign}
                         onCancel={() => setSelectedHandover(null)}

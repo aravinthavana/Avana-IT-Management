@@ -51,7 +51,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Request Type */}
                     <div>
-                        <label htmlFor="requestType" className="block text-sm font-semibold text-ink mb-1">
+                        <label htmlFor="requestType" className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
                             Request Type
                         </label>
                         <select
@@ -59,7 +59,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                             name="requestType"
                             value={requestType}
                             onChange={e => setRequestType(e.target.value as any)}
-                            className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-accent text-ink"
+                            className="w-full px-3 py-2 border rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-brand-500 text-slate-800 dark:text-white"
                         >
                             <option value="New Asset">New Asset</option>
                             <option value="Replacement">Replacement</option>
@@ -70,7 +70,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
 
                     {/* Priority */}
                     <div>
-                        <label htmlFor="priority" className="block text-sm font-semibold text-ink mb-1">
+                        <label htmlFor="priority" className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
                             Priority Level
                         </label>
                         <select
@@ -78,7 +78,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                             name="priority"
                             value={priority}
                             onChange={e => setPriority(e.target.value as any)}
-                            className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-accent text-ink"
+                            className="w-full px-3 py-2 border rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-brand-500 text-slate-800 dark:text-white"
                         >
                             <option value="Low">Low - Standard queue</option>
                             <option value="Medium">Medium - Normal workflow</option>
@@ -90,7 +90,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
 
                 {/* Asset Category */}
                 <div>
-                    <label htmlFor="category" className="block text-sm font-semibold text-ink mb-1">
+                    <label htmlFor="category" className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
                         Asset Category
                     </label>
                     <select
@@ -98,7 +98,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                         name="category"
                         value={category}
                         onChange={e => setCategory(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-accent text-ink"
+                        className="w-full px-3 py-2 border rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-brand-500 text-slate-800 dark:text-white"
                     >
                         <option value="Laptop">Laptop</option>
                         <option value="Desktop">Desktop</option>
@@ -114,8 +114,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
 
                 {/* Conditional Current Asset Selection (Replacement / Upgrade / Repair) */}
                 {isExistingAssetRequired && (
-                    <div className="p-3.5 bg-surface/70 border border-line rounded-xl space-y-2">
-                        <label htmlFor="currentAssetId" className="block text-xs font-bold text-ink uppercase tracking-wider">
+                    <div className="p-3.5 border rounded-xl space-y-2 bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40">
+                        <label htmlFor="currentAssetId" className="block text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
                             Select Existing Asset to {requestType}
                         </label>
                         {userAssignedAssets.length > 0 ? (
@@ -123,7 +123,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                                 id="currentAssetId"
                                 value={currentAssetId}
                                 onChange={e => setCurrentAssetId(e.target.value)}
-                                className="w-full px-3 py-2 bg-surface border border-line rounded-lg text-sm text-ink focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 bg-white dark:bg-slate-700 border-amber-300 dark:border-amber-800 text-slate-800 dark:text-white focus:ring-amber-500"
                             >
                                 <option value="">-- Choose one of your assigned assets --</option>
                                 {userAssignedAssets.map(asset => (
@@ -133,7 +133,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                                 ))}
                             </select>
                         ) : (
-                            <p className="text-xs text-ink">
+                            <p className="text-xs text-amber-700 dark:text-amber-400">
                                 Note: You do not have any registered equipment currently assigned in the system. You can continue, but please specify details in the description below.
                             </p>
                         )}
@@ -141,25 +141,25 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                 )}
 
                 {/* Routing notification note */}
-                <div className="bg-surface p-3 rounded-xl border border-line flex items-start gap-2.5">
-                    <div className="p-1 bg-surface rounded text-ink shrink-0 mt-0.5">
+                <div className="p-3 rounded-xl border flex items-start gap-2.5 bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40">
+                    <div className="p-1 rounded shrink-0 mt-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <p className="text-xs text-ink leading-relaxed">
+                    <p className="text-xs leading-relaxed text-blue-800 dark:text-blue-300">
                         {user?.managerId ? (
-                            <>This request will first be sent to your manager <span className="font-bold text-ink">({user?.manager?.name || 'Assigned Manager'})</span> for approval before reaching IT Admin for equipment allocation.</>
+                            <>This request will first be sent to your manager <span className="font-bold text-blue-900 dark:text-blue-200">({user?.manager?.name || 'Assigned Manager'})</span> for approval before reaching IT Admin for equipment allocation.</>
                         ) : (
-                            <>No reporting manager is configured on your profile. This request will route directly to <span className="font-bold text-ink">IT Administration</span> for triage and allocation.</>
+                            <>No reporting manager is configured on your profile. This request will route directly to <span className="font-bold text-blue-900 dark:text-blue-200">IT Administration</span> for triage and allocation.</>
                         )}
                     </p>
                 </div>
 
                 {/* Description / Justification */}
                 <div>
-                    <label htmlFor="description" className="block text-sm font-semibold text-ink mb-1">
-                        Business Justification / Specifications Needed <span className="text-ink">*</span>
+                    <label htmlFor="description" className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                        Business Justification / Specifications Needed <span className="text-red-500">*</span>
                     </label>
                     <textarea
                         id="description"
@@ -168,23 +168,23 @@ const RequestForm: React.FC<RequestFormProps> = ({ isOpen, onClose, onSubmit }) 
                         onChange={e => setDescription(e.target.value)}
                         required
                         rows={3}
-                        className="w-full px-3 py-2 bg-surface border border-line rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-accent text-ink placeholder-quiet"
+                        className="w-full px-3 py-2 border rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-brand-500 text-slate-800 dark:text-white placeholder-slate-400"
                         placeholder="Please detail why this asset is required, any technical specifications (e.g. RAM, dual monitors), or reasons for replacement..."
                     />
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end items-center gap-3 pt-4 border-t border-line">
+                <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-ink hover:bg-muted rounded-xl transition-colors"
+                        className="px-4 py-2 text-sm font-medium rounded-xl transition-colors text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="px-5 py-2 text-sm font-semibold text-on-strong bg-accent hover:bg-accent rounded-xl transition-colors shadow-sm active:scale-95"
+                        className="px-5 py-2 text-sm font-semibold rounded-xl transition-colors shadow-sm active:scale-95 text-white bg-brand-600 hover:bg-brand-700"
                     >
                         Submit Request
                     </button>

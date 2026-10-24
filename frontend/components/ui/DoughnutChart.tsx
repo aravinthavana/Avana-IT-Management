@@ -13,9 +13,9 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({ title, data, colors, onIt
 
     if (total === 0) {
         return (
-            <div className="bg-surface p-6 rounded-lg shadow-md h-full">
-                <h3 className="text-lg font-semibold text-ink mb-4">{title}</h3>
-                <p className="text-quiet text-center py-16">No data available.</p>
+            <div className="p-6 rounded-lg shadow-md h-full bg-white dark:bg-slate-800">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">{title}</h3>
+                <p className="text-center py-16 text-gray-500 dark:text-gray-400">No data available.</p>
             </div>
         );
     }
@@ -32,11 +32,11 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({ title, data, colors, onIt
     const conicGradient = `conic-gradient(${gradientParts.join(', ')})`;
 
     return (
-        <div className="bg-surface p-6 rounded-2xl shadow-sm border border-line flex flex-col justify-between overflow-hidden min-w-0">
+        <div className="p-6 rounded-2xl shadow-sm border flex flex-col justify-between overflow-hidden min-w-0 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <div>
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-base sm:text-lg font-bold text-ink">{title}</h3>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-muted text-quiet shrink-0">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                         {total} Total
                     </span>
                 </div>
@@ -44,15 +44,15 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({ title, data, colors, onIt
                 {/* Centered Donut Graphic */}
                 <div className="flex justify-center my-3">
                     <div className="relative w-28 h-28 rounded-full flex items-center justify-center shrink-0 shadow-inner hover:scale-105 transition-transform" style={{ background: conicGradient }}>
-                        <div className="w-[72px] h-[72px] bg-surface rounded-full flex flex-col items-center justify-center shadow-sm">
-                            <span className="text-lg font-black text-ink font-mono leading-none">{total}</span>
-                            <span className="text-[9px] uppercase font-bold text-quiet tracking-wider mt-0.5">Total</span>
+                        <div className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center shadow-sm bg-white dark:bg-slate-800">
+                            <span className="text-lg font-black font-mono leading-none text-slate-900 dark:text-white">{total}</span>
+                            <span className="text-[9px] uppercase font-bold tracking-wider mt-0.5 text-slate-400">Total</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Full-width Single Column Status Legend - No Truncation, Full Text Always Visible */}
-                <ul className="space-y-1.5 mt-3 pt-3 border-t border-line w-full min-w-0">
+                <ul className="space-y-1.5 mt-3 pt-3 border-t w-full min-w-0 border-slate-100 dark:border-slate-700/60">
                     {dataEntries.map(([key, value], index) => {
                         const pct = ((value / total) * 100).toFixed(1);
                         return (
@@ -61,16 +61,16 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({ title, data, colors, onIt
                                 role={onItemClick ? 'button' : undefined}
                                 tabIndex={onItemClick ? 0 : undefined}
                                 onKeyDown={event => { if (onItemClick && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onItemClick(key); } }}
-                                className={`flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-canvas/70 dark:bg-muted hover:bg-muted  transition-colors w-full min-w-0 ${onItemClick ? 'cursor-pointer' : ''}`}
+                                className={`flex items-center justify-between py-1.5 px-2.5 rounded-xl transition-colors w-full min-w-0 bg-slate-50/70 dark:bg-slate-750 hover:bg-slate-100 dark:hover:bg-slate-700 ${onItemClick ? 'cursor-pointer' : ''}`}
                                 onClick={() => onItemClick && onItemClick(key)}
                                 title={`${key}: ${value} (${pct}%)`}
                             >
                                 <span className="flex items-center min-w-0 mr-2">
                                     <span className="w-2.5 h-2.5 rounded-full border border-ink mr-2 shrink-0" style={{ backgroundColor: colors[index % colors.length] }}></span>
-                                    <span className="font-semibold text-ink break-words text-xs">{key}</span>
+                                    <span className="font-semibold break-words text-xs text-slate-700 dark:text-slate-200">{key}</span>
                                 </span>
-                                <span className="font-mono font-bold text-ink text-xs shrink-0 ml-auto">
-                                    {value} <span className="text-[10px] font-normal text-quiet font-sans">({pct}%)</span>
+                                <span className="font-mono font-bold text-xs shrink-0 ml-auto text-slate-900 dark:text-white">
+                                    {value} <span className="text-[10px] font-normal font-sans text-slate-400">({pct}%)</span>
                                 </span>
                             </li>
                         );
@@ -78,7 +78,7 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({ title, data, colors, onIt
                 </ul>
             </div>
             {onItemClick && (
-                <div className="mt-3 pt-2.5 border-t border-line text-[11px] text-quiet text-center">
+                <div className="mt-3 pt-2.5 border-t text-[11px] text-center border-slate-100 dark:border-slate-700/60 text-slate-400">
                     Click any item to view filtered assets
                 </div>
             )}

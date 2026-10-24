@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidt
     const dialogRef = useDialogAccessibility(isOpen, onClose);
     if (!isOpen) return null;
     return createPortal(
-        <div className="fixed inset-0 z-50 flex justify-center items-center bg-strong/70 p-2 sm:p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/60 p-2 sm:p-4" onClick={onClose}>
             <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}
                 onClick={event => event.stopPropagation()}
                 className={`bg-surface text-ink rounded-2xl shadow-2xl border border-line w-full ${maxWidth} max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col overflow-hidden`}>

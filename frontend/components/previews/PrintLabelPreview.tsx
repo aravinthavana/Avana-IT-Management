@@ -53,26 +53,26 @@ export default function PrintLabelPreview() {
     if (!asset) {
         if (assets.length === 0) {
             return (
-                <div className="bg-muted min-h-screen flex items-center justify-center text-ink">
+                <div className="min-h-screen flex items-center justify-center bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin border-brand-500"></div>
                         <p className="font-semibold text-base font-body">Loading label preview...</p>
                     </div>
                 </div>
             );
         }
         return (
-            <div className="bg-muted min-h-screen flex items-center justify-center text-ink">
+            <div className="min-h-screen flex items-center justify-center bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                 <div className="text-center p-4">
                     <p className="font-semibold text-lg font-heading">Error: Could not find asset data for preview.</p>
-                    <button onClick={() => setPreviewTarget(null)} className="mt-4 bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium text-sm">Go Back</button>
+                    <button onClick={() => setPreviewTarget(null)} className="mt-4 px-5 py-2 rounded-lg font-medium text-sm bg-brand-600 text-white hover:bg-brand-700">Go Back</button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-muted min-h-screen flex flex-col print:min-h-0 print:h-[30mm] print:bg-surface print:overflow-hidden print:p-0 print:m-0">
+        <div className="min-h-screen flex flex-col print:min-h-0 print:h-[30mm] print:overflow-hidden print:p-0 print:m-0 bg-slate-100 dark:bg-slate-900 print:bg-white">
             <style>{`
                 @page {
                     size: 50mm 30mm;
@@ -106,7 +106,7 @@ export default function PrintLabelPreview() {
                         margin: 0 !important;
                         padding: 0 !important;
                         overflow: hidden !important;
-                        background-color: #d7d0bc !important;
+                        background-color: #ffffff !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -116,7 +116,7 @@ export default function PrintLabelPreview() {
                         margin: 0 !important;
                         padding: 0 !important;
                         overflow: hidden !important;
-                        background-color: #d7d0bc !important;
+                        background-color: #ffffff !important;
                     }
                     .no-print,
                     .no-print * {
@@ -135,7 +135,7 @@ export default function PrintLabelPreview() {
                         max-height: 30mm !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        background-color: #d7d0bc !important;
+                        background-color: #ffffff !important;
                         overflow: hidden !important;
                         page-break-inside: avoid !important;
                         break-inside: avoid !important;
@@ -153,41 +153,41 @@ export default function PrintLabelPreview() {
                 <AssetLabel asset={asset} isPrint />
             </div>
 
-            <header className="bg-surface/90 backdrop-blur-sm border-b border-line sticky top-0 z-10 p-4 flex justify-between items-center shadow-xs no-print">
+            <header className="backdrop-blur-sm border-b sticky top-0 z-10 p-4 flex justify-between items-center shadow-xs no-print bg-white/90 dark:bg-slate-800/90 border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setPreviewTarget(null)}
-                        className="bg-muted text-ink px-3 py-1.5 rounded-lg hover:bg-muted flex items-center text-sm font-medium transition-colors"
+                        className="px-3 py-1.5 rounded-lg flex items-center text-sm font-medium transition-colors bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
                     >
                         &larr; <span className="ml-2">Back</span>
                     </button>
                     <div className="hidden sm:block">
-                        <h2 className="text-base font-bold text-ink">Asset Label Preview</h2>
-                        <p className="text-xs text-quiet">{asset.name} ({asset.assetId})</p>
+                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Asset Label Preview</h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{asset.name} ({asset.assetId})</p>
                     </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                     {/* Zoom Toggle */}
-                    <div className="hidden sm:flex items-center bg-muted rounded-lg p-0.5 text-xs font-semibold text-ink">
+                    <div className="hidden sm:flex items-center rounded-lg p-0.5 text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                         <button
                             onClick={() => setZoom(1)}
-                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 1 ? 'bg-surface  shadow-xs text-ink ' : 'hover:text-ink'}`}
+                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 1 ? 'shadow-xs bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400' : 'hover:text-slate-900'}`}
                             title="Actual 50mm x 30mm physical size"
                         >
                             1x (Actual)
                         </button>
                         <button
                             onClick={() => setZoom(1.5)}
-                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 1.5 ? 'bg-surface  shadow-xs text-ink ' : 'hover:text-ink'}`}
+                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 1.5 ? 'shadow-xs bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400' : 'hover:text-slate-900'}`}
                             title="1.5x zoom"
                         >
                             1.5x
                         </button>
                         <button
                             onClick={() => setZoom(2)}
-                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 2 ? 'bg-surface  shadow-xs text-ink ' : 'hover:text-ink'}`}
+                            className={`px-2.5 py-1 rounded-md transition-colors ${zoom === 2 ? 'shadow-xs bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400' : 'hover:text-slate-900'}`}
                             title="2x zoom"
                         >
                             2x
@@ -197,7 +197,7 @@ export default function PrintLabelPreview() {
                     <button
                         onClick={handlePrint}
                         disabled={isPrinting}
-                        className="bg-accent text-on-strong px-3.5 py-2 rounded-lg hover:bg-accent flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                        className="px-3.5 py-2 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50 bg-brand-600 text-white hover:bg-brand-700"
                         title="Print directly using isolated 50mm x 30mm thermal layout"
                     >
                         {ICONS.print}
@@ -207,7 +207,7 @@ export default function PrintLabelPreview() {
                     <button
                         onClick={handleOpenPDF}
                         disabled={isPrinting}
-                        className="bg-olive text-on-strong px-3.5 py-2 rounded-lg hover:bg-olive flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                        className="px-3.5 py-2 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-700"
                         title="Open native 50x30mm PDF (100% guarantees zero browser headers/footers)"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -217,7 +217,7 @@ export default function PrintLabelPreview() {
                     <button
                         onClick={handleDownloadPDF}
                         disabled={isPrinting}
-                        className="bg-muted text-ink px-3 py-2 rounded-lg hover:bg-muted flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer disabled:opacity-50"
+                        className="px-3 py-2 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
                         title="Save 50x30mm PDF file"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -228,10 +228,10 @@ export default function PrintLabelPreview() {
 
             <main className="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center no-print">
                  <div className="text-center max-w-md mb-6">
-                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line mb-2">
+                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border mb-2 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
                         <span>●</span> 50mm × 30mm Standard Thermal Label
                      </span>
-                     <p className="text-xs text-quiet">
+                     <p className="text-xs text-slate-500 dark:text-slate-400">
                         Optimized for <strong>Postek C168/300</strong> (300 DPI) and standard thermal label printers.
                      </p>
                  </div>
@@ -253,7 +253,7 @@ export default function PrintLabelPreview() {
                          }}
                      >
                          <div
-                             className="rounded-sm shadow-xl border border-line bg-surface"
+                             className="rounded-sm shadow-xl border border-slate-300 dark:border-slate-600 bg-white"
                              style={{
                                  width: '50mm',
                                  height: '30mm',
@@ -267,59 +267,59 @@ export default function PrintLabelPreview() {
                  </div>
 
                  {/* Postek C168/300 & Thermal Printer Setup Guide */}
-                 <div className="mt-8 max-w-md w-full bg-surface border border-line rounded-xl p-4 text-xs shadow-xs text-ink">
-                     <div className="flex items-center gap-2 font-bold text-sm mb-2 text-ink">
+                 <div className="mt-8 max-w-md w-full border rounded-xl p-4 text-xs shadow-xs bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60 text-amber-950 dark:text-amber-200">
+                     <div className="flex items-center gap-2 font-bold text-sm mb-2 text-amber-900 dark:text-amber-300">
                          <span className="text-base">🖨️</span>
                          <span>Postek C168/300 Print Settings</span>
                      </div>
-                     <p className="text-quiet mb-2">
+                     <p className="mb-2 text-slate-600 dark:text-slate-300">
                          To ensure Chrome does not add header titles/dates or center the label on A4:
                      </p>
-                     <div className="space-y-1.5 bg-surface/80 p-2.5 rounded-lg border border-line/60">
+                     <div className="space-y-1.5 p-2.5 rounded-lg border bg-white/80 dark:bg-slate-900/60 border-amber-200/60 dark:border-amber-900/40">
                          <div className="flex items-start gap-2">
-                             <span className="font-semibold text-ink min-w-[125px]">1. Destination:</span>
-                             <span className="font-medium text-ink">Postek C168/300</span>
+                             <span className="font-semibold min-w-[125px] text-slate-700 dark:text-slate-200">1. Destination:</span>
+                             <span className="font-medium text-brand-600 dark:text-brand-400">Postek C168/300</span>
                          </div>
                          <div className="flex items-start gap-2">
-                             <span className="font-semibold text-ink min-w-[125px]">2. Paper size:</span>
-                             <span className="font-medium text-ink">50mm × 30mm <span className="text-quiet font-normal">(or 50x30 stock)</span></span>
+                             <span className="font-semibold min-w-[125px] text-slate-700 dark:text-slate-200">2. Paper size:</span>
+                             <span className="font-medium text-slate-800 dark:text-slate-100">50mm × 30mm <span className="font-normal text-slate-400">(or 50x30 stock)</span></span>
                          </div>
                          <div className="flex items-start gap-2">
-                             <span className="font-semibold text-ink min-w-[125px]">3. Margins:</span>
-                             <span className="font-bold text-ink">None</span>
+                             <span className="font-semibold min-w-[125px] text-slate-700 dark:text-slate-200">3. Margins:</span>
+                             <span className="font-bold text-emerald-600 dark:text-emerald-400">None</span>
                          </div>
                          <div className="flex items-start gap-2">
-                             <span className="font-semibold text-ink min-w-[125px]">4. Headers & Footers:</span>
-                             <span className="font-bold text-ink">UNCHECK [  ]</span>
+                             <span className="font-semibold min-w-[125px] text-slate-700 dark:text-slate-200">4. Headers & Footers:</span>
+                             <span className="font-bold text-rose-600 dark:text-rose-400">UNCHECK [  ]</span>
                          </div>
                      </div>
-                     <p className="mt-2 text-[11px] text-ink">
+                     <p className="mt-2 text-[11px] text-amber-800 dark:text-amber-400">
                          💡 <strong>Pro Tip:</strong> Click <strong>"Open 50×30mm PDF"</strong> to print directly from Chrome's PDF viewer — PDFs automatically have zero browser headers and footers!
                      </p>
                  </div>
 
                  {/* Label Details Summary */}
-                 <div className="mt-8 bg-surface border border-line rounded-xl p-4 w-full max-w-sm text-xs shadow-xs">
-                     <div className="font-semibold text-ink mb-2 flex justify-between">
+                 <div className="mt-8 border rounded-xl p-4 w-full max-w-sm text-xs shadow-xs bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                     <div className="font-semibold mb-2 flex justify-between text-slate-800 dark:text-slate-200">
                          <span>Label Information</span>
-                         <span className="text-quiet font-normal">Physical Size: 50 × 30 mm</span>
+                         <span className="font-normal text-slate-400">Physical Size: 50 × 30 mm</span>
                      </div>
-                     <div className="space-y-1 text-quiet">
+                     <div className="space-y-1 text-slate-600 dark:text-slate-300">
                          <div className="flex justify-between">
-                             <span className="text-quiet">Asset Name:</span>
-                             <span className="font-medium text-ink truncate max-w-[200px]">{asset.name}</span>
+                             <span className="text-slate-400">Asset Name:</span>
+                             <span className="font-medium truncate max-w-[200px] text-slate-800 dark:text-slate-100">{asset.name}</span>
                          </div>
                          <div className="flex justify-between">
-                             <span className="text-quiet">Category:</span>
-                             <span className="font-medium text-ink">{asset.category}</span>
+                             <span className="text-slate-400">Category:</span>
+                             <span className="font-medium text-slate-800 dark:text-slate-100">{asset.category}</span>
                          </div>
                          <div className="flex justify-between">
-                             <span className="text-quiet">Asset ID:</span>
-                             <span className="font-bold text-ink font-mono">{asset.assetId}</span>
+                             <span className="text-slate-400">Asset ID:</span>
+                             <span className="font-bold font-mono text-slate-900 dark:text-slate-50">{asset.assetId}</span>
                          </div>
                          <div className="flex justify-between">
-                             <span className="text-quiet">Serial Number:</span>
-                             <span className="font-mono text-ink">{asset.serialNumber || 'N/A'}</span>
+                             <span className="text-slate-400">Serial Number:</span>
+                             <span className="font-mono text-slate-700 dark:text-slate-300">{asset.serialNumber || 'N/A'}</span>
                          </div>
                      </div>
                  </div>

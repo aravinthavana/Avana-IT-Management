@@ -11,22 +11,22 @@ const BarChart: React.FC<BarChartProps> = ({ title, data, onItemClick }) => {
     // for sorting and calculations, resolving TypeScript errors about arithmetic operations.
     const dataEntries = (Object.entries(data) as [string, number][]).sort((a, b) => b[1] - a[1]);
     const maxValue = Math.max(...dataEntries.map(([, value]) => value), 0);
-    const colors = ['bg-accent', 'bg-olive', 'bg-olive', 'bg-olive', 'bg-olive', 'bg-olive'];
+    const colors = ['bg-brand-500', 'bg-sky-500', 'bg-amber-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-pink-500'];
 
     if (dataEntries.length === 0) {
         return (
-             <div className="bg-surface p-6 rounded-lg shadow-md h-full">
-                <h3 className="text-lg font-semibold text-ink mb-4">{title}</h3>
+             <div className="p-6 rounded-lg shadow-md h-full bg-white dark:bg-slate-800">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">{title}</h3>
                 <div className="flex items-center justify-center h-full">
-                    <p className="text-quiet text-center py-16">No data available.</p>
+                    <p className="text-center py-16 text-gray-500 dark:text-gray-400">No data available.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="bg-surface p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-ink mb-4">{title}</h3>
+        <div className="p-6 rounded-lg shadow-md bg-white dark:bg-slate-800">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">{title}</h3>
             <div className="space-y-3">
                 {dataEntries.map(([key, value], index) => (
                     <div
@@ -39,10 +39,10 @@ const BarChart: React.FC<BarChartProps> = ({ title, data, onItemClick }) => {
                         onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onItemClick(key); } }}
                     >
                         <div className="flex justify-between items-center text-sm mb-1">
-                            <span className="font-medium text-ink group-hover:text-ink transition-colors">{key}</span>
-                            <span className="font-bold text-ink">{value}</span>
+                            <span className="font-medium transition-colors text-slate-700 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-red-400">{key}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-100">{value}</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2.5">
+                        <div className="w-full rounded-full h-2.5 bg-slate-200 dark:bg-slate-700">
                             <div
                                 className={`h-2.5 rounded-full ${colors[index % colors.length]} group-hover:opacity-80 transition-all duration-300 ease-out`}
                                 style={{ width: `${(maxValue > 0 ? value / maxValue : 0) * 100}%` }}

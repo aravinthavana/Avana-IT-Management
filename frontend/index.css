@@ -1,48 +1,78 @@
 @import "tailwindcss";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* The five approved colors are the only UI color primitives. */
-@theme inline {
-  --color-*: initial;
-  --shadow-2xs: 0 1px 1px var(--ui-line);
-  --shadow-xs: 0 1px 2px var(--ui-line);
-  --shadow-sm: 0 1px 3px var(--ui-line);
-  --shadow-md: 0 2px 5px var(--ui-line);
-  --shadow-lg: 0 4px 10px var(--ui-line);
-  --shadow-xl: 0 6px 14px var(--ui-line);
-  --shadow-2xl: 0 8px 18px var(--ui-line);
+@theme {
+  /* ── Typography ── */
   --font-sans: 'Arimo', sans-serif;
   --font-heading: 'Fira Sans', sans-serif;
-  --font-subheading: 'DM Sans', 'Arimo', sans-serif;
+  --font-subheading: 'Zalando Sans', 'DM Sans', 'Arimo', sans-serif;
+
+  /* ── Brand / Primary (gold scale) ── */
+  --color-brand-50:  #faefd6;
+  --color-brand-100: #f1ddad;
+  --color-brand-200: #e7ca83;
+  --color-brand-300: #deb859;
+  --color-brand-400: #d5a52e;
+  --color-brand-500: #b27f0d;
+  --color-brand-600: #936709;
+  --color-brand-700: #745106;
+  --color-brand-800: #553b03;
+  --color-brand-900: #3c2901;
+  --color-brand-950: #2a1c00;
+
+  /* ── Avana Named Colors ── */
+  --color-avana-dark:  #172025;
+  --color-avana-olive: #404131;
+  --color-avana-beige: #d7d0bc;
+  --color-avana-gray:  #aab2b2;
+
+  /* ── Remap slate-* → Avana warm-neutral scale ──
+     This remapping automatically applies to ALL components using slate-* classes */
+  --color-slate-50:  #faf9f6;
+  --color-slate-100: #f0ede6;
+  --color-slate-200: #d7d0bc;
+  --color-slate-300: #aab2b2;
+  --color-slate-400: #7d8e8e;
+  --color-slate-500: #5e6e6e;
+  --color-slate-600: #404131;
+  --color-slate-700: #2e3025;
+  --color-slate-800: #1e2520;
+  --color-slate-900: #172025;
+  --color-slate-950: #0e1518;
+}
+
+/* Shared components retain semantic aliases; legacy color utilities stay available. */
+@theme inline {
   --color-canvas: var(--ui-canvas);
   --color-surface: var(--ui-surface);
   --color-muted: var(--ui-muted);
   --color-ink: var(--ui-ink);
   --color-quiet: var(--ui-quiet);
   --color-line: var(--ui-line);
-  --color-accent: #b27f0d;
-  --color-on-accent: #172025;
+  --color-accent: #936709;
+  --color-on-accent: #ffffff;
   --color-strong: #172025;
-  --color-on-strong: #d7d0bc;
+  --color-on-strong: #ffffff;
   --color-olive: #404131;
 }
 :root {
   color-scheme: light;
-  --ui-canvas: #aab2b2;
-  --ui-surface: #d7d0bc;
-  --ui-muted: #aab2b2;
+  --ui-canvas: #faf9f6;
+  --ui-surface: #ffffff;
+  --ui-muted: #f0ede6;
   --ui-ink: #172025;
-  --ui-quiet: #404131;
-  --ui-line: #aab2b2;
+  --ui-quiet: #5e6e6e;
+  --ui-line: #d7d0bc;
 }
 .dark {
   color-scheme: dark;
   --ui-canvas: #172025;
-  --ui-surface: #172025;
-  --ui-muted: #404131;
-  --ui-ink: #d7d0bc;
+  --ui-surface: #1e2520;
+  --ui-muted: #2e3025;
+  --ui-ink: #f0ede6;
   --ui-quiet: #aab2b2;
-  --ui-line: #aab2b2;
+  --ui-line: #404131;
 }
 @layer base {
   html { scroll-padding-top: 5rem; }
@@ -61,10 +91,10 @@
   p, dd { overflow-wrap: anywhere; }
   ::selection { background: #b27f0d; color: #172025; }
 }
-/* Gold needs dark lettering; beige lettering on gold has insufficient contrast. */
+/* Accessible shared-component colors follow the original application theme. */
 @layer utilities {
-  .bg-accent, .bg-accent.text-on-strong, .bg-accent .text-on-strong { color: #172025; }
-  .bg-strong .text-ink, .bg-olive .text-ink { color: #d7d0bc; }
+  .bg-accent, .bg-accent.text-on-strong, .bg-accent .text-on-strong { color: #ffffff; }
+  .bg-strong .text-ink, .bg-olive .text-ink { color: #ffffff; }
   .bg-strong .text-quiet, .bg-olive .text-quiet { color: #aab2b2; }
   .bg-strong .bg-surface .text-ink, .bg-olive .bg-surface .text-ink { color: var(--ui-ink); }
   .bg-strong .bg-surface .text-quiet, .bg-olive .bg-surface .text-quiet { color: var(--ui-quiet); }
@@ -97,11 +127,10 @@
 
 :focus-visible { outline: 2px solid var(--ui-ink); outline-offset: 3px; }
 
-.bg-accent:hover { background-color: #b27f0d; color: #172025; }
-.bg-strong.text-ink, .bg-olive.text-ink { color: #d7d0bc; }
+.bg-accent:hover { background-color: #745106; color: #ffffff; }
+.bg-strong.text-ink, .bg-olive.text-ink { color: #ffffff; }
 
-.ql-snow .ql-toolbar button:hover .ql-stroke, .ql-snow.ql-toolbar button:hover .ql-stroke, .ql-snow .ql-active .ql-stroke { stroke: #b27f0d; }
-.ql-snow .ql-toolbar button:hover .ql-fill, .ql-snow.ql-toolbar button:hover .ql-fill, .ql-snow .ql-active .ql-fill { fill: #b27f0d; }
+.ql-snow .ql-toolbar button:hover .ql-stroke, .ql-snow.ql-toolbar button:hover .ql-stroke, .ql-snow .ql-active .ql-stroke { stroke: #06c; }
+.ql-snow .ql-toolbar button:hover .ql-fill, .ql-snow.ql-toolbar button:hover .ql-fill, .ql-snow .ql-active .ql-fill { fill: #06c; }
 
-.bg-accent .text-ink, .bg-accent .text-quiet { color: #172025; }
-.ql-snow a { color: var(--ui-ink); text-decoration: underline; }
+.bg-accent .text-ink, .bg-accent .text-quiet { color: #ffffff; }

@@ -118,7 +118,7 @@ const Breadcrumbs: React.FC = () => {
                     <React.Fragment key={index}>
                         {index > 0 && (
                             <li className="min-w-0 break-words">
-                                <svg className="h-5 w-5 flex-shrink-0 text-quiet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <svg className="h-5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                                 </svg>
                             </li>
@@ -131,12 +131,12 @@ const Breadcrumbs: React.FC = () => {
                                         e.preventDefault();
                                         crumb.onClick && crumb.onClick();
                                     }}
-                                    className="text-quiet hover:text-ink hover:underline"
+                                    className="hover:underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                 >
                                     {crumb.label}
                                 </a>
                             ) : (
-                                <span className="font-medium text-ink" aria-current="page">
+                                <span className="font-medium text-slate-700 dark:text-slate-200" aria-current="page">
                                     {crumb.label}
                                 </span>
                             )}

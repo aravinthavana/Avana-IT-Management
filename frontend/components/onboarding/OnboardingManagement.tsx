@@ -106,13 +106,13 @@ const OnboardingManagement: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-ink flex items-center gap-2.5">
-                        <span className="p-2 bg-surface text-ink rounded-xl">
+                    <h1 className="text-2xl font-bold flex items-center gap-2.5 text-slate-800 dark:text-slate-100">
+                        <span className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400">
                             {ICONS.onboarding}
                         </span>
                         IT Operations: Onboarding & Offboarding
                     </h1>
-                    <p className="text-xs text-quiet mt-1">
+                    <p className="text-xs mt-1 text-slate-500">
                         Manage end-to-end employee equipment handovers, software provisioning, dispatch dockets, and exit clearance.
                     </p>
                 </div>
@@ -122,7 +122,7 @@ const OnboardingManagement: React.FC = () => {
                             setWizardUser(null);
                             setIsOnboardingOpen(true);
                         }}
-                        className="px-4 py-2.5 bg-accent hover:bg-accent text-on-strong rounded-xl text-sm font-semibold shadow-md shadow-strong/15 transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-500/20"
                     >
                         <span>+</span> Start New Onboarding
                     </button>
@@ -131,7 +131,7 @@ const OnboardingManagement: React.FC = () => {
                             setWizardUser(null);
                             setIsOffboardingOpen(true);
                         }}
-                        className="px-4 py-2.5 bg-olive hover:bg-olive text-on-strong rounded-xl text-sm font-semibold shadow-md shadow-strong/15 transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-red-500/20"
                     >
                         {ICONS.offboarding} Initiate Offboarding
                     </button>
@@ -140,61 +140,61 @@ const OnboardingManagement: React.FC = () => {
 
             {/* Metric KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-sm">
+                <div className="p-4 rounded-xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-quiet">Pending Onboarding</span>
-                        <span className="w-2.5 h-2.5 rounded-full bg-olive animate-pulse" />
+                        <span className="text-xs font-semibold text-slate-500">Pending Onboarding</span>
+                        <span className="w-2.5 h-2.5 rounded-full animate-pulse bg-amber-500" />
                     </div>
-                    <p className="text-2xl font-bold text-ink mt-2">{pendingOnboarding + inProgressOnboarding}</p>
-                    <p className="text-[11px] text-quiet mt-0.5">{inProgressOnboarding} in progress, {pendingOnboarding} pending</p>
+                    <p className="text-2xl font-bold mt-2 text-slate-800 dark:text-slate-100">{pendingOnboarding + inProgressOnboarding}</p>
+                    <p className="text-[11px] mt-0.5 text-slate-400">{inProgressOnboarding} in progress, {pendingOnboarding} pending</p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-sm">
+                <div className="p-4 rounded-xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-quiet">Fully Onboarded</span>
-                        <span className="text-ink font-bold text-xs">✓</span>
+                        <span className="text-xs font-semibold text-slate-500">Fully Onboarded</span>
+                        <span className="font-bold text-xs text-emerald-500">✓</span>
                     </div>
-                    <p className="text-2xl font-bold text-ink mt-2">{completedOnboarding}</p>
-                    <p className="text-[11px] text-quiet mt-0.5">Employees completed 100% IT checklist</p>
+                    <p className="text-2xl font-bold mt-2 text-emerald-600 dark:text-emerald-400">{completedOnboarding}</p>
+                    <p className="text-[11px] mt-0.5 text-slate-400">Employees completed 100% IT checklist</p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-sm">
+                <div className="p-4 rounded-xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-quiet">Courier Dispatches</span>
-                        <span className="text-ink">{ICONS.truck}</span>
+                        <span className="text-xs font-semibold text-slate-500">Courier Dispatches</span>
+                        <span className="text-brand-500">{ICONS.truck}</span>
                     </div>
-                    <p className="text-2xl font-bold text-ink mt-2">
+                    <p className="text-2xl font-bold mt-2 text-brand-600 dark:text-brand-400">
                         {users.filter(u => parseDispatch(u)?.mode === 'Courier').length}
                     </p>
-                    <p className="text-[11px] text-quiet mt-0.5">Tracked with carrier docket numbers</p>
+                    <p className="text-[11px] mt-0.5 text-slate-400">Tracked with carrier docket numbers</p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-sm">
+                <div className="p-4 rounded-xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-quiet">Offboarded / Exited</span>
-                        <span className="text-ink text-xs font-semibold">Exit</span>
+                        <span className="text-xs font-semibold text-slate-500">Offboarded / Exited</span>
+                        <span className="text-xs font-semibold text-red-500">Exit</span>
                     </div>
-                    <p className="text-2xl font-bold text-ink mt-2">{offboardedUsers}</p>
-                    <p className="text-[11px] text-quiet mt-0.5">Assets reclaimed & accounts disabled</p>
+                    <p className="text-2xl font-bold mt-2 text-slate-700 dark:text-slate-300">{offboardedUsers}</p>
+                    <p className="text-[11px] mt-0.5 text-slate-400">Assets reclaimed & accounts disabled</p>
                 </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-line gap-6 text-sm font-medium">
+            <div className="flex border-b gap-6 text-sm font-medium border-slate-200 dark:border-slate-700">
                 <button
                     onClick={() => setActiveTab('onboarding')}
-                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'onboarding' ? 'text-ink  font-bold border-b-2 border-accent' : 'text-quiet hover:text-ink '}`}
+                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'onboarding' ? 'font-bold border-b-2 text-brand-600 dark:text-brand-400 border-brand-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                 >
                     {ICONS.onboarding}
                     Employee Onboarding Pipeline
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-surface text-ink">
+                    <span className="px-2 py-0.5 rounded-full text-xs bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300">
                         {users.length}
                     </span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab('offboarding')}
-                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'offboarding' ? 'text-ink  font-bold border-b-2 border-line' : 'text-quiet hover:text-ink '}`}
+                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'offboarding' ? 'font-bold border-b-2 text-red-600 dark:text-red-400 border-red-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                 >
                     {ICONS.offboarding}
                     Employee Offboarding & Returns
@@ -202,7 +202,7 @@ const OnboardingManagement: React.FC = () => {
 
                 <button
                     onClick={() => setActiveTab('logistics')}
-                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'logistics' ? 'text-ink  font-bold border-b-2 border-line' : 'text-quiet hover:text-ink '}`}
+                    className={`pb-3 relative flex items-center gap-2 transition-all ${activeTab === 'logistics' ? 'font-bold border-b-2 text-indigo-600 dark:text-indigo-400 border-indigo-600' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
                 >
                     {ICONS.truck}
                     Logistics & Docket Archive
@@ -212,7 +212,7 @@ const OnboardingManagement: React.FC = () => {
             {/* Search & Filter Toolbar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="relative w-full sm:w-80">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-quiet">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         {ICONS.search}
                     </div>
                     <input
@@ -220,7 +220,7 @@ const OnboardingManagement: React.FC = () => {
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Search employee by name, email, ID..."
-                        className="w-full pl-9 pr-4 py-2 rounded-xl border border-line bg-surface text-sm focus:ring-2 focus:ring-accent"
+                        className="w-full pl-9 pr-4 py-2 rounded-xl border text-sm focus:ring-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-brand-500"
                     />
                 </div>
 
@@ -230,7 +230,7 @@ const OnboardingManagement: React.FC = () => {
                             <button
                                 key={st}
                                 onClick={() => setStatusFilter(st)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${statusFilter === st ? 'bg-accent text-on-strong shadow-sm' : 'bg-muted  text-quiet  hover:bg-muted'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${statusFilter === st ? 'shadow-sm bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
                             >
                                 {st}
                             </button>
@@ -241,10 +241,10 @@ const OnboardingManagement: React.FC = () => {
 
             {/* TAB 1: ONBOARDING TABLE */}
             {activeTab === 'onboarding' && (
-                <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
+                <div className="rounded-xl shadow-sm border overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div tabIndex={0} role="region" aria-label="Data table; scroll horizontally for more columns" className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-canvas text-xs font-semibold text-quiet uppercase tracking-wider border-b border-line">
+                            <thead className="text-xs font-semibold uppercase tracking-wider border-b bg-slate-50 dark:bg-slate-900/60 text-slate-500 border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-5 py-3.5">Employee</th>
                                     <th className="px-4 py-3.5">Department & Branch</th>
@@ -255,10 +255,10 @@ const OnboardingManagement: React.FC = () => {
                                     <th className="px-4 py-3.5 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-line text-ink">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
                                 {filteredOnboardingUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-8 text-center text-quiet">
+                                        <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                                             No employees match the current search / filter.
                                         </td>
                                     </tr>
@@ -267,30 +267,30 @@ const OnboardingManagement: React.FC = () => {
                                         const progress = getOnboardingProgress(u);
                                         const dispatch = parseDispatch(u);
                                         const assignedAssets = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || a.assignedTo === u.id);
-                                         const statusBadge = u.onboardingStatus === 'Completed' ? 'bg-surface text-ink  ' :
-                                                             u.onboardingStatus === 'In Progress' ? 'bg-surface text-ink  ' :
-                                                             'bg-surface text-ink  ';
+                                         const statusBadge = u.onboardingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                                             u.onboardingStatus === 'In Progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+                                                             'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
 
                                          return (
-                                             <tr key={u.id} className="hover:bg-canvas/80 transition-colors">
+                                             <tr key={u.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-700/30">
                                                  <td className="px-5 py-3.5">
                                                      <div className="flex items-center gap-3">
-                                                         <div className="w-8 h-8 rounded-full bg-surface text-ink font-bold flex items-center justify-center text-xs shrink-0">
+                                                         <div className="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs shrink-0 bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">
                                                              {u.name.charAt(0).toUpperCase()}
                                                          </div>
                                                          <div>
-                                                             <div className="font-semibold text-ink flex items-center gap-1.5">
+                                                             <div className="font-semibold flex items-center gap-1.5 text-slate-900 dark:text-slate-100">
                                                                  {u.name}
                                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusBadge}`}>
                                                                      {u.onboardingStatus || 'Pending'}
                                                                  </span>
                                                              </div>
-                                                             <div className="text-xs text-quiet">{u.email} {u.employeeId ? `• ID: ${u.employeeId}` : ''}</div>
+                                                             <div className="text-xs text-slate-400">{u.email} {u.employeeId ? `• ID: ${u.employeeId}` : ''}</div>
                                                          </div>
                                                      </div>
                                                  </td>
 
-                                                 <td className="px-4 py-3.5 text-quiet">
+                                                 <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300">
                                                      {u.department?.name || '—'}
                                                  </td>
 
@@ -301,11 +301,11 @@ const OnboardingManagement: React.FC = () => {
                                                              <div className="flex flex-col gap-1">
                                                                  <div className="flex items-center gap-1.5 flex-wrap">
                                                                      {u.m365AccountCreated ? (
-                                                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface text-ink border border-line">
+                                                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">
                                                                              ✓ M365 Acct
                                                                          </span>
                                                                      ) : (
-                                                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-quiet">
+                                                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                                                                              No M365 Acct
                                                                          </span>
                                                                      )}
@@ -318,14 +318,14 @@ const OnboardingManagement: React.FC = () => {
                                                                              const isExchange = lic.name.toLowerCase().includes('exchange');
                                                                              const isZoho = lic.name.toLowerCase().includes('zoho');
                                                                              const badgeColor = isStandard
-                                                                                 ? 'bg-surface  text-ink  border-line '
+                                                                                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                  : isBasic
-                                                                                 ? 'bg-surface  text-ink  border-line '
+                                                                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
                                                                                  : isExchange
-                                                                                 ? 'bg-surface  text-ink  border-line '
+                                                                                 ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
                                                                                  : isZoho
-                                                                                 ? 'bg-surface  text-ink  border-line '
-                                                                                 : 'bg-surface  text-ink  border-line ';
+                                                                                 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                                                                 : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
 
                                                                              return (
                                                                                  <span
@@ -339,7 +339,7 @@ const OnboardingManagement: React.FC = () => {
                                                                          })}
                                                                      </div>
                                                                  ) : (
-                                                                     <span className="text-[10px] text-quiet italic">No License</span>
+                                                                     <span className="text-[10px] italic text-slate-400">No License</span>
                                                                  )}
                                                              </div>
                                                          );
@@ -349,23 +349,23 @@ const OnboardingManagement: React.FC = () => {
                                                  <td className="px-4 py-3.5">
                                                      {assignedAssets.length > 0 ? (
                                                          <div className="flex flex-col">
-                                                             <span className="font-semibold text-ink text-xs">
+                                                             <span className="font-semibold text-xs text-emerald-600 dark:text-emerald-400">
                                                                  {assignedAssets[0].name}
                                                              </span>
-                                                             <span className="text-[10px] text-quiet">
+                                                             <span className="text-[10px] text-slate-400">
                                                                  {assignedAssets[0].assetId} {assignedAssets.length > 1 ? `(+${assignedAssets.length - 1} more)` : ''}
                                                              </span>
                                                          </div>
                                                      ) : u.laptopStatus === 'Uses Own Laptop' || u.laptopStatus === 'Using own laptop' ? (
-                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface text-ink">
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
                                                              Uses Own Laptop (BYOD)
                                                          </span>
                                                      ) : u.laptopStatus === 'Details Not Collected' ? (
-                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-surface text-ink border border-line">
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700">
                                                              Details Not Collected
                                                          </span>
                                                      ) : (
-                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-quiet">
+                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                                                              No Device Assigned
                                                          </span>
                                                      )}
@@ -374,34 +374,34 @@ const OnboardingManagement: React.FC = () => {
                                                  <td className="px-4 py-3.5">
                                                      {dispatch?.isDispatched || dispatch?.docketNumber || dispatch?.dcNumber ? (
                                                          <div className="flex flex-col">
-                                                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink">
+                                                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
                                                                  🚚 {dispatch.courierName || (dispatch.mode === 'In-Person' ? 'In-Person Handover' : 'Courier')}
                                                              </span>
                                                              {dispatch.dcNumber && (
-                                                                 <span className="text-[10px] text-ink font-mono font-medium">
+                                                                 <span className="text-[10px] font-mono font-medium text-slate-700 dark:text-slate-300">
                                                                      DC: #{dispatch.dcNumber}
                                                                  </span>
                                                              )}
                                                              {dispatch.docketNumber && (
-                                                                 <span className="text-[10px] text-quiet font-mono">
+                                                                 <span className="text-[10px] font-mono text-slate-400">
                                                                      AWB: #{dispatch.docketNumber}
                                                                  </span>
                                                              )}
                                                          </div>
                                                      ) : (
-                                                         <span className="text-xs text-quiet">—</span>
+                                                         <span className="text-xs text-slate-400">—</span>
                                                      )}
                                                  </td>
 
                                                  <td className="px-4 py-3.5">
                                                      <div className="w-32">
                                                          <div className="flex justify-between text-xs mb-1">
-                                                             <span className="font-semibold text-ink">{progress}%</span>
+                                                             <span className="font-semibold text-slate-700 dark:text-slate-300">{progress}%</span>
                                                          </div>
-                                                         <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                                                         <div className="w-full h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
                                                              <div
                                                                  className={`h-full rounded-full transition-all duration-300 ${
-                                                                     progress === 100 ? 'bg-olive' : progress >= 50 ? 'bg-olive' : 'bg-olive'
+                                                                     progress === 100 ? 'bg-emerald-500' : progress >= 50 ? 'bg-blue-500' : 'bg-amber-500'
                                                                  }`}
                                                                  style={{ width: `${progress}%` }}
                                                              />
@@ -416,7 +416,7 @@ const OnboardingManagement: React.FC = () => {
                                                                  setWizardUser(u);
                                                                  setIsOnboardingOpen(true);
                                                              }}
-                                                             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-surface text-ink hover:bg-surface transition-colors"
+                                                             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900"
                                                              title="Launch Guided Onboarding Wizard"
                                                          >
                                                              {u.onboardingStatus === 'Completed' ? 'Review' : 'Continue'}
@@ -431,7 +431,7 @@ const OnboardingManagement: React.FC = () => {
                                                                          assetId: assignedAssets[0].id
                                                                      });
                                                                  }}
-                                                                 className="p-1.5 rounded-lg text-quiet hover:text-ink hover:bg-muted transition-colors"
+                                                                 className="p-1.5 rounded-lg transition-colors text-slate-500 hover:text-brand-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                                                                  title="View Declaration Form"
                                                              >
                                                                  📄
@@ -443,7 +443,7 @@ const OnboardingManagement: React.FC = () => {
                                                                 setSelectedUserId(u.id);
                                                                 navigate('users');
                                                             }}
-                                                            className="p-1.5 rounded-lg text-quiet hover:text-ink hover:bg-muted transition-colors"
+                                                            className="p-1.5 rounded-lg transition-colors text-slate-500 hover:text-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                                                             title="View Full Profile"
                                                         >
                                                             {ICONS.view}
@@ -462,10 +462,10 @@ const OnboardingManagement: React.FC = () => {
 
             {/* TAB 2: OFFBOARDING TABLE */}
             {activeTab === 'offboarding' && (
-                <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
+                <div className="rounded-xl shadow-sm border overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div tabIndex={0} role="region" aria-label="Data table; scroll horizontally for more columns" className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-canvas text-xs font-semibold text-quiet uppercase tracking-wider border-b border-line">
+                            <thead className="text-xs font-semibold uppercase tracking-wider border-b bg-slate-50 dark:bg-slate-900/60 text-slate-500 border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-5 py-3.5">Employee</th>
                                     <th className="px-4 py-3.5">Account Status</th>
@@ -476,59 +476,59 @@ const OnboardingManagement: React.FC = () => {
                                     <th className="px-4 py-3.5 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-line text-ink">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
                                 {filteredOffboardingUsers.map(u => {
                                     const userHoldings = assets.filter(a => (a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === u.id) || a.assignedTo === u.id);
                                     const isDeactivated = u.status === 'Inactive';
 
                                     return (
-                                        <tr key={u.id} className="hover:bg-canvas/80 transition-colors">
+                                        <tr key={u.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-700/30">
                                             <td className="px-5 py-3.5">
-                                                <div className="font-semibold text-ink">{u.name}</div>
-                                                <div className="text-xs text-quiet">{u.email}</div>
+                                                <div className="font-semibold text-slate-900 dark:text-slate-100">{u.name}</div>
+                                                <div className="text-xs text-slate-400">{u.email}</div>
                                             </td>
 
                                             <td className="px-4 py-3.5 text-xs">
-                                                <span className={`px-2 py-0.5 rounded-full font-semibold ${isDeactivated ? 'bg-muted text-ink  ' : 'bg-surface text-ink  '}`}>
+                                                <span className={`px-2 py-0.5 rounded-full font-semibold ${isDeactivated ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
                                                     {u.status || 'Active'}
                                                 </span>
                                             </td>
 
                                             <td className="px-4 py-3.5 text-xs font-medium">
                                                 {userHoldings.length > 0 ? (
-                                                    <span className="text-ink font-semibold">
+                                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
                                                         ⚠️ {userHoldings.length} Device(s) Assigned
                                                     </span>
                                                 ) : (
-                                                    <span className="text-quiet">No Active Devices</span>
+                                                    <span className="text-slate-400">No Active Devices</span>
                                                 )}
                                             </td>
 
                                             <td className="px-4 py-3.5 text-xs">
                                                 {u.assetReturned ? (
-                                                    <span className="text-ink font-semibold">✓ Returned</span>
+                                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">✓ Returned</span>
                                                 ) : userHoldings.length > 0 ? (
-                                                    <span className="text-ink font-semibold">Pending Collection</span>
+                                                    <span className="font-semibold text-amber-600 dark:text-amber-400">Pending Collection</span>
                                                 ) : (
-                                                    <span className="text-quiet">N/A</span>
+                                                    <span className="text-slate-400">N/A</span>
                                                 )}
                                             </td>
 
                                             <td className="px-4 py-3.5 text-xs">
                                                 {u.assetReturnCondition ? (
-                                                    <span className="px-2 py-0.5 rounded bg-muted font-semibold text-ink">
+                                                    <span className="px-2 py-0.5 rounded font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                                                         {u.assetReturnCondition}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-quiet">-</span>
+                                                    <span className="text-slate-400">-</span>
                                                 )}
                                             </td>
 
                                             <td className="px-4 py-3.5 text-xs">
                                                 {u.deviceWiped ? (
-                                                    <span className="text-ink font-semibold">✓ Wiped</span>
+                                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">✓ Wiped</span>
                                                 ) : (
-                                                    <span className="text-quiet">Not Recorded</span>
+                                                    <span className="text-slate-400">Not Recorded</span>
                                                 )}
                                             </td>
 
@@ -538,7 +538,7 @@ const OnboardingManagement: React.FC = () => {
                                                         setWizardUser(u);
                                                         setIsOffboardingOpen(true);
                                                     }}
-                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface text-ink hover:bg-surface transition-colors"
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900"
                                                 >
                                                     {isDeactivated ? 'Review Exit' : 'Offboard User'}
                                                 </button>
@@ -554,10 +554,10 @@ const OnboardingManagement: React.FC = () => {
 
             {/* TAB 3: LOGISTICS & DOCKET ARCHIVE */}
             {activeTab === 'logistics' && (
-                <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
+                <div className="rounded-xl shadow-sm border overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/60">
                     <div tabIndex={0} role="region" aria-label="Data table; scroll horizontally for more columns" className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-canvas text-xs font-semibold text-quiet uppercase tracking-wider border-b border-line">
+                            <thead className="text-xs font-semibold uppercase tracking-wider border-b bg-slate-50 dark:bg-slate-900/60 text-slate-500 border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-5 py-3.5">Employee</th>
                                     <th className="px-4 py-3.5">Shipment Type</th>
@@ -568,10 +568,10 @@ const OnboardingManagement: React.FC = () => {
                                     <th className="px-4 py-3.5">Remarks</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-line text-ink">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
                                 {users.filter(u => u.dispatchDetails || u.assetReturnDocket).length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-8 text-center text-quiet">
+                                        <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                                             No courier dispatches or returns recorded yet.
                                         </td>
                                     </tr>
@@ -583,56 +583,56 @@ const OnboardingManagement: React.FC = () => {
                                         return (
                                             <React.Fragment key={u.id}>
                                                 {dispatch && (
-                                                    <tr className="hover:bg-canvas/80">
-                                                        <td className="px-5 py-3.5 font-semibold text-ink">
+                                                    <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30">
+                                                        <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
                                                             {u.name}
-                                                            <div className="text-xs text-quiet font-normal">{u.email}</div>
+                                                            <div className="text-xs font-normal text-slate-400">{u.email}</div>
                                                         </td>
                                                         <td className="px-4 py-3.5">
-                                                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-surface text-ink">
+                                                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300">
                                                                 Outbound Dispatch
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3.5 font-medium text-xs">{dispatch.courierName || 'In-Person'}</td>
                                                         <td className="px-4 py-3.5 font-mono text-xs">
                                                             {dispatch.docketNumber && (
-                                                                <span className="text-ink font-semibold block">
+                                                                <span className="font-semibold block text-brand-600 dark:text-brand-400">
                                                                     AWB: {dispatch.docketNumber}
                                                                 </span>
                                                             )}
                                                             {dispatch.dcNumber && (
-                                                                <span className="text-ink font-medium block">
+                                                                <span className="font-medium block text-slate-700 dark:text-slate-300">
                                                                     DC: #{dispatch.dcNumber}
                                                                 </span>
                                                             )}
-                                                            {!dispatch.docketNumber && !dispatch.dcNumber && <span className="text-quiet">N/A</span>}
+                                                            {!dispatch.docketNumber && !dispatch.dcNumber && <span className="text-slate-400">N/A</span>}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-xs text-quiet max-w-xs truncate">
+                                                        <td className="px-4 py-3.5 text-xs max-w-xs truncate text-slate-500">
                                                             {dispatch.shippingAddress || dispatch.officeLocation || '-'}
                                                         </td>
                                                         <td className="px-4 py-3.5 text-xs">{dispatch.dispatchDate || '-'}</td>
-                                                        <td className="px-4 py-3.5 text-xs text-quiet">{dispatch.remarks || '-'}</td>
+                                                        <td className="px-4 py-3.5 text-xs text-slate-500">{dispatch.remarks || '-'}</td>
                                                     </tr>
                                                 )}
 
                                                 {returnDocket && (
-                                                    <tr className="hover:bg-canvas/80 bg-surface/20">
-                                                        <td className="px-5 py-3.5 font-semibold text-ink">
+                                                    <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 bg-red-50/20 dark:bg-red-950/10">
+                                                        <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-slate-100">
                                                             {u.name}
-                                                            <div className="text-xs text-quiet font-normal">{u.email}</div>
+                                                            <div className="text-xs font-normal text-slate-400">{u.email}</div>
                                                         </td>
                                                         <td className="px-4 py-3.5">
-                                                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-surface text-ink">
+                                                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
                                                                 Inbound Return
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3.5 font-medium text-xs">{returnDocket.courier || 'In-Person'}</td>
-                                                        <td className="px-4 py-3.5 font-mono text-xs text-ink font-semibold">
+                                                        <td className="px-4 py-3.5 font-mono text-xs font-semibold text-red-600 dark:text-red-400">
                                                             {returnDocket.docketNo || 'N/A'}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-xs text-quiet">-</td>
+                                                        <td className="px-4 py-3.5 text-xs text-slate-500">-</td>
                                                         <td className="px-4 py-3.5 text-xs">{returnDocket.returnDate ? returnDocket.returnDate.split('T')[0] : '-'}</td>
-                                                        <td className="px-4 py-3.5 text-xs text-quiet">{u.assetReturnRemarks || '-'}</td>
+                                                        <td className="px-4 py-3.5 text-xs text-slate-500">{u.assetReturnRemarks || '-'}</td>
                                                     </tr>
                                                 )}
                                             </React.Fragment>

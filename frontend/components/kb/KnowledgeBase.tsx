@@ -141,16 +141,16 @@ const KnowledgeBase: React.FC = () => {
         <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-ink uppercase tracking-tight">Knowledge Base</h2>
-                    <p className="text-quiet text-sm">Policies, SOPs, and troubleshooting guides.</p>
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Knowledge Base</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Policies, SOPs, and troubleshooting guides.</p>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                     <div className="relative flex-1 md:w-64">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-quiet">{ICONS.search}</span>
-                        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-surface border border-line rounded-2xl pl-11 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all" placeholder="Search articles..." />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{ICONS.search}</span>
+                        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border rounded-2xl pl-11 pr-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-red-600/20" placeholder="Search articles..." />
                     </div>
                     {user?.role === 'Admin' && (
-                        <button onClick={() => { setSelectedArticle(null); setFormData({ title: '', category: 'Troubleshooting', content: '' }); setIsModalOpen(true); }} className="bg-accent text-on-strong px-5 py-2.5 rounded-2xl hover:bg-accent font-bold transition-all active:scale-95 shadow-lg shadow-strong/15">
+                        <button onClick={() => { setSelectedArticle(null); setFormData({ title: '', category: 'Troubleshooting', content: '' }); setIsModalOpen(true); }} className="px-5 py-2.5 rounded-2xl font-bold transition-all active:scale-95 shadow-lg bg-brand-600 text-white hover:bg-brand-700 shadow-brand-600/20">
                             {ICONS.add} Create
                         </button>
                     )}
@@ -160,15 +160,15 @@ const KnowledgeBase: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Categories / List */}
                 <div className="lg:col-span-1 space-y-4">
-                    <div className="bg-surface rounded-3xl shadow-sm border border-line p-6">
-                        <h3 className="text-xs font-black text-quiet uppercase tracking-widest mb-6">Article Categories</h3>
+                    <div className="rounded-3xl shadow-sm border p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-slate-400">Article Categories</h3>
                         <div className="space-y-2">
                             {categories.map(cat => {
                                 const count = kbArticles.filter(a => a.category === cat).length;
                                 return (
-                                    <button key={cat} onClick={() => setSearchTerm(cat)} className="w-full flex justify-between items-center px-4 py-3 rounded-2xl hover:bg-canvas transition-colors group">
-                                        <span className="text-sm font-bold text-ink group-hover:text-ink">{cat}</span>
-                                        <span className="text-xs font-black bg-muted px-2 py-0.5 rounded-full text-quiet">{count}</span>
+                                    <button key={cat} onClick={() => setSearchTerm(cat)} className="w-full flex justify-between items-center px-4 py-3 rounded-2xl transition-colors group hover:bg-slate-50 dark:hover:bg-slate-900">
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-brand-600">{cat}</span>
+                                        <span className="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{count}</span>
                                     </button>
                                 );
                             })}
@@ -179,26 +179,26 @@ const KnowledgeBase: React.FC = () => {
                 {/* Content Area */}
                 <div className="lg:col-span-2 space-y-6">
                     {selectedArticle ? (
-                        <div className="bg-surface rounded-3xl shadow-sm border border-line overflow-hidden animate-slide-up">
-                            <div className="p-8 border-b border-line bg-canvas/50">
+                        <div className="rounded-3xl shadow-sm border overflow-hidden animate-slide-up bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
                                 <div className="flex justify-between items-start mb-4">
-                                    <span className="px-3 py-1 bg-surface text-ink rounded-full text-[10px] font-black uppercase tracking-widest">{selectedArticle.category}</span>
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{selectedArticle.category}</span>
                                     {user?.role === 'Admin' && (
                                         <div className="flex gap-2">
-                                            <button aria-label="Edit" onClick={() => { setFormData({ title: selectedArticle.title, category: selectedArticle.category, content: selectedArticle.content }); setIsModalOpen(true); }} className="p-2 text-quiet hover:text-ink transition-colors">{ICONS.edit}</button>
-                                            <button aria-label="Delete" onClick={() => handleDelete(selectedArticle.id)} className="p-2 text-quiet hover:text-ink transition-colors">{ICONS.delete}</button>
+                                            <button aria-label="Edit" onClick={() => { setFormData({ title: selectedArticle.title, category: selectedArticle.category, content: selectedArticle.content }); setIsModalOpen(true); }} className="p-2 transition-colors text-slate-400 hover:text-blue-600">{ICONS.edit}</button>
+                                            <button aria-label="Delete" onClick={() => handleDelete(selectedArticle.id)} className="p-2 transition-colors text-slate-400 hover:text-red-600">{ICONS.delete}</button>
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-3xl font-black text-ink leading-tight mb-2">{selectedArticle.title}</h3>
-                                <p className="text-xs text-quiet font-medium">Last updated on {new Date(selectedArticle.updatedAt).toLocaleDateString()} by {selectedArticle.author?.name}</p>
+                                <h3 className="text-3xl font-black leading-tight mb-2 text-slate-800 dark:text-white">{selectedArticle.title}</h3>
+                                <p className="text-xs font-medium text-slate-500">Last updated on {new Date(selectedArticle.updatedAt).toLocaleDateString()} by {selectedArticle.author?.name}</p>
                             </div>
                             <div className="p-8">
                                 <div
-                                    className="prose dark:prose-invert max-w-none text-ink leading-relaxed"
+                                    className="prose dark:prose-invert max-w-none leading-relaxed text-slate-700 dark:text-slate-300"
                                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedArticle.content) }}
                                 />
-                                <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold text-ink flex items-center gap-2 hover:underline">
+                                <button onClick={() => setSelectedArticle(null)} className="mt-12 text-sm font-bold flex items-center gap-2 hover:underline text-brand-600 dark:text-red-400">
                                     &larr; Back to list
                                 </button>
                             </div>
@@ -206,24 +206,24 @@ const KnowledgeBase: React.FC = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredArticles.map(article => (
-                                <button key={article.id} onClick={() => setSelectedArticle(article)} className="bg-surface p-6 rounded-3xl shadow-sm border border-line text-left hover:shadow-xl hover:-translate-y-1 transition-all group">
-                                    <span className="text-[10px] font-black text-ink uppercase tracking-widest block mb-2">{article.category}</span>
-                                    <h4 className="text-lg font-black text-ink mb-2 group-hover:text-ink transition-colors line-clamp-2">{article.title}</h4>
-                                    <p className="text-sm text-quiet line-clamp-3 mb-4 leading-relaxed">
+                                <button key={article.id} onClick={() => setSelectedArticle(article)} className="p-6 rounded-3xl shadow-sm border text-left hover:shadow-xl hover:-translate-y-1 transition-all group bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                                    <span className="text-[10px] font-black uppercase tracking-widest block mb-2 text-brand-600 dark:text-red-400">{article.category}</span>
+                                    <h4 className="text-lg font-black mb-2 transition-colors line-clamp-2 text-slate-800 dark:text-white group-hover:text-brand-600">{article.title}</h4>
+                                    <p className="text-sm line-clamp-3 mb-4 leading-relaxed text-slate-500 dark:text-slate-400">
                                         {article.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...'}
                                     </p>
                                     <div className="flex items-center justify-between mt-auto">
-                                        <span className="text-[10px] font-bold text-quiet uppercase tracking-tight">{new Date(article.updatedAt).toLocaleDateString()}</span>
-                                        <span className="text-ink opacity-0 group-hover:opacity-100 transition-opacity">&rarr;</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-tight text-slate-400">{new Date(article.updatedAt).toLocaleDateString()}</span>
+                                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-600">&rarr;</span>
                                     </div>
                                 </button>
                             ))}
                             {filteredArticles.length === 0 && (
                                 <div className="col-span-2 py-20 text-center">
-                                    <div className="w-20 h-20 bg-canvas rounded-full flex items-center justify-center mx-auto mb-4 text-on-strong">
+                                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-slate-50 dark:bg-slate-900 text-slate-300">
                                         {ICONS.kb}
                                     </div>
-                                    <p className="text-quiet font-medium">No articles found matching your search.</p>
+                                    <p className="font-medium text-slate-500">No articles found matching your search.</p>
                                 </div>
                             )}
                         </div>
@@ -233,29 +233,29 @@ const KnowledgeBase: React.FC = () => {
 
             {/* Create/Edit Modal */}
             {isModalOpen && (
-                <div ref={editorRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Article editor" className="fixed inset-0 bg-strong/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in max-h-[calc(100dvh-1rem)] flex flex-col">
-                        <div className="px-4 py-4 sm:px-8 sm:py-6 border-b border-line flex justify-between items-center shrink-0">
-                            <h3 className="text-xl font-black text-ink">{selectedArticle ? 'Edit Article' : 'New Article'}</h3>
-                            <button aria-label="Close dialog" onClick={() => setIsModalOpen(false)} className="text-quiet hover:text-quiet transition-colors p-2 hover:bg-muted rounded-xl">{ICONS.close}</button>
+                <div ref={editorRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Article editor" className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60] p-4 bg-slate-900/60">
+                    <div className="rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-scale-in max-h-[calc(100dvh-1rem)] flex flex-col bg-white dark:bg-slate-800">
+                        <div className="px-4 py-4 sm:px-8 sm:py-6 border-b flex justify-between items-center shrink-0 border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-white">{selectedArticle ? 'Edit Article' : 'New Article'}</h3>
+                            <button aria-label="Close dialog" onClick={() => setIsModalOpen(false)} className="transition-colors p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">{ICONS.close}</button>
                         </div>
                         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
                             <div className="p-8 space-y-6 overflow-y-auto">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Title</label>
-                                    <input aria-label="Title" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none" placeholder="How to setup email..." />
+                                    <label className="block text-sm font-black mb-2 uppercase tracking-tight text-slate-700 dark:text-slate-300">Title</label>
+                                    <input aria-label="Title" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full border-0 rounded-2xl px-5 py-3 focus:ring-2 transition-all outline-none bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-red-600/20" placeholder="How to setup email..." />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Category</label>
-                                    <select aria-label="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-canvas border-0 rounded-2xl px-5 py-3 text-ink focus:ring-2 focus:ring-accent/20 transition-all outline-none">
+                                    <label className="block text-sm font-black mb-2 uppercase tracking-tight text-slate-700 dark:text-slate-300">Category</label>
+                                    <select aria-label="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full border-0 rounded-2xl px-5 py-3 focus:ring-2 transition-all outline-none bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white focus:ring-red-600/20">
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-black text-ink mb-2 uppercase tracking-tight">Content</label>
-                                <div className="bg-surface rounded-2xl overflow-hidden border border-line">
+                                <label className="block text-sm font-black mb-2 uppercase tracking-tight text-slate-700 dark:text-slate-300">Content</label>
+                                <div className="rounded-2xl overflow-hidden border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                                     <ReactQuill
                                         // @ts-ignore
                                         ref={quillRef}
@@ -263,14 +263,14 @@ const KnowledgeBase: React.FC = () => {
                                         value={formData.content}
                                         onChange={(val) => setFormData({...formData, content: val})}
                                         modules={modules}
-                                        className="h-64 mb-12 text-ink"
+                                        className="h-64 mb-12 text-slate-800 dark:text-white"
                                     />
                                 </div>
                             </div>
                             </div>
-                            <div className="px-8 py-6 border-t border-line bg-canvas flex gap-4 shrink-0">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-muted text-ink py-4 rounded-2xl font-black text-lg hover:bg-muted transition-all active:scale-[0.98]">Cancel</button>
-                                <button type="submit" className="flex-1 bg-accent text-on-strong py-4 rounded-2xl font-black text-lg hover:bg-accent transition-all active:scale-[0.98] shadow-xl shadow-strong/15">Save Article</button>
+                            <div className="px-8 py-6 border-t flex gap-4 shrink-0 border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 rounded-2xl font-black text-lg transition-all active:scale-[0.98] bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">Cancel</button>
+                                <button type="submit" className="flex-1 py-4 rounded-2xl font-black text-lg transition-all active:scale-[0.98] shadow-xl bg-brand-600 text-white hover:bg-brand-700 shadow-brand-600/20">Save Article</button>
                             </div>
                         </form>
                     </div>

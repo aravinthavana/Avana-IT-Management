@@ -202,14 +202,14 @@ const AssetRequestList: React.FC = () => {
     const renderPriorityBadge = (priority?: string) => {
         switch (priority) {
             case 'Urgent':
-                return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-surface text-ink border border-line animate-pulse">Urgent</span>;
+                return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold border animate-pulse bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 border-red-200 dark:border-red-800">Urgent</span>;
             case 'High':
-                return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface text-ink border border-line">High</span>;
+                return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold border bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800">High</span>;
             case 'Low':
-                return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-quiet">Low</span>;
+                return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Low</span>;
             case 'Medium':
             default:
-                return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface text-ink border border-line">Medium</span>;
+                return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium border bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800">Medium</span>;
         }
     };
 
@@ -217,18 +217,18 @@ const AssetRequestList: React.FC = () => {
     const renderStatusBadge = (status: string) => {
         switch (status) {
             case 'Pending Manager':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Pending Manager</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800">Pending Manager</span>;
             case 'Pending Admin':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Pending IT Triage</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800">Pending IT Triage</span>;
             case 'Approved':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Approved (Pending Stock)</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800">Approved (Pending Stock)</span>;
             case 'Fulfilled':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-surface text-ink border border-line flex items-center gap-1"><span className="text-[11px]">&#10004;</span> Fulfilled</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1 bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-800"><span className="text-[11px]">&#10004;</span> Fulfilled</span>;
             case 'Rejected by Manager':
             case 'Rejected by Admin':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line flex items-center gap-1"><span className="text-[11px]">&#10008;</span> {status}</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800"><span className="text-[11px]">&#10008;</span> {status}</span>;
             default:
-                return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-ink">{status}</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">{status}</span>;
         }
     };
 
@@ -237,20 +237,20 @@ const AssetRequestList: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-ink flex items-center gap-2.5">
+                    <h2 className="text-2xl font-bold flex items-center gap-2.5 text-slate-800 dark:text-white">
                         <span>IT Asset Requests</span>
                         {isAdmin && (
-                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-quiet font-semibold uppercase tracking-wider">
+                            <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                                 IT Operations Console
                             </span>
                         )}
                         {!isAdmin && isManager && (
-                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface text-ink font-semibold uppercase tracking-wider">
+                            <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
                                 Manager Console
                             </span>
                         )}
                     </h2>
-                    <p className="text-sm text-quiet mt-1">
+                    <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
                         {isAdmin
                             ? 'Triage, approve, and allocate inventory hardware with digital handover sign-offs.'
                             : isManager
@@ -260,7 +260,7 @@ const AssetRequestList: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setIsFormOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent text-on-strong rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm bg-brand-600 hover:bg-brand-700 text-white"
                 >
                     <span className="w-4 h-4">{ICONS.add}</span>
                     <span>New Asset Request</span>
@@ -271,81 +271,81 @@ const AssetRequestList: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                 {isAdmin ? (
                     <>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-quiet uppercase tracking-wider">Total Requests</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.total}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Requests</span>
+                            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{metrics.total}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Needs IT Triage</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingAdmin}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Needs IT Triage</span>
+                            <p className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">{metrics.pendingAdmin}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Pending Manager</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingManager}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pending Manager</span>
+                            <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{metrics.pendingManager}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Fulfilled</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.fulfilled}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">Fulfilled</span>
+                            <p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">{metrics.fulfilled}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm col-span-2 sm:col-span-1">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">In-Stock Fleet</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.totalInStockAssets}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm col-span-2 sm:col-span-1 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">In-Stock Fleet</span>
+                            <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">{metrics.totalInStockAssets}</p>
                         </div>
                     </>
                 ) : isManager ? (
                     <>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Pending My Review</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingMyReview}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pending My Review</span>
+                            <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{metrics.pendingMyReview}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-quiet uppercase tracking-wider">Team Requests</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.total}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Team Requests</span>
+                            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{metrics.total}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">With IT Admin</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingAdmin}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">With IT Admin</span>
+                            <p className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">{metrics.pendingAdmin}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Fulfilled</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.fulfilled}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">Fulfilled</span>
+                            <p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">{metrics.fulfilled}</p>
                         </div>
                     </>
                 ) : (
                     <>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-quiet uppercase tracking-wider">My Requests</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.total}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">My Requests</span>
+                            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{metrics.total}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">In Review</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.pendingManager + metrics.pendingAdmin}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">In Review</span>
+                            <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{metrics.pendingManager + metrics.pendingAdmin}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Fulfilled / Assigned</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.fulfilled}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">Fulfilled / Assigned</span>
+                            <p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">{metrics.fulfilled}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm">
-                            <span className="text-xs font-semibold text-ink uppercase tracking-wider">Rejected</span>
-                            <p className="text-2xl font-bold text-ink mt-1">{metrics.rejected}</p>
+                        <div className="p-4 rounded-2xl border shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400">Rejected</span>
+                            <p className="text-2xl font-bold mt-1 text-red-600 dark:text-red-400">{metrics.rejected}</p>
                         </div>
                     </>
                 )}
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-surface p-4 rounded-2xl border border-line shadow-sm space-y-4">
+            <div className="p-4 rounded-2xl border shadow-sm space-y-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     {/* Status Tabs */}
-                    <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted rounded-xl">
+                    <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-700/50">
                         {(['All', 'Pending', 'Approved', 'Fulfilled', 'Rejected'] as const).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setStatusTab(tab)}
                                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                     statusTab === tab
-                                        ? 'bg-surface  text-ink  shadow-sm'
-                                        : 'text-quiet  hover:text-ink '
+                                        ? 'shadow-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
                                 {tab === 'Pending' ? 'Pending Approval' : tab}
@@ -357,7 +357,7 @@ const AssetRequestList: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                         {/* Search Input */}
                         <div className="relative flex-1 md:w-64">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-quiet pointer-events-none">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                                 {ICONS.search}
                             </span>
                             <input
@@ -365,7 +365,7 @@ const AssetRequestList: React.FC = () => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search by REQ, user, asset..."
-                                className="w-full pl-9 pr-3 py-1.5 text-xs bg-canvas border border-line rounded-xl focus:ring-2 focus:ring-accent text-ink placeholder-quiet"
+                                className="w-full pl-9 pr-3 py-1.5 text-xs border rounded-xl focus:ring-2 bg-slate-50 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 focus:ring-brand-500 text-slate-800 dark:text-white placeholder-slate-400"
                             />
                         </div>
 
@@ -373,7 +373,7 @@ const AssetRequestList: React.FC = () => {
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink focus:ring-2 focus:ring-accent"
+                            className="px-3 py-1.5 text-xs border rounded-xl focus:ring-2 bg-slate-50 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 focus:ring-brand-500"
                         >
                             <option value="All">All Categories</option>
                             <option value="Laptop">Laptop</option>
@@ -392,7 +392,7 @@ const AssetRequestList: React.FC = () => {
                             <select
                                 value={selectedCompany}
                                 onChange={(e) => setSelectedCompany(e.target.value)}
-                                className="px-3 py-1.5 text-xs bg-canvas border border-line rounded-xl text-ink focus:ring-2 focus:ring-accent font-medium"
+                                className="px-3 py-1.5 text-xs border rounded-xl focus:ring-2 font-medium bg-slate-50 dark:bg-slate-700/60 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 focus:ring-brand-500"
                                 title="Admin Company Filter"
                             >
                                 <option value="All">All Companies</option>
@@ -406,10 +406,10 @@ const AssetRequestList: React.FC = () => {
             </div>
 
             {/* Requests Table */}
-            <div className="bg-surface rounded-2xl shadow-sm border border-line overflow-hidden">
+            <div className="rounded-2xl shadow-sm border overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <div tabIndex={0} role="region" aria-label="Asset requests table; scroll horizontally for more columns" className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-quiet">
-                        <thead className="bg-canvas text-ink text-xs uppercase tracking-wider font-semibold border-b border-line">
+                    <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead className="text-xs uppercase tracking-wider font-semibold border-b bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700">
                             <tr>
                                 <th className="px-5 py-3.5">Request ID</th>
                                 <th className="px-5 py-3.5">Requester</th>
@@ -421,16 +421,16 @@ const AssetRequestList: React.FC = () => {
                                 <th className="px-5 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-line">
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                             {filteredRequests.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="text-center py-12 text-quiet">
+                                    <td colSpan={8} className="text-center py-12 text-slate-400 dark:text-slate-500">
                                         <div className="flex flex-col items-center justify-center">
-                                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-quiet mb-2">
+                                            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2 bg-slate-100 dark:bg-slate-700/60 text-slate-400">
                                                 {ICONS.assets}
                                             </div>
-                                            <p className="font-medium text-quiet">No asset requests found</p>
-                                            <p className="text-xs text-quiet mt-0.5">Try clearing filters or search queries</p>
+                                            <p className="font-medium text-slate-600 dark:text-slate-300">No asset requests found</p>
+                                            <p className="text-xs mt-0.5 text-slate-400">Try clearing filters or search queries</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -443,11 +443,11 @@ const AssetRequestList: React.FC = () => {
                                         <tr
                                             key={req.id}
                                             onClick={() => setSelectedDetailRequest(req)}
-                                            className="hover:bg-canvas/80 transition-colors cursor-pointer"
+                                            className="transition-colors cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-700/40"
                                         >
                                             {/* Request ID & Priority */}
                                             <td className="px-5 py-4 whitespace-nowrap">
-                                                <div className="font-mono text-xs font-bold text-ink">
+                                                <div className="font-mono text-xs font-bold text-slate-900 dark:text-white">
                                                     REQ-{req.id.toString().padStart(4, '0')}
                                                 </div>
                                                 <div className="mt-1">
@@ -457,20 +457,20 @@ const AssetRequestList: React.FC = () => {
 
                                             {/* Requester Profile */}
                                             <td className="px-5 py-4">
-                                                <div className="font-semibold text-ink text-xs">
+                                                <div className="font-semibold text-xs text-slate-900 dark:text-white">
                                                     {req.user?.name || 'Unknown'}
                                                 </div>
-                                                <div className="text-[11px] text-quiet truncate max-w-[140px]">
+                                                <div className="text-[11px] truncate max-w-[140px] text-slate-400">
                                                     {req.user?.email}
                                                 </div>
                                                 <div className="flex items-center gap-1.5 mt-0.5">
                                                     {req.user?.company && (
-                                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface text-ink font-medium">
+                                                        <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
                                                             {req.user.company}
                                                         </span>
                                                     )}
                                                     {req.user?.department?.name && (
-                                                        <span className="text-[10px] text-quiet">
+                                                        <span className="text-[10px] text-slate-400">
                                                             {req.user.department.name}
                                                         </span>
                                                     )}
@@ -480,20 +480,20 @@ const AssetRequestList: React.FC = () => {
                                             {/* Category & Type */}
                                             <td className="px-5 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 p-1 rounded bg-muted text-quiet shrink-0">
+                                                    <div className="w-6 h-6 p-1 rounded shrink-0 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                                                         {icon}
                                                     </div>
                                                     <div>
-                                                        <span className="font-semibold text-xs text-ink">
+                                                        <span className="font-semibold text-xs text-slate-900 dark:text-white">
                                                             {req.category}
                                                         </span>
-                                                        <div className="text-[11px] text-quiet">
+                                                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
                                                             {req.requestType}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 {req.currentAsset && (
-                                                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-surface text-ink border border-line">
+                                                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900">
                                                         Current: {req.currentAsset.assetId}
                                                     </span>
                                                 )}
@@ -501,8 +501,8 @@ const AssetRequestList: React.FC = () => {
 
                                             {/* Description snippet */}
                                             <td className="px-5 py-4 max-w-[180px]">
-                                                <p className="text-xs text-quiet line-clamp-2" title={req.description || undefined}>
-                                                    {req.description || <span className="italic text-quiet">None</span>}
+                                                <p className="text-xs line-clamp-2 text-slate-600 dark:text-slate-300" title={req.description || undefined}>
+                                                    {req.description || <span className="italic text-slate-400">None</span>}
                                                 </p>
                                             </td>
 
@@ -515,21 +515,21 @@ const AssetRequestList: React.FC = () => {
                                             <td className="px-5 py-4 whitespace-nowrap">
                                                 {req.allocatedAsset ? (
                                                     <div className="text-xs">
-                                                        <div className="font-bold text-ink flex items-center gap-1">
+                                                        <div className="font-bold flex items-center gap-1 text-green-700 dark:text-green-400">
                                                             <span>&#10004;</span>
                                                             <span>{req.allocatedAsset.name}</span>
                                                         </div>
-                                                        <div className="font-mono text-[11px] text-quiet">
+                                                        <div className="font-mono text-[11px] text-slate-400">
                                                             {req.allocatedAsset.assetId} &bull; {req.allocatedAsset.serialNumber || 'N/A'}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-quiet italic">Not allocated</span>
+                                                    <span className="text-xs italic text-slate-400">Not allocated</span>
                                                 )}
                                             </td>
 
                                             {/* Date */}
-                                            <td className="px-5 py-4 whitespace-nowrap text-xs text-quiet">
+                                            <td className="px-5 py-4 whitespace-nowrap text-xs text-slate-400">
                                                 {new Date(req.createdAt).toLocaleDateString()}
                                             </td>
 
@@ -540,14 +540,14 @@ const AssetRequestList: React.FC = () => {
                                                     <>
                                                         <button
                                                             onClick={() => handleApprove(req.id, 'Pending Admin')}
-                                                            className="px-2.5 py-1 bg-surface text-ink hover:bg-surface border border-line rounded-lg font-semibold text-xs transition-colors"
+                                                            className="px-2.5 py-1 border rounded-lg font-semibold text-xs transition-colors bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-950/40 dark:text-green-300 dark:hover:bg-green-900/50 border-green-200 dark:border-green-800"
                                                             title="Approve and forward to IT Administration"
                                                         >
                                                             Approve
                                                         </button>
                                                         <button
                                                             onClick={() => setRejectingRequest({ request: req, stage: 'Manager' })}
-                                                            className="px-2.5 py-1 bg-surface text-ink hover:bg-surface border border-line rounded-lg font-semibold text-xs transition-colors"
+                                                            className="px-2.5 py-1 border rounded-lg font-semibold text-xs transition-colors bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/50 border-red-200 dark:border-red-800"
                                                             title="Reject request with reason"
                                                         >
                                                             Reject
@@ -560,7 +560,7 @@ const AssetRequestList: React.FC = () => {
                                                     <>
                                                         <button
                                                             onClick={() => setAllocatingRequest(req)}
-                                                            className="px-3 py-1 bg-accent hover:bg-accent text-on-strong rounded-lg font-semibold text-xs transition-colors shadow-sm"
+                                                            className="px-3 py-1 rounded-lg font-semibold text-xs transition-colors shadow-sm bg-brand-600 hover:bg-brand-700 text-white"
                                                             title="Allocate real inventory asset and generate handover form"
                                                         >
                                                             Allocate Asset
@@ -568,7 +568,7 @@ const AssetRequestList: React.FC = () => {
                                                         {req.status === 'Pending Admin' && (
                                                             <button
                                                                 onClick={() => setRejectingRequest({ request: req, stage: 'Admin' })}
-                                                                className="px-2.5 py-1 bg-surface text-ink hover:bg-surface border border-line rounded-lg font-semibold text-xs transition-colors"
+                                                                className="px-2.5 py-1 border rounded-lg font-semibold text-xs transition-colors bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800"
                                                                 title="Reject request with reason"
                                                             >
                                                                 Reject
@@ -580,7 +580,7 @@ const AssetRequestList: React.FC = () => {
                                                 {/* Details Button */}
                                                 <button
                                                     onClick={() => setSelectedDetailRequest(req)}
-                                                    className="p-1.5 text-quiet hover:text-quiet rounded-lg hover:bg-muted transition-colors inline-block"
+                                                    className="p-1.5 rounded-lg transition-colors inline-block text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                                                     title="View Full Audit & Timeline"
                                                 >
                                                     <span className="w-4 h-4 block">{ICONS.view}</span>

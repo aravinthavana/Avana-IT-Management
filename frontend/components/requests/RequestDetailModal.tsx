@@ -19,32 +19,32 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     const getPriorityBadge = (priority?: string) => {
         switch (priority) {
             case 'Urgent':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-surface text-ink border border-line animate-pulse">Urgent</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold border animate-pulse bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 border-red-200 dark:border-red-800">Urgent</span>;
             case 'High':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">High</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800">High</span>;
             case 'Low':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-muted text-ink">Low</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">Low</span>;
             case 'Medium':
             default:
-                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Medium</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800">Medium</span>;
         }
     };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'Pending Manager':
-                return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Pending Manager</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200 dark:border-amber-800">Pending Manager</span>;
             case 'Pending Admin':
-                return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Pending IT Triage</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200 dark:border-blue-800">Pending IT Triage</span>;
             case 'Approved':
-                return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">Approved</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300 border-teal-200 dark:border-teal-800">Approved</span>;
             case 'Fulfilled':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-surface text-ink border border-line">&#10004; Fulfilled</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-bold border bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border-green-200 dark:border-green-800">&#10004; Fulfilled</span>;
             case 'Rejected by Manager':
             case 'Rejected by Admin':
-                return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-surface text-ink border border-line">&#10008; {status}</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 border-red-200 dark:border-red-800">&#10008; {status}</span>;
             default:
-                return <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-ink">{status}</span>;
+                return <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">{status}</span>;
         }
     };
 
@@ -57,23 +57,23 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             title={`Request Audit & Details (REQ-${request.id.toString().padStart(4, '0')})`}
             maxWidth="max-w-2xl"
         >
-            <div className="space-y-5 text-ink">
+            <div className="space-y-5 text-slate-800 dark:text-slate-200">
                 {/* Header overview */}
-                <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-canvas rounded-2xl border border-line">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl border bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-surface text-ink rounded-xl border border-accent">
+                        <div className="p-3 rounded-xl border bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800">
                             <div className="w-6 h-6">{icon}</div>
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-base text-ink">
+                                <h4 className="font-bold text-base text-slate-900 dark:text-white">
                                     {request.category}
                                 </h4>
-                                <span className="text-xs px-2 py-0.5 rounded bg-muted font-medium">
+                                <span className="text-xs px-2 py-0.5 rounded font-medium bg-slate-200 dark:bg-slate-600">
                                     {request.requestType}
                                 </span>
                             </div>
-                            <p className="text-xs text-quiet mt-0.5">
+                            <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">
                                 Submitted on {new Date(request.createdAt).toLocaleString()}
                             </p>
                         </div>
@@ -85,22 +85,22 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </div>
 
                 {/* Requester profile info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-canvas/70 rounded-xl border border-line/80 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl border text-xs bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/80">
                     <div>
-                        <span className="text-quiet font-medium">Requester:</span>
-                        <p className="font-semibold text-ink text-sm mt-0.5">
+                        <span className="font-medium text-slate-500 dark:text-slate-400">Requester:</span>
+                        <p className="font-semibold text-sm mt-0.5 text-slate-800 dark:text-white">
                             {request.user?.name || 'N/A'}
                         </p>
-                        <p className="text-quiet">
+                        <p className="text-slate-500 dark:text-slate-400">
                             {request.user?.email || 'N/A'}
                         </p>
                     </div>
                     <div>
-                        <span className="text-quiet font-medium">Organization:</span>
-                        <p className="font-semibold text-ink mt-0.5">
+                        <span className="font-medium text-slate-500 dark:text-slate-400">Organization:</span>
+                        <p className="font-semibold mt-0.5 text-slate-800 dark:text-white">
                             {request.user?.company || 'Avana Group'} &bull; {request.user?.department?.name || 'General'}
                         </p>
-                        <p className="text-quiet">
+                        <p className="text-slate-500 dark:text-slate-400">
                             Emp ID: {request.user?.employeeId || 'N/A'}
                         </p>
                     </div>
@@ -108,30 +108,30 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                 {/* Description & Justification */}
                 <div>
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                    <h5 className="text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-500 dark:text-slate-400">
                         Business Justification / Description
                     </h5>
-                    <div className="p-3.5 bg-surface rounded-xl border border-line text-sm leading-relaxed whitespace-pre-wrap">
-                        {request.description || <span className="italic text-quiet">No description provided.</span>}
+                    <div className="p-3.5 rounded-xl border text-sm leading-relaxed whitespace-pre-wrap bg-white dark:bg-slate-700/60 border-slate-200 dark:border-slate-600">
+                        {request.description || <span className="italic text-slate-400">No description provided.</span>}
                     </div>
                 </div>
 
                 {/* Current Asset if Replacement/Upgrade */}
                 {request.currentAsset && (
                     <div>
-                        <h5 className="text-xs font-bold uppercase tracking-wider text-quiet mb-1.5">
+                        <h5 className="text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-500 dark:text-slate-400">
                             Existing Asset to Replace / Upgrade / Repair
                         </h5>
-                        <div className="p-3.5 bg-surface/60 border border-line rounded-xl flex items-center justify-between text-xs">
+                        <div className="p-3.5 border rounded-xl flex items-center justify-between text-xs bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40">
                             <div>
-                                <p className="font-bold text-sm text-ink">
+                                <p className="font-bold text-sm text-slate-900 dark:text-white">
                                     {request.currentAsset.name}
                                 </p>
-                                <p className="text-quiet mt-0.5">
+                                <p className="mt-0.5 text-slate-500 dark:text-slate-400">
                                     Tag: <span className="font-mono font-semibold">{request.currentAsset.assetId}</span> &bull; S/N: <code className="font-mono">{request.currentAsset.serialNumber || 'N/A'}</code>
                                 </p>
                             </div>
-                            <span className="px-2 py-1 rounded bg-surface text-ink font-medium">
+                            <span className="px-2 py-1 rounded font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                 {request.currentAsset.category}
                             </span>
                         </div>
@@ -141,26 +141,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 {/* Allocated Asset if Fulfilled */}
                 {request.allocatedAsset && (
                     <div>
-                        <h5 className="text-xs font-bold uppercase tracking-wider text-ink mb-1.5 flex items-center gap-1.5">
+                        <h5 className="text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-green-600 dark:text-green-400">
                             <span>&#10004;</span> Allocated Device (Fulfilled)
                         </h5>
-                        <div className="p-3.5 bg-surface/80 border border-line rounded-xl flex items-center justify-between text-xs">
+                        <div className="p-3.5 border rounded-xl flex items-center justify-between text-xs bg-green-50/80 dark:bg-green-950/30 border-green-200 dark:border-green-800/50">
                             <div>
-                                <p className="font-bold text-sm text-ink">
+                                <p className="font-bold text-sm text-slate-900 dark:text-white">
                                     {request.allocatedAsset.name}
                                 </p>
-                                <p className="text-quiet mt-0.5">
-                                    Tag: <span className="font-mono font-bold text-ink">{request.allocatedAsset.assetId}</span> &bull;
+                                <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                                    Tag: <span className="font-mono font-bold text-green-700 dark:text-green-300">{request.allocatedAsset.assetId}</span> &bull;
                                     Model: {request.allocatedAsset.brand} {request.allocatedAsset.model} &bull;
                                     S/N: <code className="font-mono">{request.allocatedAsset.serialNumber || 'N/A'}</code>
                                 </p>
                                 {request.fulfilledAt && (
-                                    <p className="text-[11px] text-ink mt-1">
+                                    <p className="text-[11px] mt-1 text-green-700 dark:text-green-400">
                                         Allocated on {new Date(request.fulfilledAt).toLocaleString()}
                                     </p>
                                 )}
                             </div>
-                            <span className="px-2.5 py-1 rounded-full bg-surface text-ink font-bold text-xs">
+                            <span className="px-2.5 py-1 rounded-full font-bold text-xs bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
                                 In Use
                             </span>
                         </div>
@@ -169,14 +169,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                 {/* Rejection Alert Box */}
                 {request.rejectionReason && (
-                    <div className="p-3.5 bg-surface border border-line rounded-xl text-xs text-ink">
-                        <div className="flex items-center gap-2 font-bold text-ink mb-1">
+                    <div className="p-3.5 border rounded-xl text-xs bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/40 text-red-800 dark:text-red-300">
+                        <div className="flex items-center gap-2 font-bold mb-1 text-red-700 dark:text-red-300">
                             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>Reason for Rejection:</span>
                         </div>
-                        <p className="text-sm font-medium pl-6 text-ink whitespace-pre-wrap">
+                        <p className="text-sm font-medium pl-6 whitespace-pre-wrap text-red-900 dark:text-red-200">
                             {request.rejectionReason}
                         </p>
                     </div>
@@ -184,16 +184,16 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                 {/* Approval & Audit Timeline */}
                 <div>
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-quiet mb-2">
+                    <h5 className="text-xs font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-slate-400">
                         Approval &amp; Audit Lifecycle
                     </h5>
-                    <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-muted">
+                    <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
                         {/* Step 1: Submission */}
                         <div className="relative">
-                            <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-olive ring-4 ring-accent" />
+                            <div className="absolute -left-6 top-1 w-4 h-4 rounded-full ring-4 bg-blue-500 ring-white dark:ring-slate-800" />
                             <div className="text-xs">
-                                <p className="font-semibold text-ink">Request Submitted</p>
-                                <p className="text-quiet">
+                                <p className="font-semibold text-slate-800 dark:text-white">Request Submitted</p>
+                                <p className="text-slate-500 dark:text-slate-400">
                                     By {request.user?.name || 'Employee'} on {new Date(request.createdAt).toLocaleString()}
                                 </p>
                             </div>
@@ -201,33 +201,33 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                         {/* Step 2: Manager Stage */}
                         <div className="relative">
-                            <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full ring-4 ring-accent  ${
+                            <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-800 ${
                                 request.status === 'Rejected by Manager'
-                                    ? 'bg-olive'
+                                    ? 'bg-red-500'
                                     : request.managerDecisionAt || request.status === 'Pending Admin' || request.status === 'Approved' || request.status === 'Fulfilled'
-                                        ? 'bg-olive'
-                                        : 'bg-muted'
+                                        ? 'bg-green-500'
+                                        : 'bg-amber-400'
                             }`} />
                             <div className="text-xs">
-                                <p className="font-semibold text-ink">
+                                <p className="font-semibold text-slate-800 dark:text-white">
                                     Manager Approval Stage
                                 </p>
                                 {request.manager ? (
-                                    <p className="text-quiet">
+                                    <p className="text-slate-500 dark:text-slate-400">
                                         Assigned Manager: {request.manager.name} ({request.manager.email})
                                     </p>
                                 ) : (
-                                    <p className="text-quiet italic">
+                                    <p className="italic text-slate-500 dark:text-slate-400">
                                         No manager assigned (Direct IT Routing)
                                     </p>
                                 )}
                                 {request.managerDecisionAt && (
-                                    <p className="text-quiet">
+                                    <p className="text-slate-500 dark:text-slate-400">
                                         Decision recorded on {new Date(request.managerDecisionAt).toLocaleString()}
                                     </p>
                                 )}
                                 {request.managerRemarks && (
-                                    <p className="mt-1 text-quiet italic bg-muted p-2 rounded">
+                                    <p className="mt-1 italic p-2 rounded text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700">
                                         Manager Remarks: "{request.managerRemarks}"
                                     </p>
                                 )}
@@ -236,31 +236,31 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
                         {/* Step 3: IT Admin Stage */}
                         <div className="relative">
-                            <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full ring-4 ring-accent  ${
+                            <div className={`absolute -left-6 top-1 w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-800 ${
                                 request.status === 'Rejected by Admin'
-                                    ? 'bg-olive'
+                                    ? 'bg-red-500'
                                     : request.status === 'Fulfilled'
-                                        ? 'bg-olive'
+                                        ? 'bg-green-500'
                                         : request.status === 'Approved'
-                                            ? 'bg-olive'
-                                            : 'bg-muted '
+                                            ? 'bg-teal-500'
+                                            : 'bg-slate-300 dark:bg-slate-600'
                             }`} />
                             <div className="text-xs">
-                                <p className="font-semibold text-ink">
+                                <p className="font-semibold text-slate-800 dark:text-white">
                                     IT Administration &amp; Allocation Stage
                                 </p>
                                 {request.adminDecisionAt && (
-                                    <p className="text-quiet">
+                                    <p className="text-slate-500 dark:text-slate-400">
                                         Actioned on {new Date(request.adminDecisionAt).toLocaleString()}
                                     </p>
                                 )}
                                 {request.adminRemarks && (
-                                    <p className="mt-1 text-quiet italic bg-muted p-2 rounded">
+                                    <p className="mt-1 italic p-2 rounded text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700">
                                         IT Admin Remarks: "{request.adminRemarks}"
                                     </p>
                                 )}
                                 {request.status === 'Fulfilled' && (
-                                    <p className="text-ink font-semibold mt-1">
+                                    <p className="font-semibold mt-1 text-green-600 dark:text-green-400">
                                         &#10004; Device handed over with digital sign-off log generated.
                                     </p>
                                 )}
@@ -270,11 +270,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </div>
 
                 {/* Footer close */}
-                <div className="flex justify-end pt-4 border-t border-line">
+                <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-5 py-2 text-sm font-medium text-ink bg-muted hover:bg-muted rounded-xl transition-colors"
+                        className="px-5 py-2 text-sm font-medium rounded-xl transition-colors text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
                     >
                         Close
                     </button>

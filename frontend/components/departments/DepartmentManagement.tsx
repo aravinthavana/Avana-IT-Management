@@ -11,8 +11,8 @@ import DepartmentDetailView from './DepartmentDetailView';
 // Reusable FormInput component
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
     <div>
-        <label className="block text-sm font-medium text-ink">{label}</label>
-        <input {...props} className="mt-1 block w-full px-3 py-2 bg-surface border border-line rounded-md text-sm shadow-sm placeholder-quiet focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent text-ink" />
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+        <input {...props} className="mt-1 block w-full px-3 py-2 border rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-400 focus:border-brand-500 focus:ring-brand-500 text-slate-900 dark:text-slate-100" />
     </div>
 );
 
@@ -132,30 +132,30 @@ const DepartmentManagement: React.FC = () => {
                         required
                     />
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 gap-3">
-                        <button type="button" onClick={handleCloseForm} className="w-full sm:w-auto flex justify-center bg-muted text-ink px-5 py-2 rounded-lg hover:bg-muted font-medium transition-all duration-200 active:scale-95">Cancel</button>
-                        <button type="submit" className="w-full sm:w-auto flex justify-center bg-accent text-on-strong px-5 py-2 rounded-lg hover:bg-accent font-medium transition-all duration-200 active:scale-95">Save</button>
+                        <button type="button" onClick={handleCloseForm} className="w-full sm:w-auto flex justify-center px-5 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">Cancel</button>
+                        <button type="submit" className="w-full sm:w-auto flex justify-center px-5 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95 bg-brand-600 text-white hover:bg-brand-700">Save</button>
                     </div>
                 </form>
             </Modal>
 
-            <div className="bg-surface rounded-lg shadow-md">
-                <div className="p-6 flex justify-between items-center border-b border-line">
-                    <h2 className="text-xl font-bold text-ink">Manage Departments</h2>
-                    <button onClick={() => handleOpenForm()} className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 font-medium transition-all duration-200 active:scale-95">
+            <div className="rounded-lg shadow-md bg-white dark:bg-slate-800">
+                <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Manage Departments</h2>
+                    <button onClick={() => handleOpenForm()} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-all duration-200 active:scale-95 bg-brand-600 text-white hover:bg-brand-700">
                         <div className="w-4 h-4">{ICONS.add}</div>
                         <span className="hidden sm:inline">Add Department</span>
                     </button>
                 </div>
                 <div className="p-6 space-y-3">
                     {departments.map(dept => (
-                         <div key={dept.id} onClick={() => setSelectedDepartmentId(dept.id)} className="bg-canvas p-4 rounded-lg flex items-center justify-between border border-line/80 cursor-pointer hover:bg-muted transition-colors">
+                         <div key={dept.id} onClick={() => setSelectedDepartmentId(dept.id)} className="p-4 rounded-lg flex items-center justify-between border cursor-pointer transition-colors bg-slate-50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/50">
                              <div>
-                                 <p className="font-semibold text-ink">{dept.name}</p>
-                                 <p className="text-sm text-quiet">Assets Assigned: {assetCounts[dept.id] || 0} &bull; Users: {userCounts[dept.id] || 0}</p>
+                                 <p className="font-semibold text-slate-800 dark:text-slate-100">{dept.name}</p>
+                                 <p className="text-sm text-slate-500 dark:text-slate-400">Assets Assigned: {assetCounts[dept.id] || 0} &bull; Users: {userCounts[dept.id] || 0}</p>
                              </div>
                              <div className="flex items-center space-x-2">
-                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(dept); }} className="p-2 text-quiet rounded-full hover:bg-muted hover:text-ink" title="Edit">{ICONS.edit}</button>
-                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(dept); }} className="p-2 text-quiet rounded-full hover:bg-muted hover:text-ink" title="Delete">{ICONS.delete}</button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleOpenForm(dept); }} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-brand-600 dark:hover:text-brand-500" title="Edit">{ICONS.edit}</button>
+                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteRequest(dept); }} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-500" title="Delete">{ICONS.delete}</button>
                              </div>
                          </div>
                     ))}

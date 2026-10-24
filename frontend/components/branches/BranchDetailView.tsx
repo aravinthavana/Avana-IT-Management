@@ -31,9 +31,9 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
 
     if (!branch) {
         return (
-            <div className="text-center p-8 bg-surface rounded-lg shadow-md">
+            <div className="text-center p-8 rounded-lg shadow-md bg-white dark:bg-slate-800">
                 <h2 className="text-xl font-semibold">Branch not found</h2>
-                <button onClick={onBack} className="mt-4 bg-accent text-on-strong px-4 py-2 rounded-lg hover:bg-accent">&larr; Back to Branches</button>
+                <button onClick={onBack} className="mt-4 px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700">&larr; Back to Branches</button>
             </div>
         );
     }
@@ -103,53 +103,53 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
             {branch && <AssignAssetModal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} onAssign={handleAssignAsset} target={{ id: branch.id, name: branch.name, type: 'branch' }} />}
             <UnassignAssetModal isOpen={!!assetToUnassign} onClose={() => setAssetToUnassign(null)} onConfirm={handleConfirmUnassign} asset={assetToUnassign} />
 
-            <div className="sticky top-16 bg-muted/80 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b border-line">
+            <div className="sticky top-16 backdrop-blur-sm z-10 -mx-4 sm:-mx-8 px-4 sm:px-6 lg:px-8 py-3 border-b bg-slate-100/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4 min-w-0">
-                        <button onClick={onBack} className="bg-muted text-ink px-2 sm:px-3 py-1.5 rounded-lg hover:bg-muted flex items-center text-sm transition-colors flex-shrink-0">&larr; <span className="hidden sm:inline ml-2 font-medium">Back</span></button>
+                        <button onClick={onBack} className="px-2 sm:px-3 py-1.5 rounded-lg flex items-center text-sm transition-colors flex-shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">&larr; <span className="hidden sm:inline ml-2 font-medium">Back</span></button>
                         <div className="min-w-0">
-                            <h2 className="text-lg font-bold text-ink truncate" title={branch.name}>{branch.name}</h2>
-                            <p className="text-xs text-quiet">{branch.location}</p>
+                            <h2 className="text-lg font-bold truncate text-slate-800 dark:text-slate-100" title={branch.name}>{branch.name}</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{branch.location}</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsAssignModalOpen(true)} className="bg-accent text-on-strong px-3 sm:px-4 py-2 rounded-lg hover:bg-accent flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0">
+                    <button onClick={() => setIsAssignModalOpen(true)} className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors flex-shrink-0 bg-brand-600 text-white hover:bg-brand-700">
                         {ICONS.add} <span className="hidden sm:inline">Assign Asset</span>
                     </button>
                 </div>
             </div>
 
             <div className="space-y-6 pt-6">
-                <div className="bg-surface p-6 rounded-lg shadow-md">
+                <div className="p-6 rounded-lg shadow-md bg-white dark:bg-slate-800">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold text-ink">Assigned Assets ({branchAssets.length})</h3>
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Assigned Assets ({branchAssets.length})</h3>
                     </div>
                     <div className="space-y-3">
                         {branchAssets.length > 0 ? (
                             branchAssets.map(asset => (
-                                <div key={asset.id} className="bg-canvas p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-line">
+                                <div key={asset.id} className="p-4 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50">
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-ink truncate">{asset.name}</p>
-                                        <p className="text-sm text-quiet flex flex-wrap items-center gap-x-2">
+                                        <p className="font-semibold truncate text-slate-800 dark:text-slate-100">{asset.name}</p>
+                                        <p className="text-sm flex flex-wrap items-center gap-x-2 text-slate-500 dark:text-slate-400">
                                             <span className="font-mono">{asset.assetId}</span>
                                             <span className="hidden sm:inline">&bull;</span>
                                             <span className="font-mono">S/N: {asset.serialNumber}</span>
                                         </p>
                                     </div>
                                     <div className="flex items-center justify-end gap-2 flex-shrink-0 self-start sm:self-center">
-                                        <button onClick={() => setSelectedAssetId(asset.id)} className="px-3 py-1.5 rounded-md bg-muted text-ink hover:bg-muted text-xs font-semibold transition-colors">View</button>
-                                        <button onClick={() => setAssetToUnassign(asset)} className="p-2 text-quiet rounded-full hover:bg-surface hover:text-ink" title="Unassign Asset">{ICONS.unassign}</button>
+                                        <button onClick={() => setSelectedAssetId(asset.id)} className="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">View</button>
+                                        <button onClick={() => setAssetToUnassign(asset)} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-500" title="Unassign Asset">{ICONS.unassign}</button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-quiet text-center py-4">No assets are currently assigned to this branch.</p>
+                            <p className="text-center py-4 text-gray-500 dark:text-gray-400">No assets are currently assigned to this branch.</p>
                         )}
                     </div>
                 </div>
 
-                <div className="bg-surface p-6 rounded-lg shadow-md">
+                <div className="p-6 rounded-lg shadow-md bg-white dark:bg-slate-800">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold text-ink">Users in Branch ({branchUsers.length})</h3>
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Users in Branch ({branchUsers.length})</h3>
                     </div>
                     <div className="space-y-3">
                         {branchUsers.length > 0 ? (
@@ -157,32 +157,32 @@ const BranchDetailView: React.FC<BranchDetailViewProps> = ({ branchId, onBack })
                                 <div
                                     key={user.id}
                                     onClick={() => setSelectedUserId(user.id)}
-                                    className="bg-canvas p-3.5 rounded-xl flex items-center justify-between gap-3 border border-line cursor-pointer hover:bg-muted transition-colors"
+                                    className="p-3.5 rounded-xl flex items-center justify-between gap-3 border cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         {user.avatar ? (
-                                            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-line flex-shrink-0" />
+                                            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border flex-shrink-0 border-slate-200 dark:border-slate-700" />
                                         ) : (
-                                            <div className="w-10 h-10 rounded-full bg-accent/10 text-ink flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 bg-brand-500/10 text-brand-600 dark:text-brand-400">
                                                 {user.name.charAt(0).toUpperCase()}
                                             </div>
                                         )}
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-ink truncate">{user.name}</p>
-                                            <p className="text-sm text-quiet truncate flex items-center gap-2">
+                                            <p className="font-semibold truncate text-slate-800 dark:text-slate-100">{user.name}</p>
+                                            <p className="text-sm truncate flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                                 {user.employeeId && <span>{user.employeeId}</span>}
                                                 {user.jobTitle && <span>&bull; {user.jobTitle}</span>}
                                                 {user.email && <span className="hidden sm:inline">&bull; {user.email}</span>}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="p-2 text-quiet flex-shrink-0">
+                                    <div className="p-2 flex-shrink-0 text-slate-400 dark:text-slate-500">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-quiet text-center py-4">No users found in this branch.</p>
+                            <p className="text-center py-4 text-gray-500 dark:text-gray-400">No users found in this branch.</p>
                         )}
                     </div>
                 </div>

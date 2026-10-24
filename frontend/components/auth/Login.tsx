@@ -253,29 +253,29 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex text-ink">
+        <div className="min-h-screen flex text-slate-800 dark:text-slate-200">
             {/* Left Side - Visual */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-strong overflow-hidden items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/90 via-strong to-strong z-10" />
-                <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#d7d0bc 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-                <div className="relative z-20 flex flex-col items-center justify-center p-12 text-center text-on-strong">
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-slate-900">
+                <div className="absolute inset-0 bg-gradient-to-br z-10 from-brand-600/90 via-slate-900 to-slate-900" />
+                <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+                <div className="relative z-20 flex flex-col items-center justify-center p-12 text-center text-white">
                     <img src="/logo-light.png" alt="Avana Logo" className="w-full max-w-sm object-contain mb-8" />
                     <h1 className="text-4xl font-bold mb-4 tracking-tight">IT Asset Management</h1>
-                    <p className="text-lg text-on-strong max-w-md">Streamline your hardware, licenses, and user requests with our secure enterprise platform.</p>
+                    <p className="text-lg max-w-md text-slate-300">Streamline your hardware, licenses, and user requests with our secure enterprise platform.</p>
                 </div>
             </div>
 
             {/* Right Side - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-3 sm:p-8 bg-canvas">
-                <div className="w-full max-w-md bg-surface rounded-3xl shadow-lg p-5 sm:p-10 border border-line relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-accent to-accent" />
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-3 sm:p-8 bg-slate-50 dark:bg-slate-900">
+                <div className="w-full max-w-md rounded-3xl shadow-lg p-5 sm:p-10 border relative overflow-hidden bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-500 to-brand-600" />
 
                     <div className="text-center mb-8">
                         <img src="/logo.png" alt="Company Logo" className="w-44 object-contain mx-auto mb-5 lg:hidden" />
-                        <h2 className="text-2xl sm:text-3xl font-black text-ink uppercase tracking-tight">
+                        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
                             {authMode === 'otp-verify' ? 'Check Your Inbox' : 'Welcome Back'}
                         </h2>
-                        <p className="text-quiet mt-2 text-sm font-medium">
+                        <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                             {authMode === 'otp-verify'
                                 ? 'Enter the verification code sent to your email'
                                 : 'Access your IT workspace'}
@@ -288,24 +288,24 @@ const Login: React.FC = () => {
                             <button
                                 onClick={handleMicrosoftLogin}
                                 disabled={isLoading}
-                                className="w-full mb-6 flex items-center justify-center gap-3 py-3.5 px-4 border border-line rounded-2xl shadow-sm text-sm font-bold text-ink bg-surface hover:bg-canvas transition-all transform active:scale-[0.98] group"
+                                className="w-full mb-6 flex items-center justify-center gap-3 py-3.5 px-4 border rounded-2xl shadow-sm text-sm font-bold transition-all transform active:scale-[0.98] group border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
                             >
                                 <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill="#d7d0bc" d="M0 0h23v23H0z"/>
-                                    <path fill="#b27f0d" d="M1 1h10v10H1z"/>
-                                    <path fill="#b27f0d" d="M12 1h10v10H12z"/>
-                                    <path fill="#aab2b2" d="M1 12h10v10H1z"/>
-                                    <path fill="#b27f0d" d="M12 12h10v10H12z"/>
+                                    <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
+                                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
                                 </svg>
                                 Sign in with Microsoft 365
                             </button>
 
                             <div className="relative mb-6">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-line" />
+                                    <div className="w-full border-t border-slate-200 dark:border-slate-700" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase tracking-widest font-black">
-                                    <span className="px-4 bg-surface text-quiet">
+                                    <span className="px-4 bg-white dark:bg-slate-800 text-slate-400">
                                         Or sign in with email
                                     </span>
                                 </div>
@@ -315,14 +315,14 @@ const Login: React.FC = () => {
 
                     {/* Feedback Messages */}
                     {error && (
-                        <div role="alert" aria-live="assertive" className="mb-6 p-4 bg-surface border-l-4 border-line text-ink text-sm rounded-xl flex items-start animate-shake">
+                        <div role="alert" aria-live="assertive" className="mb-6 p-4 border-l-4 text-sm rounded-xl flex items-start animate-shake bg-red-50 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-400">
                             <span className="mr-3 text-lg leading-none">⚠️</span>
                             <div className="text-xs sm:text-sm">{error}</div>
                         </div>
                     )}
 
                     {successMessage && !error && (
-                        <div role="status" aria-live="polite" className="mb-6 p-3.5 bg-surface border-l-4 border-line text-ink text-xs sm:text-sm rounded-xl flex items-center">
+                        <div role="status" aria-live="polite" className="mb-6 p-3.5 border-l-4 text-xs sm:text-sm rounded-xl flex items-center bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-700 dark:text-emerald-300">
                             <span className="mr-2.5 text-base">✉️</span>
                             <span>{successMessage}</span>
                         </div>
@@ -332,11 +332,11 @@ const Login: React.FC = () => {
                     {authMode === 'otp-email' && (
                         <form onSubmit={(e) => { e.preventDefault(); handleSendOtp(); }} className="space-y-5">
                             <div>
-                                <label htmlFor="loginEmail" className="block text-xs font-black text-quiet mb-2 uppercase tracking-widest">
+                                <label htmlFor="loginEmail" className="block text-xs font-black mb-2 uppercase tracking-widest text-slate-400 dark:text-slate-500">
                                     Work Email Address
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-quiet">
+                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
                                         {ICONS.profile}
                                     </span>
                                     <input
@@ -347,11 +347,11 @@ const Login: React.FC = () => {
                                         autoFocus
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-canvas text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-quiet text-sm sm:text-base font-medium"
+                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl focus:outline-none focus:ring-2 transition-all text-sm sm:text-base font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-brand-500/30 placeholder:text-slate-400"
                                         placeholder="name@avanamedical.com"
                                     />
                                 </div>
-                                <p className="text-[11px] text-quiet mt-1.5 pl-1">
+                                <p className="text-[11px] mt-1.5 pl-1 text-slate-400 dark:text-slate-500">
                                     We'll send a 6-digit secure verification code to this inbox.
                                 </p>
                             </div>
@@ -359,11 +359,11 @@ const Login: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading || !email}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black text-on-strong bg-accent hover:bg-accent transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-white bg-brand-600 hover:bg-brand-700"
                             >
                                 {isLoading ? (
                                     <>
-                                        <svg className="animate-spin h-5 w-5 text-on-strong" fill="none" viewBox="0 0 24 24">
+                                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                         </svg>
@@ -381,7 +381,7 @@ const Login: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => { setError(''); setSuccessMessage(''); setAuthMode('password'); }}
-                                    className="text-xs font-bold text-quiet hover:text-ink transition-colors"
+                                    className="text-xs font-bold transition-colors text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-white"
                                 >
                                     Prefer password? <span className="underline underline-offset-2">Sign in with password</span>
                                 </button>
@@ -392,15 +392,15 @@ const Login: React.FC = () => {
                     {/* MODE 2: OTP 6-Digit Code Verification */}
                     {authMode === 'otp-verify' && (
                         <div className="space-y-6">
-                            <div className="bg-canvas p-4 rounded-2xl border border-line flex items-center justify-between">
+                            <div className="p-4 rounded-2xl border flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700/60">
                                 <div className="truncate mr-3">
-                                    <div className="text-[11px] uppercase tracking-wider font-bold text-quiet">Code Sent To</div>
-                                    <div className="text-sm font-bold text-ink truncate">{email}</div>
+                                    <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Code Sent To</div>
+                                    <div className="text-sm font-bold truncate text-slate-900 dark:text-white">{email}</div>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => { setError(''); setSuccessMessage(''); setAuthMode('otp-email'); }}
-                                    className="text-xs font-bold text-ink hover:underline shrink-0"
+                                    className="text-xs font-bold hover:underline shrink-0 text-brand-600 dark:text-brand-400"
                                 >
                                     Change
                                 </button>
@@ -408,7 +408,7 @@ const Login: React.FC = () => {
 
                             {/* 6 Digit Input Boxes */}
                             <div>
-                                <label className="block text-xs font-black text-quiet mb-3 uppercase tracking-widest text-center">
+                                <label className="block text-xs font-black mb-3 uppercase tracking-widest text-center text-slate-400 dark:text-slate-500">
                                     Enter 6-Digit Code
                                 </label>
                                 <div role="group" aria-label="Six-digit verification code" className="grid grid-cols-6 gap-1.5 sm:gap-2 max-w-sm mx-auto" onPaste={handleOtpPaste}>
@@ -425,7 +425,7 @@ const Login: React.FC = () => {
                                             value={digit}
                                             onChange={(e) => handleOtpChange(idx, e.target.value)}
                                             onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                                            className="min-w-0 w-full h-12 sm:h-14 text-center text-2xl font-black rounded-2xl bg-canvas border-2 border-line text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/20 transition-all"
+                                            className="min-w-0 w-full h-12 sm:h-14 text-center text-2xl font-black rounded-2xl border-2 focus:outline-none focus:ring-4 transition-all bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-brand-500 focus:ring-brand-500/20"
                                         />
                                     ))}
                                 </div>
@@ -436,11 +436,11 @@ const Login: React.FC = () => {
                                 type="button"
                                 onClick={() => handleVerifyOtp()}
                                 disabled={isLoading || otp.some(d => d === '')}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black text-on-strong bg-accent hover:bg-accent transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-white bg-brand-600 hover:bg-brand-700"
                             >
                                 {isLoading ? (
                                     <>
-                                        <svg className="animate-spin h-5 w-5 text-on-strong" fill="none" viewBox="0 0 24 24">
+                                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                         </svg>
@@ -457,14 +457,14 @@ const Login: React.FC = () => {
                                     type="button"
                                     onClick={() => handleSendOtp(email)}
                                     disabled={resendCooldown > 0 || isLoading}
-                                    className="font-bold text-ink hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                                    className="font-bold hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed text-brand-600 dark:text-brand-400"
                                 >
                                     {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setError(''); setSuccessMessage(''); setAuthMode('password'); }}
-                                    className="font-semibold text-quiet hover:underline"
+                                    className="font-semibold hover:underline text-slate-500 dark:text-slate-400"
                                 >
                                     Use password instead
                                 </button>
@@ -476,11 +476,11 @@ const Login: React.FC = () => {
                     {authMode === 'password' && (
                         <form onSubmit={handlePasswordSubmit} className="space-y-5">
                             <div>
-                                <label htmlFor="loginEmail" className="block text-xs font-black text-quiet mb-2 uppercase tracking-widest">
+                                <label htmlFor="loginEmail" className="block text-xs font-black mb-2 uppercase tracking-widest text-slate-400 dark:text-slate-500">
                                     Work Email Address
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-quiet">
+                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
                                         {ICONS.profile}
                                     </span>
                                     <input
@@ -490,7 +490,7 @@ const Login: React.FC = () => {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-canvas text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-quiet text-sm sm:text-base font-medium"
+                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl focus:outline-none focus:ring-2 transition-all text-sm sm:text-base font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-brand-500/30 placeholder:text-slate-400"
                                         placeholder="name@avanamedical.com"
                                     />
                                 </div>
@@ -498,19 +498,19 @@ const Login: React.FC = () => {
 
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label htmlFor="loginPassword" className="block text-xs font-black text-quiet uppercase tracking-widest">
+                                    <label htmlFor="loginPassword" className="block text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                                         Password
                                     </label>
                                     <button
                                         type="button"
                                         onClick={() => { setError(''); setSuccessMessage(''); handleSendOtp(); }}
-                                        className="text-xs font-bold text-ink hover:text-ink"
+                                        className="text-xs font-bold text-brand-600 hover:text-brand-500 dark:text-red-400"
                                     >
                                         Forgot? Use OTP
                                     </button>
                                 </div>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-quiet">
+                                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
@@ -522,7 +522,7 @@ const Login: React.FC = () => {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl bg-canvas text-ink focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-quiet text-sm sm:text-base font-medium"
+                                        className="block w-full pl-12 pr-4 py-3.5 border-0 rounded-2xl focus:outline-none focus:ring-2 transition-all text-sm sm:text-base font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-brand-500/30 placeholder:text-slate-400"
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -531,7 +531,7 @@ const Login: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black text-on-strong bg-accent hover:bg-accent transition-all transform active:scale-[0.98] disabled:opacity-50"
+                                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-xl text-base font-black transition-all transform active:scale-[0.98] disabled:opacity-50 text-white bg-brand-600 hover:bg-brand-700"
                             >
                                 {isLoading ? 'Processing...' : 'Sign In'}
                             </button>
@@ -540,7 +540,7 @@ const Login: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => { setError(''); setSuccessMessage(''); setAuthMode('otp-email'); }}
-                                    className="text-xs font-bold text-ink hover:text-ink transition-colors"
+                                    className="text-xs font-bold transition-colors text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-white"
                                 >
                                     &larr; Switch back to <span className="underline underline-offset-2">Email Code (OTP) login</span>
                                 </button>
@@ -548,7 +548,7 @@ const Login: React.FC = () => {
                         </form>
                     )}
 
-                    <div className="mt-8 text-center text-xs text-quiet font-bold uppercase tracking-tighter">
+                    <div className="mt-8 text-center text-xs font-bold uppercase tracking-tighter text-slate-400">
                         <p>Secured by Avana Enterprise Security</p>
                     </div>
                 </div>

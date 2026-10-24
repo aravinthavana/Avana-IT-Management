@@ -28,7 +28,7 @@ export default function SignatureCanvas({ onSave, onCancel }: SignatureCanvasPro
         event.preventDefault();
         canvas.setPointerCapture(event.pointerId);
         drawing.current = true;
-        ctx.strokeStyle = '#172025';
+        ctx.strokeStyle = '#0f172a';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -59,7 +59,7 @@ export default function SignatureCanvas({ onSave, onCancel }: SignatureCanvasPro
             <p className="text-sm text-quiet mb-4">Use your finger, pen or mouse in the area below.</p>
             <div className="border-2 border-line rounded-lg overflow-hidden">
                 <canvas ref={canvasRef} width={400} height={200} aria-label="Signature drawing area"
-                    className="cursor-crosshair touch-none w-full bg-[#d7d0bc]"
+                    className="cursor-crosshair touch-none w-full bg-white"
                     onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing}
                     onPointerCancel={stopDrawing} onLostPointerCapture={stopDrawing} />
             </div>

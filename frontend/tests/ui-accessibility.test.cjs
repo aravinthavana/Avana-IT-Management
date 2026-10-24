@@ -7,28 +7,16 @@ const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const root = path.resolve(__dirname, '..');
 const css = fs.readFileSync(path.join(root, 'index.css'), 'utf8');
-const approved = new Set(['#b27f0d', '#172025', '#404131', '#d7d0bc', '#aab2b2']);
-
-test('first-party UI colors stay within the approved five-color palette', () => {
-    const failures = [];
-    function walk(dir) {
-        for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
-            if (['node_modules', 'dist', 'tests'].includes(item.name)) continue;
-            const file = path.join(dir, item.name);
-            if (item.isDirectory()) walk(file);
-            else if (/\.(tsx?|css)$/.test(file)) {
-                const source = fs.readFileSync(file, 'utf8');
-                for (const match of source.matchAll(/(?<![\w&])#(?:[a-f\d]{8}|[a-f\d]{6}|[a-f\d]{4}|[a-f\d]{3})\b/gi)) {
-                    if (!approved.has(match[0].toLowerCase())) failures.push(`${file}: ${match[0]}`);
-                }
-                for (const match of source.matchAll(/(?:bg|text|border|from|via|to|ring)-(?:brand|slate|gray|red|green|blue|amber|orange|emerald|indigo|sky|yellow|pink|purple|white|black)[\w/-]*/g)) {
-                    failures.push(`${file}: ${match[0]}`);
-                }
-            }
-        }
-    }
-    walk(root);
-    assert.deepEqual(failures, []);
+test('the original theme and status colors remain available after the color rollback', () => {
+    assert.doesNotMatch(css, /--color-\*: initial/);
+    assert.match(css, /--color-brand-600:\s*#936709/);
+    assert.match(css, /--color-slate-50:\s*#faf9f6/);
+    const login = fs.readFileSync(path.join(root, 'components/auth/Login.tsx'), 'utf8');
+    assert.match(login, /#f35325/);
+    assert.match(login, /#81bc06/);
+    const assets = fs.readFileSync(path.join(root, 'components/assets/AssetManagement.tsx'), 'utf8');
+    assert.match(assets, /bg-green-/);
+    assert.match(assets, /bg-red-/);
 });
 
 function luminance(hex) {
@@ -50,8 +38,9 @@ test('theme text and primary-button pairs meet 4.5:1 contrast', () => {
             }
         }
     }
-    assert.ok(contrast('#172025', '#b27f0d') >= 4.5);
-    assert.ok(contrast('#d7d0bc', '#172025') >= 4.5);
+    const accent = css.match(/--color-accent:\s*(#[a-f\d]{6})/)[1];
+    const onAccent = css.match(/--color-on-accent:\s*(#[a-f\d]{6})/)[1];
+    assert.ok(contrast(onAccent, accent) >= 4.5);
 });
 
 function dialogHarness() {

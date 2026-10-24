@@ -45,14 +45,14 @@ const TreeNode: React.FC<{
             <div
                 className={`flex items-center py-2 px-3 my-1 rounded-lg border transition-colors cursor-pointer group ${
                     isMatch
-                        ? 'bg-surface border-line  '
-                        : 'bg-surface border-transparent hover:border-line hover:bg-canvas   '
+                        ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800/50'
+                        : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50 dark:hover:border-slate-600'
                 } ${isInactive ? 'opacity-70' : ''}`}
                 style={{ marginLeft: `${level * 24}px` }}
                 onClick={() => onSelectUser(user.id)}
             >
                 <div
-                    className="w-6 h-6 flex items-center justify-center mr-2 cursor-pointer text-quiet hover:text-quiet"
+                    className="w-6 h-6 flex items-center justify-center mr-2 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     onClick={(e) => {
                         e.stopPropagation();
                         if (hasChildren) setIsExpanded(!isExpanded);
@@ -65,28 +65,28 @@ const TreeNode: React.FC<{
                             <svg className="w-4 h-4 transform -rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         )
                     ) : (
-                        <div className="w-1 h-1 rounded-full bg-muted"></div>
+                        <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                     )}
                 </div>
 
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     {user.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-line" />
+                        <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
                     ) : (
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs bg-gradient-to-br from-muted to-olive text-on-strong flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs bg-gradient-to-br flex-shrink-0 from-red-400 to-red-600 text-white">
                             {user.name?.charAt(0).toUpperCase()}
                         </div>
                     )}
 
                     <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                         <div className="flex items-center gap-2 truncate">
-                            <span className={`font-semibold text-sm truncate ${isMatch ? 'text-ink ' : 'text-ink '}`}>
+                            <span className={`font-semibold text-sm truncate ${isMatch ? 'text-red-700 dark:text-red-400' : 'text-slate-800 dark:text-slate-100'}`}>
                                 {user.name}
                             </span>
-                            {isSelf && <span className="text-[10px] bg-surface text-ink px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">You</span>}
-                            {isInactive && <span className="text-[10px] bg-muted text-quiet px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">Inactive</span>}
+                            {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 bg-blue-100 text-blue-700">You</span>}
+                            {isInactive && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 bg-slate-100 text-slate-500">Inactive</span>}
                         </div>
-                        <div className="flex items-center text-xs text-quiet truncate gap-2">
+                        <div className="flex items-center text-xs truncate gap-2 text-slate-500 dark:text-slate-400">
                             {user.jobTitle && <span className="truncate" title={user.jobTitle}>{user.jobTitle}</span>}
                             {user.jobTitle && user.department?.name && <span>•</span>}
                             {user.department?.name && <span className="truncate">{user.department.name}</span>}
@@ -96,7 +96,7 @@ const TreeNode: React.FC<{
             </div>
 
             {hasChildren && isExpanded && (
-                <div className="flex flex-col relative before:absolute before:left-[11px] before:top-0 before:bottom-4 before:w-px before:bg-muted">
+                <div className="flex flex-col relative before:absolute before:left-[11px] before:top-0 before:bottom-4 before:w-px before:bg-slate-200 dark:before:bg-slate-700">
                     {childrenNodes.map(child => (
                         <TreeNode
                             key={child.id}
@@ -187,7 +187,7 @@ const UserHierarchy: React.FC<UserHierarchyProps> = ({ users, searchTerm, filter
 
     if (rootNodes.length === 0) {
         return (
-            <div className="text-center py-16 text-quiet">
+            <div className="text-center py-16 text-slate-500 dark:text-slate-400">
                 <p className="text-lg font-medium">No users found</p>
                 <p className="text-sm mt-1">Try adjusting your filters.</p>
             </div>
@@ -195,7 +195,7 @@ const UserHierarchy: React.FC<UserHierarchyProps> = ({ users, searchTerm, filter
     }
 
     return (
-        <div className="bg-surface rounded-lg shadow-sm border border-line p-4 sm:p-6 overflow-x-auto">
+        <div className="rounded-lg shadow-sm border p-4 sm:p-6 overflow-x-auto bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <div className="min-w-[600px]">
                 {rootNodes.map(root => (
                     <TreeNode

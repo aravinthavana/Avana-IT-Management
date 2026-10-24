@@ -30,16 +30,16 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-strong/70 backdrop-blur-sm overflow-hidden animate-fade-in">
-            <div className="bg-surface rounded-3xl shadow-2xl border border-line w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 backdrop-blur-sm overflow-hidden animate-fade-in bg-slate-900/70">
+            <div className="rounded-3xl shadow-2xl border w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden animate-scale-in bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-line flex justify-between items-center bg-canvas shrink-0">
+                <div className="px-6 py-4 border-b flex justify-between items-center shrink-0 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
                     <div className="min-w-0 pr-4">
-                        <h3 className="text-base sm:text-lg font-bold text-ink truncate">
+                        <h3 className="text-base sm:text-lg font-bold truncate text-slate-900 dark:text-white">
                             {title}
                         </h3>
                         {filename && (
-                            <p className="text-xs text-quiet font-mono truncate">
+                            <p className="text-xs font-mono truncate text-slate-500 dark:text-slate-400">
                                 {filename}
                             </p>
                         )}
@@ -48,7 +48,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                         <button
                             type="button"
                             onClick={handleDownload}
-                            className="bg-surface hover:bg-surface text-ink px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border border-accent/50"
+                            className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors border bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 text-brand-700 dark:text-brand-300 border-brand-200/50 dark:border-brand-800/50"
                         >
                             {ICONS.download}
                             <span>Download</span>
@@ -56,7 +56,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="text-quiet hover:text-quiet p-2 rounded-xl hover:bg-muted transition-colors"
+                            className="p-2 rounded-xl transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                             aria-label="Close"
                         >
                             {ICONS.close}
@@ -65,19 +65,19 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-auto p-4 sm:p-6 bg-muted flex items-center justify-center min-h-[350px]">
+                <div className="flex-1 overflow-auto p-4 sm:p-6 flex items-center justify-center min-h-[350px] bg-slate-100 dark:bg-slate-950/60">
                     {isPdf ? (
                         <iframe
                             src={fileUrl}
                             title={filename || 'Invoice PDF'}
-                            className="w-full h-[70vh] rounded-2xl border border-line bg-surface"
+                            className="w-full h-[70vh] rounded-2xl border border-slate-300 dark:border-slate-700 bg-white"
                         />
                     ) : (
                         <div className="max-w-full max-h-[70vh] overflow-auto flex items-center justify-center">
                             <img
                                 src={fileUrl}
                                 alt={filename || 'Invoice'}
-                                className="max-w-full max-h-[68vh] object-contain rounded-2xl shadow-lg border border-line bg-surface"
+                                className="max-w-full max-h-[68vh] object-contain rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 bg-white"
                             />
                         </div>
                     )}
