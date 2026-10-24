@@ -228,3 +228,69 @@ test('production API URL ignores a legacy Render URL; development keeps its conf
     assert.equal(evaluate({ PROD: false, VITE_API_URL: 'http://localhost:9000/' }), 'http://localhost:9000');
     assert.equal(evaluate({ PROD: false }), 'http://localhost:8080');
 });
+
+test('decoupled roles allow a manager or employee to hold IT admin access and reject non-users from sign-in', async () => {
+    let checkedStatus = null;
+    const authModule = load('src/middleware/auth.ts', {
+        '../db': {
+            prisma: {
+                user: {
+                    findUnique: async ({ where }) => {
+                        if (where.id === 1) return { id: 1, role: 'User', orgRole: 'Manager', isAdmin: true, isPortalUser: true, status: 'Active', email: 'singaravel@avanamedical.com' };
+                        if (where.id === 2) return { id: 2, role: 'User', orgRole: 'Employee', isAdmin: true, isPortalUser: true, status: 'Active', email: 'aravinth@avanamedical.com' };
+                        if (where.id === 3) return { id: 3, role: 'User', orgRole: 'Manager', isAdmin: false, isPortalUser: true, status: 'Active', email: 'salesmgr@example.invalid' };
+                        if (where.id === 4) return { id: 4, role: 'User', orgRole: 'Employee', isAdmin: false, isPortalUser: false, status: 'Active', email: 'shared@example.invalid' };
+                        return null;
+                    }
+                }
+            }
+        }
+    });
+
+    const jwt = require('jsonwebtoken');
+    process.env.JWT_SECRET = '01234567890123456789012345678901';
+
+    // Test 1: Singaravel (Manager + IT Admin)
+    const token1 = jwt.sign({ id: 1 }, process.env.JWT_SECRET);
+    const req1 = { cookies: { authToken: token1 }, method: 'GET' };
+    let next1Called = false;
+    await authModule.authenticateToken(req1, {}, () => { next1Called = true; });
+    assert.equal(next1Called, true);
+    assert.equal(req1.user.isAdmin, true);
+    assert.equal(req1.user.orgRole, 'Manager');
+    let adminNext1 = false;
+    authModule.requireAdmin(req1, {}, () => { adminNext1 = true; });
+    assert.equal(adminNext1, true);
+
+    // Test 2: Aravinth (Employee + IT Admin)
+    const token2 = jwt.sign({ id: 2 }, process.env.JWT_SECRET);
+    const req2 = { cookies: { authToken: token2 }, method: 'GET' };
+    let next2Called = false;
+    await authModule.authenticateToken(req2, {}, () => { next2Called = true; });
+    assert.equal(next2Called, true);
+    assert.equal(req2.user.isAdmin, true);
+    assert.equal(req2.user.orgRole, 'Employee');
+    let adminNext2 = false;
+    authModule.requireAdmin(req2, {}, () => { adminNext2 = true; });
+    assert.equal(adminNext2, true);
+
+    // Test 3: Standard Manager (Manager + No Admin)
+    const token3 = jwt.sign({ id: 3 }, process.env.JWT_SECRET);
+    const req3 = { cookies: { authToken: token3 }, method: 'GET' };
+    await authModule.authenticateToken(req3, {}, () => {});
+    assert.equal(req3.user.isAdmin, false);
+    assert.equal(req3.user.orgRole, 'Manager');
+    let adminNext3 = false;
+    const res3 = { status: code => ({ json: () => { checkedStatus = code; } }) };
+    authModule.requireAdmin(req3, res3, () => { adminNext3 = true; });
+    assert.equal(adminNext3, false);
+    assert.equal(checkedStatus, 403);
+
+    // Test 4: Non-portal user rejected
+    const token4 = jwt.sign({ id: 4 }, process.env.JWT_SECRET);
+    const req4 = { cookies: { authToken: token4 }, method: 'GET' };
+    let rejectedStatus = null;
+    const res4 = { status: code => ({ json: () => { rejectedStatus = code; } }) };
+    await authModule.authenticateToken(req4, res4, () => {});
+    assert.equal(rejectedStatus, 403);
+});

@@ -5,6 +5,9 @@ import { prisma } from '../db';
 export interface AuthUser {
     id: number;
     role: string;
+    orgRole: string;
+    isAdmin: boolean;
+    isPortalUser: boolean;
     email: string;
     name?: string;
     status: string;
@@ -43,7 +46,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
         // Live check against database: immediately revoke access for deactivated users or demoted roles
         const user = await prisma.user.findUnique({
             where: { id: decoded.id },
-            select: { id: true, role: true, status: true, email: true, name: true }
+            select: { id: true, role: true, status: true, email: true, name: true, isAdmin: true, orgRole: true, isPortalUser: true }
         });
 
         if (!user) {
@@ -54,9 +57,20 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
             return res.status(403).json({ error: 'Account is deactivated. Access revoked.' });
         }
 
+        if (user.isPortalUser === false) {
+            return res.status(403).json({ error: 'This account is designated as a non-portal record and cannot sign in.' });
+        }
+
+        const effectiveIsAdmin = Boolean(user.isAdmin || user.role === 'Admin');
+        const effectiveOrgRole = user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee');
+        const effectiveRole = effectiveIsAdmin ? 'Admin' : (effectiveOrgRole === 'Manager' ? 'Manager' : 'User');
+
         req.user = {
             id: user.id,
-            role: user.role,
+            role: effectiveRole,
+            isAdmin: effectiveIsAdmin,
+            orgRole: effectiveOrgRole,
+            isPortalUser: user.isPortalUser ?? true,
             email: user.email,
             name: user.name,
             status: user.status
@@ -69,7 +83,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 };
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (req.user?.role !== 'Admin') {
+    if (!req.user?.isAdmin && req.user?.role !== 'Admin') {
         return res.status(403).json({ error: 'Access denied. Admin role required.' });
     }
     next();

@@ -3,6 +3,9 @@ export interface User {
     name: string;
     email: string;
     role: 'Admin' | 'User' | 'Manager';
+    orgRole?: 'Employee' | 'Manager' | string;
+    isAdmin?: boolean;
+    isPortalUser?: boolean;
     status?: 'Active' | 'Inactive';
     departmentId?: number;
     branchId?: number;

@@ -20,7 +20,30 @@ router.get('/api/users/me', authenticateToken, async (req, res) => {
         if (!user || user.status === 'Inactive') {
             return res.status(401).json({ error: 'User not found or inactive' });
         }
-        res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
+        if (user.isPortalUser === false) {
+            return res.status(403).json({ error: 'This account is designated as a non-portal record and cannot sign in.' });
+        }
+        const effectiveIsAdmin = Boolean(user.isAdmin || user.role === 'Admin');
+        const effectiveOrgRole = user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee');
+        const effectiveRole = effectiveIsAdmin ? 'Admin' : (effectiveOrgRole === 'Manager' ? 'Manager' : 'User');
+
+        res.json({
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: effectiveRole,
+                orgRole: effectiveOrgRole,
+                isAdmin: effectiveIsAdmin,
+                isPortalUser: user.isPortalUser ?? true,
+                status: user.status,
+                avatar: user.avatar,
+                mobile: user.mobile,
+                jobTitle: user.jobTitle,
+                company: user.company,
+                employeeId: user.employeeId
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
@@ -196,12 +219,21 @@ router.post('/api/users', authenticateToken, requireAdmin, async (req, res) => {
         }
 
         const hashedPassword = (password && password.trim().length >= 8) ? await bcrypt.hash(password.trim(), 10) : null;
+        
+        const isAdminVal = req.body.isAdmin !== undefined ? Boolean(req.body.isAdmin) : (role === 'Admin');
+        const orgRoleVal = req.body.orgRole !== undefined ? req.body.orgRole : (role === 'Manager' ? 'Manager' : 'Employee');
+        const isPortalUserVal = req.body.isPortalUser !== undefined ? Boolean(req.body.isPortalUser) : true;
+        const computedRole = isAdminVal ? 'Admin' : (orgRoleVal === 'Manager' ? 'Manager' : 'User');
+
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: role || 'User',
+                role: computedRole,
+                orgRole: orgRoleVal,
+                isAdmin: isAdminVal,
+                isPortalUser: isPortalUserVal,
                 status: status || 'Active',
                 departmentId: departmentId || null,
                 branchId: branchId || null,
@@ -319,7 +351,23 @@ router.put('/api/users/:id', authenticateToken, async (req, res) => {
 
         // Only admin can change role/status/depts
         if (requestingUserRole === 'Admin') {
-            if (req.body.role !== undefined) updateData.role = role;
+            if (req.body.orgRole !== undefined) updateData.orgRole = req.body.orgRole;
+            if (req.body.isAdmin !== undefined) updateData.isAdmin = Boolean(req.body.isAdmin);
+            if (req.body.isPortalUser !== undefined) updateData.isPortalUser = Boolean(req.body.isPortalUser);
+
+            const adminVal = req.body.isAdmin !== undefined ? Boolean(req.body.isAdmin) : undefined;
+            const orgVal = req.body.orgRole !== undefined ? req.body.orgRole : undefined;
+            if (adminVal !== undefined || orgVal !== undefined) {
+                const targetBefore = await prisma.user.findUnique({ where: { id: Number(id) } });
+                const finalAdmin = adminVal !== undefined ? adminVal : targetBefore?.isAdmin;
+                const finalOrg = orgVal !== undefined ? orgVal : targetBefore?.orgRole;
+                updateData.role = finalAdmin ? 'Admin' : (finalOrg === 'Manager' ? 'Manager' : 'User');
+            } else if (req.body.role !== undefined) {
+                updateData.role = role;
+                if (role === 'Admin') updateData.isAdmin = true;
+                else if (role === 'Manager') { updateData.isAdmin = false; updateData.orgRole = 'Manager'; }
+                else if (role === 'User') { updateData.isAdmin = false; updateData.orgRole = 'Employee'; }
+            }
             if (req.body.status !== undefined) updateData.status = status;
             if (departmentId !== undefined) updateData.departmentId = departmentId;
             if (branchId !== undefined) updateData.branchId = branchId;

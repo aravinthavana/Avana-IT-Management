@@ -14,6 +14,9 @@ model User {
   email        String       @unique
   password     String?
   role         String       @default("User")
+  orgRole      String       @default("Employee") // "Employee" | "Manager"
+  isAdmin      Boolean      @default(false)
+  isPortalUser Boolean      @default(true)
   status       String       @default("Active")
   departmentId Int?
   branchId     Int?

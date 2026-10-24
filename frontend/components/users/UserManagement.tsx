@@ -685,12 +685,26 @@ const UserManagement: React.FC<UserManagementProps> = ({ initialFilters, onFilte
                                         {/* Right: role + status + actions */}
                                         <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
                                             <div className="hidden sm:flex flex-col items-end gap-1">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role === 'Admin' ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300' : user.role === 'Manager' ? 'bg-avana-beige/60 text-avana-olive dark:bg-slate-700 dark:text-avana-beige' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
-                                                    {user.role}
-                                                </span>
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isInactive ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
-                                                    {isInactive ? 'Inactive' : 'Active'}
-                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    {(user.isAdmin || user.role === 'Admin') && (
+                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                                            IT Admin
+                                                        </span>
+                                                    )}
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.orgRole === 'Manager' || user.role === 'Manager' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                        {user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    {user.isPortalUser === false && (
+                                                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                                                            Non-User
+                                                        </span>
+                                                    )}
+                                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isInactive ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                                        {isInactive ? 'Inactive' : 'Active'}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <UserActionMenu
                                                 user={user}

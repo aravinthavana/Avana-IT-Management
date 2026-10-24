@@ -73,7 +73,9 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
     const { user: loggedInUser } = useAuth();
     const isAdmin = loggedInUser?.role === 'Admin';
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', role: 'User', status: 'Active',
+        name: '', email: '', password: '', role: 'User',
+        orgRole: 'Employee', isAdmin: false, isPortalUser: true,
+        status: 'Active',
         departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
         employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
         workAddress: '', city: '', state: '', postalCode: '', country: ''
@@ -155,6 +157,9 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                     email: user.email || '',
                     password: '',
                     role: user.role || 'User',
+                    orgRole: (user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee')) as 'Employee' | 'Manager',
+                    isAdmin: Boolean(user.isAdmin ?? (user.role === 'Admin')),
+                    isPortalUser: user.isPortalUser ?? true,
                     status: user.status || 'Active',
                     departmentId: user.departmentId ? String(user.departmentId) : '',
                     branchId: user.branchId ? String(user.branchId) : '',
@@ -178,7 +183,9 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                 setLaunchWizardOnSave(false);
             } else {
                 setFormData({
-                    name: '', email: '', password: '', role: 'User', status: 'Active',
+                    name: '', email: '', password: '', role: 'User',
+                    orgRole: 'Employee', isAdmin: false, isPortalUser: true,
+                    status: 'Active',
                     departmentId: '', branchId: '', managerId: '', accountType: 'Employee',
                     employeeId: '', mobile: '', jobTitle: '', company: '', laptopStatus: '', location: '',
                     workAddress: '', city: '', state: '', postalCode: '', country: ''
@@ -201,10 +208,14 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const computedRole = formData.isAdmin ? 'Admin' : (formData.orgRole === 'Manager' ? 'Manager' : 'User');
         const payload: any = {
             name: formData.name,
             email: formData.email,
-            role: isAdmin ? formData.role : (user ? user.role : 'User'),
+            role: computedRole,
+            orgRole: formData.orgRole,
+            isAdmin: Boolean(formData.isAdmin),
+            isPortalUser: Boolean(formData.isPortalUser),
             status: isAdmin ? formData.status : (user ? user.status : 'Active'),
             accountType: formData.accountType,
             departmentId: formData.departmentId ? Number(formData.departmentId) : null,
@@ -284,18 +295,68 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                         {!user && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">This password will be required for the user to log in.</p>}
                     </div>
 
-                    {/* Role & Access */}
-                    <SectionHeader title="Role & Access" />
-                    <div>
-                        <FormSelect label="Role *" name="uf_role" value={formData.role} onChange={handleChange} disabled={!isAdmin} required>
-                            <option value="User">User</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Admin">Admin</option>
-                        </FormSelect>
-                        {!isAdmin && (
-                            <p className="text-[11px] mt-1 font-body text-slate-400 dark:text-slate-500">Role can only be modified by an Admin.</p>
-                        )}
+                    {/* Portal Access & Privileges */}
+                    <SectionHeader title="Portal Access & Privileges" />
+
+                    <div className="md:col-span-2 space-y-4 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <FormSelect 
+                                    label="Portal Login Access *" 
+                                    name="uf_isPortalUser" 
+                                    value={formData.isPortalUser ? 'true' : 'false'} 
+                                    onChange={e => setFormData(p => ({ ...p, isPortalUser: e.target.value === 'true' }))} 
+                                    disabled={!isAdmin} 
+                                    required
+                                >
+                                    <option value="true">Portal User (Can Sign In)</option>
+                                    <option value="false">Non-User (Directory / Asset Holder Only - No Login)</option>
+                                </FormSelect>
+                                <p className="text-[11px] mt-1 font-body text-slate-400 dark:text-slate-500">
+                                    Non-users can hold assets and licenses, but cannot log into the web portal.
+                                </p>
+                            </div>
+
+                            <div>
+                                <FormSelect 
+                                    label="Organizational Hierarchy Role *" 
+                                    name="uf_orgRole" 
+                                    value={formData.orgRole} 
+                                    onChange={handleChange} 
+                                    disabled={!isAdmin} 
+                                    required
+                                >
+                                    <option value="Employee">Employee (Individual Contributor)</option>
+                                    <option value="Manager">Manager (Approves Direct Reports)</option>
+                                </FormSelect>
+                                <p className="text-[11px] mt-1 font-body text-slate-400 dark:text-slate-500">
+                                    Managers can approve asset requests and view subordinate assets.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* IT Administrative Access Toggle */}
+                        <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-start gap-3">
+                            <input
+                                type="checkbox"
+                                id="uf_isAdmin"
+                                name="uf_isAdmin"
+                                checked={formData.isAdmin}
+                                onChange={e => setFormData(p => ({ ...p, isAdmin: e.target.checked }))}
+                                disabled={!isAdmin}
+                                className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800"
+                            />
+                            <label htmlFor="uf_isAdmin" className="text-sm cursor-pointer select-none">
+                                <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                                    Grant IT Administrator Privileges
+                                </span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">
+                                    Full administrative access to manage all assets, cloud licenses (M365 &amp; Zoho), private work logs, offboarding, and portal configurations. Can be granted to any staff member or manager.
+                                </span>
+                            </label>
+                        </div>
                     </div>
+
                     <div>
                         <FormSelect label="Status *" name="uf_status" value={formData.status} onChange={handleChange} disabled={!isAdmin} required>
                             <option value="Active">Active</option>
@@ -343,8 +404,10 @@ const UserForm: React.FC<UserFormProps> = ({ isOpen, onClose, onSave, user, isLo
                     </div>
                     <FormSelect label="Reports To (Manager)" name="uf_managerId" value={formData.managerId} onChange={handleChange}>
                         <option value="">-- No Manager --</option>
-                        {users.filter(u => u.id !== user?.id && (u.role === 'Manager' || u.role === 'Admin')).map(u => (
-                            <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                        {users.filter(u => u.id !== user?.id && (u.orgRole === 'Manager' || u.role === 'Manager' || u.isAdmin || u.role === 'Admin')).map(u => (
+                            <option key={u.id} value={u.id}>
+                                {u.name} {u.orgRole === 'Manager' || u.role === 'Manager' ? '(Manager)' : ''} {u.isAdmin || u.role === 'Admin' ? '[IT Admin]' : ''}
+                            </option>
                         ))}
                     </FormSelect>
 

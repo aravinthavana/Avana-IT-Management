@@ -11,7 +11,8 @@
     "sync-users": "ts-node src/syncUsers.ts",
     "wipe-data": "ts-node src/wipeData.ts",
     "test": "node --test tests/security-regressions.test.cjs tests/licensing.test.cjs tests/support-work.test.cjs",
-    "db:deploy-support-work": "prisma db execute --file prisma/updates/20261024_support_work.sql --schema prisma/schema.prisma"
+    "db:deploy-support-work": "prisma db execute --file prisma/updates/20261024_support_work.sql --schema prisma/schema.prisma",
+    "db:deploy-user-roles": "prisma db execute --file prisma/updates/20261024_user_admin_roles.sql --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

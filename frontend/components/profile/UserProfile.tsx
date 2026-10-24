@@ -71,7 +71,16 @@ const UserProfile: React.FC = () => {
                     <img src={currentUser.avatar || defaultAvatar} alt="User Avatar" className="w-32 h-32 rounded-full mx-auto mb-4 border-4 shadow-lg border-white dark:border-slate-700"/>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{currentUser.name}</h2>
                     <p className="text-slate-500 dark:text-slate-400">{currentUser.email}</p>
-                    <p className="mt-4"><span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${currentUser.role === 'Admin' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'}`}>{currentUser.role}</span></p>
+                    <p className="mt-4 flex items-center justify-center gap-2">
+                        <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${currentUser.orgRole === 'Manager' || currentUser.role === 'Manager' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'}`}>
+                            {currentUser.orgRole || (currentUser.role === 'Manager' ? 'Manager' : 'Employee')}
+                        </span>
+                        {(currentUser.isAdmin || currentUser.role === 'Admin') && (
+                            <span className="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                IT Admin
+                            </span>
+                        )}
+                    </p>
                 </div>
 
                 <div className="p-6 rounded-xl shadow-sm bg-white dark:bg-slate-800">

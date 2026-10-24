@@ -154,7 +154,15 @@ router.post('/api/auth/m365', async (req, res) => {
                         return res.status(403).json({ error: 'Account is inactive' });
                     }
 
-                    const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
+                    if (user.isPortalUser === false) {
+                        return res.status(403).json({ error: 'This account is designated as a non-portal record and cannot sign in.' });
+                    }
+
+                    const effectiveIsAdmin = Boolean(user.isAdmin || user.role === 'Admin');
+                    const effectiveOrgRole = user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee');
+                    const effectiveRole = effectiveIsAdmin ? 'Admin' : (effectiveOrgRole === 'Manager' ? 'Manager' : 'User');
+
+                    const token = jwt.sign({ id: user.id, role: effectiveRole }, getJwtSecret(), { expiresIn: '8h' });
                     const csrfToken = crypto.randomBytes(32).toString('hex');
                     
                     res.cookie('authToken', token, {
@@ -168,7 +176,7 @@ router.post('/api/auth/m365', async (req, res) => {
                         sameSite: 'lax',
                         maxAge: 8 * 60 * 60 * 1000
                     });
-                    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
+                    res.json({ user: { id: user.id, name: user.name, email: user.email, role: effectiveRole, orgRole: effectiveOrgRole, isAdmin: effectiveIsAdmin, isPortalUser: user.isPortalUser ?? true, status: user.status, avatar: user.avatar, mobile: user.mobile, jobTitle: user.jobTitle, company: user.company, employeeId: user.employeeId } });
                 } catch (dbError) {
                     console.error('M365 DB Error:', dbError);
                     res.status(500).json({ error: 'Failed to sync user data' });
@@ -191,11 +199,16 @@ router.post('/api/login', async (req, res) => {
         if (!user || !user.password) return res.status(400).json({ error: 'Invalid credentials' });
 
         if (user.status === 'Inactive') return res.status(403).json({ error: 'Account is inactive. Please contact IT support.' });
+        if (user.isPortalUser === false) return res.status(403).json({ error: 'This account is designated as a non-portal record and cannot sign in.' });
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
+        const effectiveIsAdmin = Boolean(user.isAdmin || user.role === 'Admin');
+        const effectiveOrgRole = user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee');
+        const effectiveRole = effectiveIsAdmin ? 'Admin' : (effectiveOrgRole === 'Manager' ? 'Manager' : 'User');
+
+        const token = jwt.sign({ id: user.id, role: effectiveRole }, getJwtSecret(), { expiresIn: '8h' });
         const csrfToken = crypto.randomBytes(32).toString('hex');
         
         res.cookie('authToken', token, {
@@ -209,7 +222,7 @@ router.post('/api/login', async (req, res) => {
             sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000
         });
-        res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } });
+        res.json({ user: { id: user.id, name: user.name, email: user.email, role: effectiveRole, orgRole: effectiveOrgRole, isAdmin: effectiveIsAdmin, isPortalUser: user.isPortalUser ?? true, status: user.status } });
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
     }
@@ -375,11 +388,18 @@ router.post('/api/auth/otp/verify', async (req, res) => {
             });
         }
 
+        if (user.status === 'Inactive') return res.status(403).json({ error: 'Account is inactive. Please contact IT support.' });
+        if (user.isPortalUser === false) return res.status(403).json({ error: 'This account is designated as a non-portal record and cannot sign in.' });
+
         // OTP is valid - delete it immediately (single-use)
         await prisma.loginOtp.delete({ where: { id: activeOtp.id } });
 
+        const effectiveIsAdmin = Boolean(user.isAdmin || user.role === 'Admin');
+        const effectiveOrgRole = user.orgRole || (user.role === 'Manager' ? 'Manager' : 'Employee');
+        const effectiveRole = effectiveIsAdmin ? 'Admin' : (effectiveOrgRole === 'Manager' ? 'Manager' : 'User');
+
         // Issue auth cookie and CSRF token
-        const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '8h' });
+        const token = jwt.sign({ id: user.id, role: effectiveRole }, getJwtSecret(), { expiresIn: '8h' });
         const csrfToken = crypto.randomBytes(32).toString('hex');
 
         res.cookie('authToken', token, {
@@ -394,13 +414,16 @@ router.post('/api/auth/otp/verify', async (req, res) => {
             maxAge: 8 * 60 * 60 * 1000
         });
 
-        console.log(`[OTP Verify] Successfully verified and logged in ${user.email} (${user.role})`);
+        console.log(`[OTP Verify] Successfully verified and logged in ${user.email} (${effectiveRole})`);
         res.json({
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: effectiveRole,
+                orgRole: effectiveOrgRole,
+                isAdmin: effectiveIsAdmin,
+                isPortalUser: user.isPortalUser ?? true,
                 status: user.status
             }
         });
