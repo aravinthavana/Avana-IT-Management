@@ -117,9 +117,21 @@ function loadComponent(file, context) {
         module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React, esModuleInterop: true
     } }).outputText;
     const module = { exports: {} };
+    let stateIndex = 0;
     const localRequire = name => {
         if (name.endsWith('/useAppContext')) return { useAppContext: () => context };
         if (name.endsWith('/AuthContext')) return { useAuth: () => ({ user: { name: 'UI Reviewer', role: 'Admin' }, logout() {} }) };
+        if (name.endsWith('/apiClient')) return { apiClient() { throw new Error('Unexpected HTTP request in markup test'); } };
+        if (name.endsWith('/Modal') && context.inlineDialog) return { default: ({ title, children }) => React.createElement('section', { 'aria-label': title }, children), __esModule: true };
+        if (name === 'react' && (context.initialProvider || context.initialMembers)) return {
+            ...React,
+            useState(value) {
+                stateIndex++;
+                const initial = filename.endsWith('LicenseManagement.tsx') && value === 'm365' ? context.initialProvider || value
+                    : filename.endsWith('LicenseAssignmentModal.tsx') && stateIndex === 1 ? context.initialMembers || value : value;
+                return React.useState(initial);
+            }
+        };
         if (!name.startsWith('.')) return require(name);
         const resolved = path.resolve(path.dirname(filename), name);
         const candidate = ['.tsx', '.ts'].map(extension => resolved + extension).find(fs.existsSync);
@@ -164,4 +176,57 @@ test('signature coordinates follow the finger when the canvas is scaled on a pho
     assert.deepEqual(getCanvasPoint(canvas, -10, -10), { x: 0, y: 0 });
     canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });
     assert.equal(getCanvasPoint(canvas, 1, 1), null);
+});
+
+const licenseFixtures = [
+    { id: 1, name: 'Microsoft 365 Business Standard', category: 'Cloud', isM365: true, skuId: 'sku-1', seats: 10, assignments: [], status: 'Active' },
+    { id: 2, name: 'Zoho People Plus', key: 'ZOHO-PEOPLE-PLUS', category: 'HR', seats: 123, assignments: [], status: 'Active' },
+    { id: 3, name: 'Design software', category: 'Software', seats: 5, assignments: [], status: 'Active' }
+];
+
+test('license page separates provider actions and hides cloud edit, seat-purchase and delete controls', () => {
+    for (const provider of ['m365', 'zoho', 'manual']) {
+        const context = { licenses: licenseFixtures, initialProvider: provider };
+        const { default: Page } = loadComponent('components/licenses/LicenseManagement.tsx', context);
+        const html = renderToStaticMarkup(React.createElement(Page));
+        if (provider === 'manual') {
+            assert.match(html, /Add software/);
+            assert.match(html, /Manage assignments/);
+            assert.match(html, /Edit details/);
+        } else {
+            assert.doesNotMatch(html, />Edit details<|>Delete<|>Add purchased seats<|>\+ Add software</);
+            assert.match(html, provider === 'zoho' ? /View users/ : /Manage Microsoft 365 users/);
+        }
+    }
+});
+
+test('Zoho user panel has search and source membership without assignment/removal controls', () => {
+    const context = { licenses: licenseFixtures, users: [], assets: [], inlineDialog: true,
+        initialMembers: { provider: 'zoho', mode: 'live', eligibleUsers: [], members: [{ id: 'z1', displayName: 'Zoho Employee', email: 'employee@example.invalid', removable: true, assignmentSource: 'Zoho People' }] } };
+    const { default: Panel } = loadComponent('components/licenses/LicenseAssignmentModal.tsx', context);
+    const html = renderToStaticMarkup(React.createElement(Panel, { isOpen: true, onClose() {}, license: licenseFixtures[1] }));
+    assert.match(html, /Search assigned users/);
+    assert.match(html, /Zoho Employee/);
+    assert.doesNotMatch(html, /Review assignment|Remove assignment|Remove license|Assign in Microsoft/);
+});
+
+test('Microsoft user panel offers removal only for direct assignments', () => {
+    const context = { licenses: licenseFixtures, users: [], assets: [], inlineDialog: true,
+        initialMembers: { provider: 'm365', mode: 'live', seats: 10, assignedSeats: 2, availableSeats: 8, eligibleUsers: [], members: [
+            { id: 'direct', displayName: 'Direct Employee', assignmentSource: 'Direct', removable: true },
+            { id: 'group', displayName: 'Group Employee', assignmentSource: 'Group managed', removable: false, note: 'Change membership in Entra.' }
+        ] } };
+    const { default: Panel } = loadComponent('components/licenses/LicenseAssignmentModal.tsx', context);
+    const html = renderToStaticMarkup(React.createElement(Panel, { isOpen: true, onClose() {}, license: licenseFixtures[0] }));
+    assert.equal((html.match(/>Remove license<\/button>/g) || []).length, 1);
+    assert.match(html, /Group managed/);
+    assert.match(html, /Change membership in Entra/);
+});
+
+test('pending informational notices are not labeled as successful operations', () => {
+    const { default: Notification } = loadComponent('components/ui/Notification.tsx', {});
+    const html = renderToStaticMarkup(React.createElement(Notification, { notification: { type: 'info', message: 'Microsoft confirmation pending.' }, onClear() {} }));
+    assert.match(html, /Information/);
+    assert.doesNotMatch(html, /Success/);
+    assert.match(html, /role="status"/);
 });

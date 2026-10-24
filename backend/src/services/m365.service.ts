@@ -1,3 +1,4 @@
+import { reconcileM365Assignments } from './licenseCache.service';
 import { findPortalUser } from '../utils/userIdentity';
 import { queueM365ProfileChanges } from './hrReview.service';
 import axios from 'axios';
@@ -5,9 +6,9 @@ import { prisma } from '../db';
 import { getGraphAppToken } from '../utils/email';
 
 const SKU_FRIENDLY_NAMES: Record<string, string> = {
-    'O365_BUSINESS_PREMIUM': 'Microsoft 365 Business Premium',
+    'O365_BUSINESS_PREMIUM': 'Microsoft 365 Business Standard',
     'O365_BUSINESS_ESSENTIALS': 'Microsoft 365 Business Basic',
-    'SPB': 'Microsoft 365 Business Standard',
+    'SPB': 'Microsoft 365 Business Premium',
     'EXCHANGEENTERPRISE': 'Exchange Online (Plan 2)',
     'EXCHANGESTANDARD': 'Exchange Online (Plan 1)',
     'POWER_BI_PRO': 'Power BI Pro',
@@ -39,6 +40,8 @@ export interface M365UserDTO {
     assignedLicenses?: Array<{ skuId: string }>;
     proxyAddresses?: string[];
     otherMails?: string[];
+    usageLocation?: string | null;
+    licenseAssignmentStates?: Array<{ skuId: string; assignedByGroup?: string | null; state?: string; error?: string | null }>;
     employeeId?: string | null;
     companyName?: string | null;
 }
@@ -69,7 +72,7 @@ export interface SyncResult {
  */
 export async function fetchAllM365Users(accessToken: string): Promise<M365UserDTO[]> {
     const allUsers: M365UserDTO[] = [];
-    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses,proxyAddresses,otherMails,employeeId,companyName';
+    let nextUrl: string | null = 'https://graph.microsoft.com/v1.0/users?$top=999&$select=id,displayName,mail,userPrincipalName,jobTitle,department,mobilePhone,officeLocation,accountEnabled,city,state,country,postalCode,streetAddress,assignedLicenses,proxyAddresses,otherMails,employeeId,companyName,usageLocation,licenseAssignmentStates';
 
     while (nextUrl) {
         const response: any = await axios.get(nextUrl, {
@@ -78,9 +81,9 @@ export async function fetchAllM365Users(accessToken: string): Promise<M365UserDT
         });
 
         const data = response.data;
-        if (data.value && Array.isArray(data.value)) {
-            allUsers.push(...data.value);
-        }
+        if (!Array.isArray(data?.value)) throw new Error('Microsoft returned an incomplete user snapshot. Cached assignments were preserved.');
+        if (data.value.some((u: M365UserDTO) => !Array.isArray(u.assignedLicenses))) throw new Error('Microsoft returned an incomplete license snapshot. Cached assignments were preserved.');
+        allUsers.push(...data.value);
         nextUrl = data['@odata.nextLink'] || null;
     }
 
@@ -95,7 +98,8 @@ export async function fetchM365SubscribedSkus(accessToken: string): Promise<M365
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 20000
     });
-    return response.data?.value || [];
+    if (!Array.isArray(response.data?.value)) throw new Error('Microsoft returned an invalid subscription list.');
+    return response.data.value;
 }
 
 /**
@@ -187,7 +191,7 @@ export async function revokeM365Licenses(
         const skuIdsToRemove = assignedLicenses.map(l => l.skuId);
         // 2. Remove all assigned licenses via assignLicenses endpoint
         await axios.post(
-            `https://graph.microsoft.com/v1.0/users/${encodedTarget}/assignLicenses`,
+            `https://graph.microsoft.com/v1.0/users/${encodedTarget}/assignLicense`,
             {
                 addLicenses: [],
                 removeLicenses: skuIdsToRemove
@@ -236,7 +240,7 @@ export async function syncFromM365(): Promise<SyncResult> {
         for (const sku of skus) {
             const rawPart = sku.skuPartNumber || '';
             const friendlyName = SKU_FRIENDLY_NAMES[rawPart] || rawPart.replace(/_/g, ' ');
-            const totalSeats = sku.prepaidUnits?.enabled || 1;
+            const totalSeats = sku.prepaidUnits?.enabled ?? 0;
             const consumed = sku.consumedUnits || 0;
 
             const license = await prisma.license.upsert({
@@ -273,6 +277,7 @@ export async function syncFromM365(): Promise<SyncResult> {
         let usersUpdated = 0;
         const now = new Date();
 
+        const assignmentsByLicense = new Map<number, Set<number>>();
         const portalUsers = await prisma.user.findMany({ include: { department: true } });
         for (const mUser of m365Users) {
             // Ignore external guest accounts
@@ -415,28 +420,19 @@ export async function syncFromM365(): Promise<SyncResult> {
                 usersCreated++;
             }
 
-            // Sync User's Assigned Licenses
-            if (mUser.assignedLicenses && dbUser) {
-                for (const lic of mUser.assignedLicenses) {
-                    const licenseId = skuLicenseMap.get(lic.skuId);
-                    if (licenseId) {
-                        const existingAssignment = await prisma.licenseAssignment.findFirst({
-                            where: {
-                                licenseId: licenseId,
-                                userId: dbUser.id
-                            }
-                        });
-                        if (!existingAssignment) {
-                            await prisma.licenseAssignment.create({
-                                data: {
-                                    licenseId: licenseId,
-                                    userId: dbUser.id
-                                }
-                            });
-                        }
-                    }
+            if (Array.isArray(mUser.assignedLicenses) && dbUser) {
+                for (const assigned of mUser.assignedLicenses) {
+                    const licenseId = skuLicenseMap.get(assigned.skuId);
+                    if (!licenseId) continue;
+                    if (!assignmentsByLicense.has(licenseId)) assignmentsByLicense.set(licenseId, new Set());
+                    assignmentsByLicense.get(licenseId)!.add(dbUser.id);
                 }
             }
+        }
+
+        for (const sku of skus) {
+            const licenseId = skuLicenseMap.get(sku.skuId)!;
+            await reconcileM365Assignments(licenseId, [...(assignmentsByLicense.get(licenseId) || [])], sku.prepaidUnits?.enabled ?? 0);
         }
 
         console.log(`[M365 Sync Complete] Created: ${usersCreated}, Updated: ${usersUpdated}, Licenses: ${licensesSynced}`);

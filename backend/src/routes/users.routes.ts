@@ -1,3 +1,4 @@
+import { licenseProvider, manualLicenseFilter, nonZohoLicenseFilter } from '../utils/licensePolicy';
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../db';
@@ -428,7 +429,7 @@ router.put('/api/users/:id/status', authenticateToken, requireAdmin, async (req,
 
             // Reclaim Licenses
             await prisma.licenseAssignment.deleteMany({
-                where: { userId: Number(id) }
+                where: { userId: Number(id), license: manualLicenseFilter }
             });
         }
 
@@ -593,27 +594,17 @@ router.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (
                 ? assignLicenseIds.map(Number).filter(n => !isNaN(n) && n > 0)
                 : (assignLicenseId && !isNaN(Number(assignLicenseId)) ? [Number(assignLicenseId)] : []);
 
-            // Remove any licenses currently assigned to this user that are not in requestedLicenseIds
+            const requested = await prisma.license.findMany({ where: { id: { in: requestedLicenseIds } }, include: { assignments: true } });
+            if (requested.length !== new Set(requestedLicenseIds).size || requested.some(l => licenseProvider(l) !== 'manual')) {
+                return res.status(400).json({ error: 'Only manual software can be assigned during this step. Manage Microsoft 365 in Licenses & Subscriptions; Zoho is read-only.' });
+            }
             await prisma.licenseAssignment.deleteMany({
-                where: {
-                    userId: targetUser.id,
-                    licenseId: { notIn: requestedLicenseIds }
-                }
+                where: { userId: targetUser.id, license: manualLicenseFilter, licenseId: { notIn: requestedLicenseIds } }
             });
-
-            // Assign newly requested licenses if not already assigned
-            for (const licenseId of requestedLicenseIds) {
-                const license = await prisma.license.findUnique({
-                    where: { id: licenseId },
-                    include: { assignments: true }
-                });
-                if (license) {
-                    const alreadyAssigned = license.assignments.some(a => a.userId === targetUser.id);
-                    if (!alreadyAssigned && license.assignments.length < license.seats) {
-                        await prisma.licenseAssignment.create({
-                            data: { licenseId, userId: targetUser.id }
-                        });
-                    }
+            for (const license of requested) {
+                const assigned = license.assignments.some(a => a.userId === targetUser.id);
+                if (!assigned && license.assignments.length < license.seats) {
+                    await prisma.licenseAssignment.create({ data: { licenseId: license.id, userId: targetUser.id } });
                 }
             }
 
@@ -623,8 +614,7 @@ router.post('/api/onboarding/complete', authenticateToken, requireAdmin, async (
                 include: { license: true }
             });
             licenseAssignedFlag = currentAssignments.some(a => 
-                a.license.name.toLowerCase().includes('microsoft') || 
-                a.license.name.toLowerCase().includes('exchange')
+                a.license.isM365
             );
         }
 
@@ -738,7 +728,7 @@ router.post('/api/offboarding/process', authenticateToken, requireAdmin, async (
         // Persist successful actions and asset history atomically; cloud calls remain outside the transaction.
         const updatedUser = await prisma.$transaction(async tx => {
             if (revokeAllLicenses && m365RevokeSuccess) {
-                await tx.licenseAssignment.deleteMany({ where: { userId: targetUser.id } });
+                await tx.licenseAssignment.deleteMany({ where: { userId: targetUser.id, license: nonZohoLicenseFilter } });
             }
             // 1. Process Asset Return if provided
 

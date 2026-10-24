@@ -289,6 +289,7 @@ export interface License {
     remarks?: string;
     skuId?: string;
     isM365?: boolean;
+    provider?: 'm365' | 'zoho' | 'manual';
     assignments?: LicenseAssignment[];
 }
 

@@ -1,3 +1,4 @@
+import { licenseProvider } from '../../utils/licenseUtils';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
@@ -35,7 +36,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
 
     // User's assigned assets and licenses
     const userAssets = selectedUser ? assets.filter(a => ((a.assigneeType?.toLowerCase() === 'user' && a.assigneeId === selectedUser.id) || a.assignedTo === selectedUser.id || a.userId === selectedUser.id)) : [];
-    const userLicenses = selectedUser ? licenses.filter(l => l.assignments?.some(a => a.userId === selectedUser.id)) : [];
+    const userLicenses = selectedUser ? licenses.filter(l => licenseProvider(l) !== 'zoho' && l.assignments?.some(a => a.userId === selectedUser.id)) : [];
 
     // Step 2: Asset Return & Condition
     const [selectedAssetId, setSelectedAssetId] = useState<number | ''>('');
@@ -183,6 +184,7 @@ const OffboardingWizardModal: React.FC<OffboardingWizardModalProps> = ({ isOpen,
             // If licenses revoked, update license state
             if (revokeAllLicenses && updatedUser.m365LicenseRevoked && userLicenses.length > 0) {
                 setLicenses(licenses.map(l => {
+                    if (licenseProvider(l) === 'zoho') return l;
                     const filtered = l.assignments?.filter(a => a.userId !== selectedUser.id) || [];
                     return {
                         ...l,

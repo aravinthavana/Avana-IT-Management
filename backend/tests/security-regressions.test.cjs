@@ -28,6 +28,7 @@ function route(file, url, db, graph = {}) {
         '../utils/email': { sendTicketEmail: async () => {} },
         '../utils/userIdentity': { findPortalUser: async () => null },
         '../utils/safeUser': { SAFE_USER_SELECT: { id: true } },
+        '../utils/licensePolicy': { licenseProvider: license => license.isM365 ? 'm365' : /zoho/i.test(license.name) ? 'zoho' : 'manual', manualLicenseFilter: { isM365: false }, nonZohoLicenseFilter: {} },
         '../schemas': { userSchema: { partial: () => ({ safeParse: data => ({ success: true, data }) }) } },
         '../services/m365.service': graph
     }).default;

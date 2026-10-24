@@ -78,28 +78,21 @@ export async function fetchZohoEmployees(): Promise<ZohoEmployeeRecord[]> {
 
     let rawRecords: any[] = [];
     try {
-        const response = await axios.get(endpoint, {
-            headers: {
-                Authorization: `Zoho-oauthtoken ${accessToken}`
-            },
-            params: {
-                sIndex: 1,
-                limit: 200
-            }
-        });
-
-        if (Array.isArray(response.data)) {
-            rawRecords = response.data;
-        } else if (response.data?.response?.result) {
-            rawRecords = Array.isArray(response.data.response.result)
-                ? response.data.response.result
-                : [response.data.response.result];
-        } else if (response.data?.result) {
-            rawRecords = Array.isArray(response.data.result)
-                ? response.data.result
-                : [response.data.result];
-        } else {
-            console.warn('Zoho returned unexpected data shape:', response.data);
+        const pages = new Set<string>();
+        for (let sIndex = 1; ; sIndex += 200) {
+            if (sIndex > 10000) throw new Error('Zoho employee snapshot exceeded the supported page limit; existing references were preserved.');
+            const response = await axios.get(endpoint, {
+                headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+                params: { sIndex, rec_limit: 200, limit: 200 }, timeout: 20000
+            });
+            const value = Array.isArray(response.data) ? response.data : response.data?.response?.result ?? response.data?.result;
+            const page = Array.isArray(value) ? value : value && (value['Email address'] || value.EmailID || value.Email) ? [value] : null;
+            if (!page) throw new Error('Zoho returned an incomplete employee snapshot; existing references were preserved.');
+            const fingerprint = JSON.stringify(page);
+            if (page.length && pages.has(fingerprint)) throw new Error('Zoho repeated an employee page; existing references were preserved.');
+            pages.add(fingerprint);
+            rawRecords.push(...page);
+            if (page.length < 200) break;
         }
     } catch (err: any) {
         const errData = err.response?.data;
@@ -122,7 +115,7 @@ export async function fetchZohoEmployees(): Promise<ZohoEmployeeRecord[]> {
         const department = (item['Department'] || item['Department_Name'] || '').toString().trim();
         const designation = (item['Designation'] || item['Job_Title'] || item['Job Title'] || '').toString().trim();
         const mobile = (item['Work Phone Number'] || item['Mobile'] || item['Mobile_Number'] || item['Phone'] || '').toString().trim();
-        const status = (item['Employee_Status'] || item['Employment_Status'] || item['Employment Type'] || item['Status'] || 'Active').toString().trim();
+        const status = (item['Employee Status'] || item['Employee_Status'] || item['Employment_Status'] || item['Employment Type'] || item['Status'] || 'Active').toString().trim();
 
         return {
             recordId: item.recordId,
@@ -523,67 +516,26 @@ export async function syncZohoLicensePool() {
         });
     }
 
-    // Batch map assignments to portal users
-    const allUsers = await prisma.user.findMany({ select: { id: true, email: true, employeeId: true, zohoEmployeeId: true, emailAliases: true } });
-    const emailMap = new Map<string, any>();
-    const empIdMap = new Map<string, any>();
-    const aliasMap = new Map<string, any>();
-
-    for (const u of allUsers) {
-        if (u.email) emailMap.set(u.email.toLowerCase(), u);
-        if (u.employeeId) {
-            empIdMap.set(u.employeeId.toLowerCase(), u);
-            const norm = normalizeEmpId(u.employeeId);
-            if (norm) empIdMap.set(norm, u);
-        }
-        if (u.zohoEmployeeId) {
-            empIdMap.set(u.zohoEmployeeId.toLowerCase(), u);
-            const norm = normalizeEmpId(u.zohoEmployeeId);
-            if (norm) empIdMap.set(norm, u);
-        }
-        if (u.emailAliases) {
-            try {
-                const al = JSON.parse(u.emailAliases);
-                if (Array.isArray(al)) {
-                    for (const a of al) {
-                        if (typeof a === 'string') aliasMap.set(a.trim().toLowerCase(), u);
-                    }
-                }
-            } catch (e) {}
+    // Zoho owns membership. Reconcile this read-only snapshot, including departures.
+    const allUsers = await prisma.user.findMany({ include: { department: true } });
+    const ids = new Set<number>();
+    for (const employee of activeEmployees) {
+        if (!employee.email) continue;
+        try {
+            const user = await findPortalUser(employee.email, employee.employeeId, [], undefined, allUsers);
+            if (user) ids.add(user.id);
+        } catch (error) {
+            console.warn('[Zoho membership] Ambiguous employee identity; no portal assignment created.');
         }
     }
-
-    const existingAssignments = await prisma.licenseAssignment.findMany({
-        where: { licenseId: license.id },
-        select: { userId: true }
+    const assignedCount = ids.size;
+    await prisma.$transaction(async tx => {
+        await tx.licenseAssignment.deleteMany({ where: { licenseId: license!.id, OR: [{ userId: null }, { userId: { notIn: [...ids] } }] } });
+        const current = await tx.licenseAssignment.findMany({ where: { licenseId: license!.id } });
+        const existing = new Set(current.map(a => a.userId));
+        const missing = [...ids].filter(id => !existing.has(id));
+        if (missing.length) await tx.licenseAssignment.createMany({ data: missing.map(userId => ({ licenseId: license!.id, userId })) });
     });
-    const assignedUserIds = new Set(existingAssignments.map(a => a.userId).filter(Boolean));
-
-    const newAssignments: { licenseId: number; userId: number }[] = [];
-    let assignedCount = assignedUserIds.size;
-
-    for (const zEmp of activeEmployees) {
-        if (!zEmp.email) continue;
-        const zEmail = zEmp.email.toLowerCase();
-        const normZEmpId = normalizeEmpId(zEmp.employeeId);
-        const dbUser = emailMap.get(zEmail) 
-            || (normZEmpId ? empIdMap.get(normZEmpId) : null)
-            || (zEmp.employeeId ? empIdMap.get(zEmp.employeeId.toLowerCase()) : null)
-            || aliasMap.get(zEmail);
-
-        if (dbUser && !assignedUserIds.has(dbUser.id)) {
-            newAssignments.push({
-                licenseId: license.id,
-                userId: dbUser.id
-            });
-            assignedUserIds.add(dbUser.id);
-            assignedCount++;
-        }
-    }
-
-    if (newAssignments.length > 0) {
-        await prisma.licenseAssignment.createMany({ data: newAssignments });
-    }
 
     return {
         success: true,

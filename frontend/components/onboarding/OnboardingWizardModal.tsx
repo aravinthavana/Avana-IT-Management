@@ -1,3 +1,4 @@
+import { licenseProvider } from '../../utils/licenseUtils';
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility';
 import { API_URL } from '../../utils/apiClient';
 import React, { useState, useEffect } from 'react';
@@ -371,6 +372,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
             // Synchronize licenses local state
             const effectiveLicenseIds = licenseOption === 'assign' ? selectedLicenseIds : [];
             setLicenses(licenses.map(l => {
+                if (licenseProvider(l) !== 'manual') return l;
                 const isSelected = effectiveLicenseIds.includes(l.id);
                 const isAssigned = l.assignments?.some(a => a.userId === updatedUser.id);
 
@@ -660,7 +662,7 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     >
                                         <div className="flex items-center gap-2 font-semibold text-sm">
                                             <input type="radio" name="licenseOpt" checked={licenseOption === 'skip'} onChange={() => setLicenseOption('skip')} className="text-brand-600" />
-                                            <span>No License Required</span>
+                                            <span>No Manual Software Required</span>
                                         </div>
                                         <p className="text-xs mt-1 pl-5 text-slate-500">Skip license allocation (e.g. frontline worker, external user)</p>
                                     </div>
@@ -670,13 +672,14 @@ const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({ isOpen, o
                                     <div className="mt-4 p-4 rounded-xl border space-y-3 animate-in fade-in duration-150 border-brand-200 dark:border-brand-900 bg-brand-50/30 dark:bg-brand-950/20">
                                         <div className="flex items-center justify-between">
                                             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                                Available Licenses ({selectedLicenseIds.length} selected)
+                                                Manual software ({selectedLicenseIds.length} selected)
                                             </label>
                                             <span className="text-[11px] text-slate-500">Multiple licenses can be selected</span>
                                         </div>
 
-                                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                            {licenses.map(l => {
+                                        <p className="text-sm text-slate-500">Manage Microsoft 365 in Licenses &amp; Subscriptions after syncing the account. Zoho membership is shown there as read-only.</p>
+                                          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                            {licenses.filter(l => licenseProvider(l) === 'manual').map(l => {
                                                 const assigned = l.assignments?.length || 0;
                                                 const available = l.seats - assigned;
                                                 const isAlreadyAssigned = selectedUserId !== 'new' && l.assignments?.some(a => a.userId === selectedUserId);
